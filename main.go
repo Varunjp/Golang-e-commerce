@@ -1,13 +1,27 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	db "first-project/DB"
+	"first-project/routes"
+	"os"
+
+	"github.com/gin-gonic/gin"
+)
 
 func main() {
+
+  db.DbInit()
+  port := os.Getenv("PORT")
+
+  if port == ""{
+    port = "8080"
+  }
+
+  
   router := gin.Default()
-  router.GET("/ping", func(c *gin.Context) {
-    c.JSON(200, gin.H{
-      "message": "pong",
-    })
-  })
-  router.Run() // listen and serve on 0.0.0.0:8080
+
+  routes.GetUrl(router)
+  
+  router.Run(":"+port)
+  
 }
