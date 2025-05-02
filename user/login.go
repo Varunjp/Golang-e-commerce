@@ -1,7 +1,7 @@
 package user
 
 import (
-	db "first-project/db"
+	db "first-project/DB"
 	"first-project/middleware"
 	"first-project/models"
 	"net/http"
