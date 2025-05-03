@@ -53,7 +53,14 @@ func ListUsers(c *gin.Context){
 
 	// Add html
 
-	c.JSON(http.StatusOK,gin.H{
+	// c.JSON(http.StatusOK,gin.H{
+	// 	"Users":users,
+	// 	"page":page,
+	// 	"limit":limit,
+	// 	"totalPages":totalPages,
+	// })
+
+	c.HTML(http.StatusOK,"user_list.html",gin.H{
 		"Users":users,
 		"page":page,
 		"limit":limit,
