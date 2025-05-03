@@ -15,6 +15,7 @@
             <nav class="nav flex-column">
                 <a class="nav-link" href="#">Dashboard</a>
                 <a class="nav-link active" href="#">Customers</a>
+                <a class="nav-link" href="#">Categories</a>
                 <a class="nav-link" href="#">Products</a>
                 <a class="nav-link" href="#">Sales Report</a>
                 <a class="nav-link" href="#">Settings</a>
@@ -60,9 +61,8 @@
                             <td>{{ .Phone }}</td>
                             <td>{{ .Status }}</td>
                             <td>
-                                <a href="/admin/users/{{ .ID }}" class="btn btn-sm btn-outline-light">View</a>
-                                <a href="/admin/users/edit/{{ .ID }}" class="btn btn-sm btn-outline-warning">Edit</a>
-                                <a href="/admin/users/delete/{{ .ID }}" class="btn btn-sm btn-outline-danger">Delete</a>
+                                <a href="/admin/users/block/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Block">Block</a>
+                                <a href="/admin/users/unblock/{{ .ID }}" class="btn btn-sm btn-outline-warning" data-action="Unblock">Unblock</a>
                             </td>
                         </tr>
                         {{ end }}
@@ -96,5 +96,45 @@
         </div>
     </div>
 </div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-white">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="confirmModalBody">
+          Are you sure you want to perform this action?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <a id="confirmModalYesBtn" href="#" class="btn btn-danger">Yes, Proceed</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+  const confirmBtn = document.getElementById('confirmModalYesBtn');
+  const confirmText = document.getElementById('confirmModalBody');
+
+  document.querySelectorAll('a[data-action]').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const url = btn.getAttribute('href');
+      const action = btn.getAttribute('data-action');
+      confirmText.textContent = `Are you sure you want to ${action.toLowerCase()} this user?`;
+      confirmBtn.href = url;
+      confirmBtn.className = `btn btn-${action === 'Block' ? 'danger' : 'success'}`;
+      confirmBtn.textContent = `Yes, ${action}`;
+      confirmModal.show();
+    });
+  });
+</script>
+
 </body>
 </html>
