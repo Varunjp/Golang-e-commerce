@@ -40,7 +40,7 @@ func Login(c *gin.Context){
 		return 
 	}
 
-	token, err := middleware.CreateToken(admin.Email,admin.ID)
+	token, err := middleware.CreateToken("admin",admin.Email,admin.ID)
 	if err != nil{
 		c.JSON(http.StatusOK,gin.H{"error": "Error Generating JWT"})
 	}
