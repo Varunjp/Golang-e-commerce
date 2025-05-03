@@ -27,6 +27,7 @@ func DbInit(){
 	autoerr := Db.AutoMigrate(
 		&models.User{},
 		&models.Admin{},
+		&models.Category{},
 	)
 
 	if autoerr != nil{

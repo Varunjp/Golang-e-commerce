@@ -7,19 +7,25 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
+func LoginPage(c *gin.Context){
+	c.HTML(http.StatusOK,"admin_login.html",nil)
+}
+
 func Login(c *gin.Context){
-	var input models.Userinput
+	//var input models.Userinput
 	var admin models.Admin
 
-	if err := c.ShouldBind(&input); err != nil{
-		c.JSON(http.StatusBadRequest,gin.H{"error": err.Error()})
-		return
-	}
+	email := c.PostForm("email")
+	password := c.PostForm("password")
 
-	result := db.Db.Where("email=?",input.Email).First(&admin)
+	// if err := c.ShouldBind(&input); err != nil{
+	// 	c.JSON(http.StatusBadRequest,gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	result := db.Db.Where("email=?",email).First(&admin)
 
 	if result.Error != nil{
 		c.JSON(http.StatusUnauthorized,gin.H{
@@ -35,7 +41,7 @@ func Login(c *gin.Context){
 		return 
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(admin.Password),[]byte(input.Password)); err != nil {
+	if admin.Password != password {
 		c.JSON(http.StatusUnauthorized, gin.H{"message":"Invalid email or password"})
 		return 
 	}
@@ -45,5 +51,15 @@ func Login(c *gin.Context){
 		c.JSON(http.StatusOK,gin.H{"error": "Error Generating JWT"})
 	}
 	c.Header("Authorization","Bearer"+token)
-	c.JSON(http.StatusOK, gin.H{"message":"Login successfull", "token":token})
+
+	username := admin.Username
+
+	//c.JSON(http.StatusOK, gin.H{"message":"Login successfull", "token":token})
+
+	c.HTML(http.StatusOK,"admin_dashboard.html",gin.H{
+		"username" : username,
+		"totalUsers": 10,
+		"totalProducts": 100,
+		"totalSales": 10000,
+	})
 }

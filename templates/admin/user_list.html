@@ -18,7 +18,6 @@
                 <a class="nav-link" href="#">Categories</a>
                 <a class="nav-link" href="#">Products</a>
                 <a class="nav-link" href="#">Sales Report</a>
-                <a class="nav-link" href="#">Settings</a>
             </nav>
         </div>
 
@@ -34,10 +33,10 @@
                 <!-- Search + Buttons -->
                 <form class="d-flex mb-3" method="get">
                     <input class="form-control me-2" type="search" placeholder="Search by name, email..." name="search" value="{{ .search }}">
-                    <button class="btn btn-outline-light me-2" type="submit">Search</button>
-                    <a href="/admin/users" class="btn btn-secondary">Clear</a>
-                    <a href="/admin/users/add" class="btn btn-primary ms-auto">Add Customer</a>
+                    <button class="btn btn-outline-success me-2" type="submit">Search</button>
+                    <a href="/admin/users-list" class="btn btn-secondary">Clear</a>
                 </form>
+                <a href="/admin/users/add" class="btn btn-primary ms-auto">Add Customer</a>
 
                 <!-- User Table -->
                 <div class="table-responsive bg-dark p-3 rounded">

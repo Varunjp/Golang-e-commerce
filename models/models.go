@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type User struct{
@@ -24,4 +26,11 @@ type Admin struct {
 	Status 		string 		`gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
 	Created_at 	time.Time
 	Updated_at 	time.Time
+}
+
+type Category struct {
+	CategoryID uint `gorm:"primarykey" json:"category_id"`
+	CategoryName string `json:"name"`
+	CreateAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

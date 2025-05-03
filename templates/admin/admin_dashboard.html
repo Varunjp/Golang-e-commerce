@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - Fashion Art</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+    }
+    .sidebar {
+      background-color: #1e1e1e;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .sidebar .nav-link {
+      color: #ccc;
+    }
+    .sidebar .nav-link.active {
+      background-color: #333;
+      border-radius: 8px;
+      color: #fff;
+    }
+    .topbar {
+      background-color: #1e1e1e;
+      padding: 1rem;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .stat-card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 1.5rem;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    .stat-card h5 {
+      font-weight: 600;
+      color: #bbb;
+    }
+    .stat-card h2 {
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar">
+      <h4 class="text-white">Fashion Art</h4>
+      <nav class="nav flex-column">
+        <a class="nav-link active" href="/admin/dashboard">Dashboard</a>
+        <a class="nav-link" href="/admin/users">Customers</a>
+        <a class="nav-link" href="/admin/products">Products</a>
+        <a class="nav-link" href="/admin/categories">Categories</a>
+        <a class="nav-link" href="/admin/reports">Sales Report</a>
+      </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-10">
+      <div class="topbar">
+        <span class="text-white">Admin: {{ .username}}</span>
+      </div>
+
+      <div class="container py-4">
+        <h2 class="mb-4">Dashboard</h2>
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h5>Total Users</h5>
+              <h2>{{ .totalUsers }}</h2>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h5>Total Products</h5>
+              <h2>{{ .totalProducts }}</h2>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="stat-card">
+              <h5>Total Sales</h5>
+              <h2>₹ {{ .totalSales }}</h2>
+            </div>
+          </div>
+        </div>
+        <!-- Add more cards or charts below as needed -->
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
