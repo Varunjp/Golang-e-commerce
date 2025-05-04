@@ -43,14 +43,14 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 		token, err := c.Cookie("JWT")
 
 		if username == nil || err != nil{
-			c.JSON(http.StatusUnauthorized,gin.H{"error":"Authorization header required"})
+			c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{"error":"Login required"})
 			c.Abort()
 			return 
 		}
 
 		
 		if token == ""{
-			c.JSON(http.StatusUnauthorized, gin.H{"error":"Token missing"})
+			c.HTML(http.StatusUnauthorized,"admin_login.html", gin.H{"error":"Token missing"})
 			c.Abort()
 			return 
 		}
@@ -63,7 +63,7 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 		})
 
 		if err != nil || !tokenres.Valid{
-			c.JSON(http.StatusUnauthorized, gin.H{"error":"Invalid or expired token"})
+			c.HTML(http.StatusUnauthorized,"admin_login.html", gin.H{"error":"Invalid or expired token"})
 			c.Abort()
 			return 
 		}
@@ -76,7 +76,7 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 			}
 			c.Set("claims",claims)
 		}else{
-			c.JSON(http.StatusUnauthorized, gin.H{"error":"Invalid token claims"})
+			c.HTML(http.StatusUnauthorized,"admin_login.html", gin.H{"error":"Invalid token claims"})
 			c.Abort()
 			return 
 		}

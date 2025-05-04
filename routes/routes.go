@@ -14,7 +14,7 @@ func GetUrl(router *gin.Engine){
 	router.POST("/login",user.Login)
 
 	//Admin
-	//router.GET("/admin",)
+	router.GET("/admin",middleware.AuthMiddlerware("admin"),admin.LoginPage)
 	router.GET("/admin/login",admin.LoginPage)
 	router.POST("/admin/login",admin.Login)
 	// Admin users
@@ -25,5 +25,6 @@ func GetUrl(router *gin.Engine){
 
 	// Admin categories
 	router.GET("/admin/categories",middleware.AuthMiddlerware("admin"),admin.ViewCategory)
+	
 
 }

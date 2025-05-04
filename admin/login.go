@@ -12,9 +12,17 @@ import (
 
 func LoginPage(c *gin.Context){
 
-	
+	session := sessions.Default(c)
+	username := session.Get("name")
 
-	c.HTML(http.StatusOK,"admin_login.html",nil)
+	c.HTML(http.StatusOK,"admin_dashboard.html",gin.H{
+		"username" : username.(string),
+		"totalUsers": 10,
+		"totalProducts": 100,
+		"totalSales": 10000,
+	})
+
+	//c.HTML(http.StatusOK,"admin_login.html",nil)
 }
 
 func Login(c *gin.Context){
