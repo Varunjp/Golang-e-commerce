@@ -156,5 +156,5 @@ func UnblockUser(c *gin.Context){
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save user"})
 		return 
 	}
-
+	c.JSON(http.StatusOK,gin.H{"message":"User unblocked successfully"})
 }

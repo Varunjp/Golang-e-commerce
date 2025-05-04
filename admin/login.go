@@ -6,24 +6,23 @@ import (
 	"first-project/models"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func LoginPage(c *gin.Context){
+
+	
+
 	c.HTML(http.StatusOK,"admin_login.html",nil)
 }
 
 func Login(c *gin.Context){
-	//var input models.Userinput
+	
 	var admin models.Admin
 
 	email := c.PostForm("email")
 	password := c.PostForm("password")
-
-	// if err := c.ShouldBind(&input); err != nil{
-	// 	c.JSON(http.StatusBadRequest,gin.H{"error": err.Error()})
-	// 	return
-	// }
 
 	result := db.Db.Where("email=?",email).First(&admin)
 
@@ -46,18 +45,25 @@ func Login(c *gin.Context){
 		return 
 	}
 
+	session := sessions.Default(c)
+	session.Set("name",admin.Username)
+	session.Save()
+
 	token, err := middleware.CreateToken("admin",admin.Email,admin.ID)
 	if err != nil{
 		c.JSON(http.StatusOK,gin.H{"error": "Error Generating JWT"})
 	}
-	c.Header("Authorization","Bearer"+token)
+	
+	c.SetCookie("JWT",token,3600,"/","",false,true)
+	
+	// Prevent caching
+	c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
 
-	username := admin.Username
 
 	//c.JSON(http.StatusOK, gin.H{"message":"Login successfull", "token":token})
 
 	c.HTML(http.StatusOK,"admin_dashboard.html",gin.H{
-		"username" : username,
+		"username" : admin.Username,
 		"totalUsers": 10,
 		"totalProducts": 100,
 		"totalSales": 10000,

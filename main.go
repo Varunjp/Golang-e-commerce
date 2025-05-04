@@ -6,6 +6,8 @@ import (
 	"first-project/utils"
 	"os"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,6 +22,10 @@ func main() {
 
   
   router := gin.Default()
+
+  // creating session
+  store := cookie.NewStore([]byte("secret-key"))
+  router.Use(sessions.Sessions("Mysession",store))
 
   // Connect helper function
   router.SetFuncMap(utils.TemplateFuncs())

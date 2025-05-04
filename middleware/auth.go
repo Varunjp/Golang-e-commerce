@@ -3,9 +3,9 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
@@ -36,34 +36,39 @@ func CreateToken(role string, email string, id uint)(string, error){
 
 func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 	return func(c *gin.Context){
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == ""{
+		//authHeader := c.GetHeader("Authorization")
+		session := sessions.Default(c)
+		username := session.Get("name")
+
+		token, err := c.Cookie("JWT")
+
+		if username == nil || err != nil{
 			c.JSON(http.StatusUnauthorized,gin.H{"error":"Authorization header required"})
 			c.Abort()
 			return 
 		}
 
-		tokenString := strings.TrimPrefix(authHeader,"Bearer ")
-		if tokenString == ""{
+		
+		if token == ""{
 			c.JSON(http.StatusUnauthorized, gin.H{"error":"Token missing"})
 			c.Abort()
 			return 
 		}
 
-		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func (token *jwt.Token)(interface{}, error){
+		tokenres, err := jwt.ParseWithClaims(token, &Claims{}, func (token *jwt.Token)(interface{}, error){
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok{
 				return nil, fmt.Errorf("unexpected signing method: %v",token.Header["alg"])
 			}
 			return Secret, nil
 		})
 
-		if err != nil || !token.Valid{
+		if err != nil || !tokenres.Valid{
 			c.JSON(http.StatusUnauthorized, gin.H{"error":"Invalid or expired token"})
 			c.Abort()
 			return 
 		}
 
-		if claims, ok := token.Claims.(*Claims); ok && token.Valid{
+		if claims, ok := tokenres.Claims.(*Claims); ok && tokenres.Valid{
 			if claims.Role != requiredRole {
 				c.JSON(http.StatusForbidden, gin.H{"message":"Insufficient privileges"})
 				c.Abort()

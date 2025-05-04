@@ -13,11 +13,11 @@
         <div class="col-md-2 sidebar">
             <h4 class="text-white">Kanky Store</h4>
             <nav class="nav flex-column">
-                <a class="nav-link" href="#">Dashboard</a>
-                <a class="nav-link active" href="#">Customers</a>
-                <a class="nav-link" href="#">Categories</a>
-                <a class="nav-link" href="#">Products</a>
-                <a class="nav-link" href="#">Sales Report</a>
+                <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                <a class="nav-link active" href="/admin/users-list">Customers</a>
+                <a class="nav-link" href="/admin/products">Products</a>
+                <a class="nav-link" href="/admin/categories">Categories</a>
+                <a class="nav-link" href="/admin/reports">Sales Report</a>
             </nav>
         </div>
 
@@ -34,9 +34,9 @@
                 <form class="d-flex mb-3" method="get">
                     <input class="form-control me-2" type="search" placeholder="Search by name, email..." name="search" value="{{ .search }}">
                     <button class="btn btn-outline-success me-2" type="submit">Search</button>
-                    <a href="/admin/users-list" class="btn btn-secondary">Clear</a>
+                    <a href="/admin/users-list" class="btn btn-secondary me-2">Clear</a>
+                    <a href="/admin/users/add" class="btn btn-primary ms-auto">Add Customer</a>
                 </form>
-                <a href="/admin/users/add" class="btn btn-primary ms-auto">Add Customer</a>
 
                 <!-- User Table -->
                 <div class="table-responsive bg-dark p-3 rounded">
