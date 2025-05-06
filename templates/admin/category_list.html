@@ -49,6 +49,9 @@
       
               <!-- Table -->
               <div class="table-responsive bg-dark p-3 rounded">
+                {{if .error}}
+                <div class="alert alert-danger">{{.error}}</div>
+                {{end}}
                 <table class="table table-hover">
                   <thead>
                   <tr>
@@ -60,11 +63,11 @@
                   <tbody>
                   {{ range .categoriesList }}
                   <tr>
-                    <td>{{ .ID }}</td>
-                    <td>{{ .Name }}</td>
+                    <td>{{ .CategoryID }}</td>
+                    <td>{{ .CategoryName }}</td>
                     <td>
-                      <a href="/admin/categories/edit/{{ .ID }}" class="btn btn-sm btn-outline-warning">Edit</a>
-                      <a href="/admin/categories/delete/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Delete">Delete</a>
+                      <a href="/admin/categories/edit/{{ .CategoryID }}" class="btn btn-sm btn-outline-warning">Edit</a>
+                      <a href="/admin/categories/delete/{{ .CategoryID }}" class="btn btn-sm btn-outline-danger" data-action="Delete">Delete</a>
                     </td>
                   </tr>
                   {{ end }}

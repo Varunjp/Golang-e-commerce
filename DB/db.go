@@ -28,6 +28,12 @@ func DbInit(){
 		&models.User{},
 		&models.Admin{},
 		&models.Category{},
+		&models.Address{},
+		&models.SubCategory{},
+		&models.Product{},
+		&models.Product_Variant{},
+		&models.Product_image{},
+		&models.Review{},
 	)
 
 	if autoerr != nil{

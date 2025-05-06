@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -91,7 +90,7 @@ func ViewCategory (c *gin.Context){
 		adDb.Count(&total)
 
 		if total < 1 {
-			c.JSON(http.StatusNotFound,gin.H{"category":"Not found"})
+			c.HTML(http.StatusNotFound,"category_list.html",gin.H{"error": "Category not found"})
 			return 
 		}
 
@@ -109,62 +108,6 @@ func ViewCategory (c *gin.Context){
 	
 }
 
-func FindCategory (c *gin.Context){
-	
-	var category []models.Category
-	
-
-	pageStr := c.DefaultQuery("page","1")
-	limitStr := c.DefaultQuery("limit","10")
-
-	page, err := strconv.Atoi(pageStr)
-
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	limit, err := strconv.Atoi(limitStr)
-
-	if err != nil || limit < 1{
-		limit = 10
-	}
-
-	offset := (page - 1) * limit
-
-	var total int64
-
-	keyword := c.Query("search")
-
-	if keyword != ""{
-		c.JSON(http.StatusBadRequest, gin.H{"error":"Invalid data passed"})
-		return
-	}
-
-	adDb := db.Db.Where("LOWER(category_name) LIKE ?", "%"+strings.ToLower(keyword)+"%").Order("category_id desc").Limit(limit).Offset(offset).Find(&category)
-
-	if err := adDb.Error; err != nil{
-		c.JSON(http.StatusInternalServerError, gin.H{"error":"Database error"})
-		return 
-	}
-	
-	adDb.Count(&total)
-
-	if total < 1 {
-		c.JSON(http.StatusNotFound,gin.H{"category":"Not found"})
-		return 
-	}
-
-	totalPages := int(math.Ceil(float64(total)/ float64(limit)))
-
-
-	c.HTML(http.StatusOK,"category_list.html",gin.H{
-		"categoriesList":category,
-		"page":page,
-		"limit":limit,
-		"totalPages":totalPages,
-	})
-
-}
 
 func AddCategory (c *gin.Context){
 	
@@ -190,11 +133,71 @@ func AddCategory (c *gin.Context){
 		return 
 	}
 
-	c.JSON(http.StatusCreated,gin.H{"Category created successfully": newCategory})
+	c.Redirect(http.StatusCreated,"/admin/categories")
 
 }
 
+func EditCategoryPage(c *gin.Context){
+	
+	categoryID,_ := strconv.Atoi(c.Param("id"))
+
+	var category models.Category
+
+	if err := db.Db.First(&category,categoryID).Error; err != nil{
+		c.Redirect(http.StatusNotFound,"/admin/categories")
+		return 
+	}
+
+	var subCategories []models.SubCategory
+
+	if err := db.Db.Where("category_id = ?",categoryID).Find(&subCategories).Error; err != nil{
+		c.Redirect(http.StatusNotFound,"/admin/categories")
+		return 
+	}
+
+	c.HTML(http.StatusOK,"edit_category.html",gin.H{"Category":category,"Subcategories":subCategories})
+
+
+}
+
+func AddSubCategory(c *gin.Context){
+	
+	categoryIDStr := c.Param("id")
+	categoryID,_ := strconv.Atoi(c.Param("id"))
+	
+	newName := c.PostForm("name")
+
+	var category models.Category
+	var subCategory models.SubCategory
+
+	if err := db.Db.First(&category,categoryID).Error; err != nil{
+		c.Redirect(http.StatusNotFound,"/admin/categories")
+		return 
+	}
+
+	if err := db.Db.Where("sub_category_name=?",newName).Find(&subCategory).Error; err != nil{
+		c.Redirect(http.StatusNotFound,"/admin/categories")
+		return 
+	}
+
+	NewsubCategory := models.SubCategory{
+		CategoryID: uint(categoryID),
+		SubCategoryName: newName,
+	}
+
+	if err := db.Db.Create(&NewsubCategory).Error; err != nil{
+		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create new sub category"})
+		return 
+	}
+
+	fmt.Println("created succesfully")
+
+	c.Redirect(http.StatusCreated,"/admin/categories/edit/"+categoryIDStr)
+	
+}
+
 func EditCategory(c *gin.Context){
+	
 	categoryID := c.Param("id")
 	newName := c.PostForm("name")
 	var category models.Category
@@ -213,7 +216,43 @@ func EditCategory(c *gin.Context){
 		return 
 	}
 
-	c.JSON(http.StatusOK,gin.H{"Category updated successfully": newName})
+	c.Redirect(http.StatusFound,"/admin/categories")
+}
+
+func EditSubCategoryPage(c *gin.Context){
+
+	subCategoryID := c.Param("id")
+	var subCategory models.SubCategory
+
+	if err := db.Db.First(&subCategory,subCategoryID).Error; err != nil{
+		c.JSON(http.StatusNotFound,gin.H{"error":"Category not found"})
+		return 
+	}
+
+	c.HTML(http.StatusOK,"edit_subCategory.html",gin.H{"Subcategory":subCategory})
+
+}
+
+func UpdateSubCategory(c *gin.Context){
+
+	subCategoryID := c.Param("id")
+	newName := c.PostForm("name")
+
+	var subCategory models.SubCategory
+
+	if err := db.Db.First(&subCategory,subCategoryID).Error; err != nil{
+		c.JSON(http.StatusNotFound,gin.H{"error":"Category not found"})
+		return
+	}
+
+	subCategory.SubCategoryName = newName
+
+	if err := db.Db.Save(&subCategory).Error; err != nil{
+		c.String(http.StatusInternalServerError,"Error while updating subcategory")
+		return
+	}
+
+	c.Redirect(http.StatusFound,"/admin/categories")
 }
 
 func DeleteCategory(c *gin.Context){
@@ -225,11 +264,29 @@ func DeleteCategory(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Model(&category).Update("deleted_at",time.Now()).Error; err != nil {
+	if err := db.Db.Delete(&category).Error; err != nil {
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed delete category"})
 		return 
 	}
 
-	c.JSON(http.StatusOK,gin.H{"message":"Category deleted successfully"})
+	c.Redirect(http.StatusFound,"/admin/categories")
 	
+}
+
+func DeleteSubCategory(c *gin.Context){
+
+	subCategoryID := c.Param("id")
+	var subcategory models.SubCategory
+
+	if err := db.Db.Where("sub_category_id = ?",subCategoryID).First(&subcategory).Error; err != nil{
+		c.String(http.StatusInternalServerError,"Category not found")
+		return 
+	}
+
+	if err := db.Db.Delete(&subcategory).Error; err != nil{
+		c.String(http.StatusInternalServerError,"Not able delete item")
+		return 
+	}
+
+	c.Redirect(http.StatusFound,"/admin/categories")
 }

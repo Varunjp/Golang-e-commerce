@@ -14,5 +14,16 @@ func TemplateFuncs() template.FuncMap {
 			}
 			return s
 		},
+		"slice": slice,
+		"add1": add1,
+
 	}
+}
+
+func slice(vals ...int)[]int{
+	return vals
+}
+
+func add1(i int) int {
+    return i + 1
 }
