@@ -4,47 +4,51 @@ import (
 	db "first-project/DB"
 	"first-project/middleware"
 	"first-project/models"
+	"first-project/utils"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func Login(c * gin.Context){
-	var input models.Userinput
-	var user models.User
+	
+	var input struct {
+		Email 		string `form:"email" binding:"required,email"`
+		Password	string `form:"password" binding:"required"`
+	}
 
 	if err := c.ShouldBind(&input); err != nil{
-		c.JSON(http.StatusBadRequest,gin.H{"error": err.Error()})
-		return
-	}
-
-	result := db.Db.Where("email=?",input.Email).First(&user)
-
-	if result.Error != nil{
-		c.JSON(http.StatusUnauthorized,gin.H{
-			"message":"Invalid email or password",
-		})
-		return
-	}
-
-	if user.Status == "Blocked"{
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error":"User has been blocked by admin",
-		})
+		c.HTML(http.StatusBadRequest,"userLogin.html",gin.H{"error":err.Error()})
 		return 
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message":"Invalid email or password"})
+	var user models.User
+	if err := db.Db.Where("email = ?",input.Email).First(&user).Error; err != nil{
+		c.HTML(http.StatusBadRequest,"userLogin.html",gin.H{"error":"User not found"})
 		return 
 	}
+
+	if !utils.CheckPasswordHash(input.Password,user.Password){
+		c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error":"Invalid email or password"})
+		return
+	}
+
+	session := sessions.Default(c)
+	session.Set("name",user.Username)
+	session.Save()
 
 	token, err := middleware.CreateToken("user",user.Email,user.ID)
+	
 	if err != nil{
-		c.JSON(http.StatusOK,gin.H{"error": "Error Generating JWT"})
+		c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error": err.Error()})
+		return
 	}
-	c.Header("Authorization","Bearer"+token)
-	c.JSON(http.StatusOK, gin.H{"message":"Login successfull", "token":token})
+	
+	c.SetCookie("JWT",token,3600,"/","",false,true)
 
+	// Prevent caching
+	c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+
+	c.JSON(http.StatusOK,gin.H{"message":"login successfull"})
 }

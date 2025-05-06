@@ -9,6 +9,9 @@ import (
 )
 
 func GetUrl(router *gin.Engine){
+
+	// Welcome
+	router.GET("/",user.WelcomePage)
 	
 	// user
 	router.POST("/login",user.Login)

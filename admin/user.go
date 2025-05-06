@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/models"
 	"first-project/models/responsemodels"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -47,9 +48,11 @@ func ListUsers(c *gin.Context){
 
 	totalPages := int(math.Ceil(float64(total)/ float64(limit)))
 	
+	// delete
+	fmt.Println("result :",users)
 
 	c.HTML(http.StatusOK,"user_list.html",gin.H{
-		"Users":users,
+		"users":users,
 		"page":page,
 		"limit":limit,
 		"totalPages":totalPages,
@@ -124,7 +127,7 @@ func BlockUser(c *gin.Context){
 	}
 
 	if user.Status == "Blocked"{
-		c.JSON(http.StatusBadRequest, gin.H{"message":"User already blocked"})
+		c.String(http.StatusBadRequest,"message : User already blocked")
 		return 
 	}
 
@@ -134,7 +137,7 @@ func BlockUser(c *gin.Context){
 		return 
 	}
 
-	c.JSON(http.StatusOK,gin.H{"message": "User blocked successfully"})
+	c.Redirect(http.StatusFound,"/admin/users-list")
 }
 
 func UnblockUser(c *gin.Context){
@@ -146,15 +149,15 @@ func UnblockUser(c *gin.Context){
 		return 
 	}
 
-	if user.Status == "Available"{
+	if user.Status == "Active"{
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User already active"})
 		return 
 	}
 
-	user.Status = "Available"
+	user.Status = "Active"
 	if err := db.Db.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save user"})
 		return 
 	}
-	c.JSON(http.StatusOK,gin.H{"message":"User unblocked successfully"})
+	c.Redirect(http.StatusFound,"/admin/users-list")
 }

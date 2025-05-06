@@ -16,7 +16,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
         <!-- Left: Images -->
         <div class="flex flex-col gap-4">
-            <img src="{{index .Product.Variants 0 .Images 0.URL}}" alt="Product Image" class="w-full rounded-xl shadow-md" />
+            <img src="{{ (index (index .Product.Variants 0).Images 0).URL }}" alt="Product Image" class="w-full rounded-xl shadow-md" />
             <div class="flex gap-2">
                 {{ range .Product.Variants }}
                     {{ range .Images }}
