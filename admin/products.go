@@ -155,8 +155,9 @@ func AddProduct(c *gin.Context){
 
 
 	ProductName := c.PostForm("name")
-	ProductSubCat,_ := strconv.Atoi(c.PostForm("subcategory"))
+	ProductSubCat := c.PostForm("subcategory_id")
 	ProductDescription := c.PostForm("description")
+
 
 	// product variant details
 	ProductVariantName := c.PostForm("variant_name")
@@ -168,20 +169,23 @@ func AddProduct(c *gin.Context){
 	var subCat models.SubCategory
 	
 
-	if err := db.Db.Find(&subCat, ProductSubCat).Error; err != nil{
+	if err := db.Db.Where("sub_category_id = ?",ProductSubCat).First(&subCat).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"category id does not exist"})
 		return
 	}
 
+	
 	if subCat.CategoryID == 0 {
 		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"category id does not exist"})
 		return
 	}
 
+	productSubcatInt,_ := strconv.Atoi(ProductSubCat)
+
 	product := models.Product{
 		ProductName: ProductName,
 		Description: ProductDescription,
-		SubCategoryID: uint(ProductSubCat),
+		SubCategoryID: uint(productSubcatInt),
 	}
 
 	if err := db.Db.Create(&product).Error; err != nil{
@@ -265,10 +269,11 @@ func UpdateProductPage(c *gin.Context){
 		return
 	}
 
-	if err := db.Db.Find(&Images,productID).Error; err != nil{
+	if err := db.Db.Where("product_variant_id = ?",productID).First(&Images).Error; err != nil{
 		c.String(http.StatusNotFound,"Error loading image from DB: %v",err)
 		return
 	}
+
 
 	c.HTML(http.StatusFound,"edit_Product.html",gin.H{
 		"Product": Product,

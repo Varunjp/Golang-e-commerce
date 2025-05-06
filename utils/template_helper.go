@@ -16,7 +16,8 @@ func TemplateFuncs() template.FuncMap {
 		},
 		"slice": slice,
 		"add1": add1,
-
+		"iter":iter,
+		"itere":itere,
 	}
 }
 
@@ -26,4 +27,21 @@ func slice(vals ...int)[]int{
 
 func add1(i int) int {
     return i + 1
+}
+
+func iter(count int) []int {
+    var i []int
+    for x := 0; x < count; x++ {
+        i = append(i, x)
+    }
+    return i
+}
+
+func itere(count int) []int {
+	var i int
+	var items []int
+	for i = 1; i <= count; i++ {
+		items = append(items, i)
+	}
+	return items
 }

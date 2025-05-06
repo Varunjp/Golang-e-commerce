@@ -1,0 +1,91 @@
+{{ template "header.html" . }}
+
+<div class="container mt-5">
+  <div class="row">
+    <!-- Sidebar Filters -->
+    <aside class="col-md-3">
+      <h5 class="mb-4">Filters</h5>
+      <div class="mb-4">
+        <h6>Category</h6>
+        <ul class="list-unstyled">
+          <li><input type="checkbox" id="category1"> T-shirts</li>
+          <li><input type="checkbox" id="category2"> Shorts</li>
+          <li><input type="checkbox" id="category3"> Hoodies</li>
+          <li><input type="checkbox" id="category4"> Jeans</li>
+        </ul>
+      </div>
+      <div class="mb-4">
+        <h6>Price</h6>
+        <input type="range" class="form-range" min="50" max="500" step="10">
+      </div>
+      <div class="mb-4">
+        <h6>Size</h6>
+        <ul class="list-unstyled">
+          <li><input type="radio" name="size" id="small"> Small</li>
+          <li><input type="radio" name="size" id="medium"> Medium</li>
+          <li><input type="radio" name="size" id="large"> Large</li>
+          <li><input type="radio" name="size" id="xlarge"> X-Large</li>
+        </ul>
+      </div>
+      <button class="btn btn-primary w-100">Apply Filters</button>
+    </aside>
+
+    <!-- Product Grid -->
+    <main class="col-md-9">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5>Casual</h5>
+        <select class="form-select w-auto">
+          <option selected>Sort by: Most Popular</option>
+          <option>Price: Low to High</option>
+          <option>Price: High to Low</option>
+        </select>
+      </div>
+
+      <div class="row">
+        {{ range .Products }}
+        <div class="col-md-4 mb-4">
+          <div class="card">
+            <img src="{{ .ImageURL }}" class="card-img-top" alt="{{ .Name }}">
+            <div class="card-body">
+              <h6 class="card-title">{{ .Name }}</h6>
+              <p class="card-text">
+                <span class="text-danger fw-bold">${{ .Price }}</span>
+                {{ if .DiscountedPrice }}
+                <del class="text-muted">${{ .DiscountedPrice }}</del>
+                {{ end }}
+              </p>
+              <a href="/product/{{ .ID }}" class="btn btn-outline-primary w-100">View Details</a>
+            </div>
+          </div>
+        </div>
+        {{ end }}
+      </div>
+
+      <!-- Pagination -->
+        <nav>
+            <ul class="pagination justify-content-center">
+            {{ if gt .Page 1 }}
+            <li class="page-item">
+                <a class="page-link" href="/products?page={{ sub .Page 1 }}&limit=9">&laquo;</a>
+            </li>
+            {{ end }}
+        
+            {{ range $i := itere .TotalPages }}
+            <li class="page-item {{ if eq $i $.Page }}active{{ end }}">
+                <a class="page-link" href="/products?page={{ $i }}&limit=9">{{ $i }}</a>
+            </li>
+            {{ end }}
+        
+            {{ if lt .Page .TotalPages }}
+            <li class="page-item">
+                <a class="page-link" href="/products?page={{ add .Page 1 }}&limit=9">&raquo;</a>
+            </li>
+            {{ end }}
+            </ul>
+        </nav>
+  
+    </main>
+  </div>
+</div>
+
+{{ template "footer.html" . }}
