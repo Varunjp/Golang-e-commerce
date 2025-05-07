@@ -70,10 +70,5 @@ func Login(c *gin.Context){
 
 	//c.JSON(http.StatusOK, gin.H{"message":"Login successfull", "token":token})
 
-	c.HTML(http.StatusOK,"admin_dashboard.html",gin.H{
-		"username" : admin.Username,
-		"totalUsers": 10,
-		"totalProducts": 100,
-		"totalSales": 10000,
-	})
+	c.Redirect(http.StatusTemporaryRedirect,"/admin")
 }

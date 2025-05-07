@@ -123,7 +123,7 @@ func BlockUser(c *gin.Context){
 	}
 
 	if user.Status == "Blocked"{
-		c.String(http.StatusBadRequest,"message : User already blocked")
+		c.HTML(http.StatusConflict,"user_list.html",gin.H{"error":"User already blocked"})
 		return 
 	}
 
@@ -146,7 +146,7 @@ func UnblockUser(c *gin.Context){
 	}
 
 	if user.Status == "Active"{
-		c.JSON(http.StatusBadRequest, gin.H{"message": "User already active"})
+		c.HTML(http.StatusConflict,"user_list.html", gin.H{"message": "User already active"})
 		return 
 	}
 

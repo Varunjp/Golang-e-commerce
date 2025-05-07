@@ -4,17 +4,28 @@ import (
 	db "first-project/DB"
 	"first-project/routes"
 	"first-project/utils"
+	"log"
 	"os"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 
+
+  err := godotenv.Load()
+  if err != nil{
+    log.Fatal("Error while loading env file")
+  }
+
+
+
   db.DbInit()
   port := os.Getenv("PORT")
+
 
   if port == ""{
     port = "8080"

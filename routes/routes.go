@@ -21,6 +21,8 @@ func GetUrl(router *gin.Engine){
 	router.POST("/verify-otp",user.VerfiyOTP)
 	router.GET("/user/home",middleware.AuthUserMiddlerware("user"),user.HomePage)
 	router.GET("/user/logout",user.UserLogout)
+	router.GET("auth/google/login",user.HandleGoogleLogin)
+	router.GET("/auth/google/callback",user.HandleGoogleCallback)
 
 
 
@@ -29,7 +31,7 @@ func GetUrl(router *gin.Engine){
 
 	//Admin
 	router.GET("/admin",middleware.AuthMiddlerware("admin"),admin.LoginPage)
-	router.GET("/admin/login",admin.LoginPage)
+	router.GET("/admin/login",middleware.AuthMiddlerware("admin"),admin.LoginPage)
 	router.POST("/admin/login",admin.Login)
 	
 	// Admin users

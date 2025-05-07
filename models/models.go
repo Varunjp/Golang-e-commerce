@@ -11,7 +11,7 @@ type User struct{
 	Username 	string 		`gorm:"not null"`
 	Email 		string 		`gorm:"not null; unique; index"`
 	Password 	string 		`gorm:"not null"`
-	Phone 		string 		`gorm:"not null; unique"`
+	Phone 		string 		
 	Status 		string 		`gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
 	Addresses 	[]Address 	`gorm:"constraint:OnDelete:CASCADE; foreignKey:UserID"` 
 	Created_at 	time.Time
