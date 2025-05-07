@@ -62,7 +62,7 @@ func Login(c *gin.Context){
 		c.JSON(http.StatusOK,gin.H{"error": "Error Generating JWT"})
 	}
 	
-	c.SetCookie("JWT",token,3600,"/","",false,true)
+	c.SetCookie("JWT-Admin",token,3600,"/","",false,true)
 	
 	// Prevent caching
 	c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")

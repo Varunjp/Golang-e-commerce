@@ -34,6 +34,8 @@ func DbInit(){
 		&models.Product_Variant{},
 		&models.Product_image{},
 		&models.Review{},
+		&models.Banner{},
+		&models.OTPVerification{},
 	)
 
 	if autoerr != nil{

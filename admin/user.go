@@ -4,7 +4,6 @@ import (
 	db "first-project/DB"
 	"first-project/models"
 	"first-project/models/responsemodels"
-	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -48,9 +47,6 @@ func ListUsers(c *gin.Context){
 
 	totalPages := int(math.Ceil(float64(total)/ float64(limit)))
 	
-	// delete
-	fmt.Println("result :",users)
-
 	c.HTML(http.StatusOK,"user_list.html",gin.H{
 		"users":users,
 		"page":page,

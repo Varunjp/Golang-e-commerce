@@ -108,3 +108,21 @@ type Review struct {
 	User			User		`gorm:"constraint: OnDelete:CASCADE"`
 	Product			Product		`gorm:"constraint: OnDelete:CASCADE"`
 }
+
+type Banner struct {
+	ID				uint		`gorm:"primarykey"`
+	Title			string
+	ImageUrl		string		`gorm:"not null"`
+	RedirectURL		string
+	Active			bool
+	CreatedAt		time.Time
+	UpdateAt		time.Time 
+}
+
+type OTPVerification struct {
+	ID 		uint		`gorm:"primarykey"`
+	Email	string		`gorm:"not null"`
+	OTP 	string		`gorm:"not null"`
+	ExpiresAt	time.Time	`gorm:"not null"`
+	IsUsed		bool		`gorm:"default:false"`		
+}

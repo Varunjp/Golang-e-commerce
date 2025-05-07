@@ -40,7 +40,7 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 		session := sessions.Default(c)
 		username := session.Get("name")
 
-		token, err := c.Cookie("JWT")
+		token, err := c.Cookie("JWT-Admin")
 
 		if username == nil || err != nil{
 			c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{"error":"Login required"})
@@ -84,3 +84,53 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 	}
 }
 
+
+func AuthUserMiddlerware(requiredRole string) gin.HandlerFunc{
+	return func(c *gin.Context){
+		//authHeader := c.GetHeader("Authorization")
+		session := sessions.Default(c)
+		username := session.Get("name")
+
+		token, err := c.Cookie("JWT-User")
+
+		if username == nil || err != nil{
+			c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error":"Login required"})
+			c.Abort()
+			return 
+		}
+
+		
+		if token == ""{
+			c.HTML(http.StatusUnauthorized,"userLogin.html", gin.H{"error":"Token missing"})
+			c.Abort()
+			return 
+		}
+
+		tokenres, err := jwt.ParseWithClaims(token, &Claims{}, func (token *jwt.Token)(interface{}, error){
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok{
+				return nil, fmt.Errorf("unexpected signing method: %v",token.Header["alg"])
+			}
+			return Secret, nil
+		})
+
+		if err != nil || !tokenres.Valid{
+			c.HTML(http.StatusUnauthorized,"userLogin.html", gin.H{"error":"Invalid or expired token"})
+			c.Abort()
+			return 
+		}
+
+		if claims, ok := tokenres.Claims.(*Claims); ok && tokenres.Valid{
+			if claims.Role != requiredRole {
+				c.JSON(http.StatusForbidden, gin.H{"message":"Insufficient privileges"})
+				c.Abort()
+				return 
+			}
+			c.Set("claims",claims)
+		}else{
+			c.HTML(http.StatusUnauthorized,"userLogin.html", gin.H{"error":"Invalid token claims"})
+			c.Abort()
+			return 
+		}
+		c.Next()
+	}
+}

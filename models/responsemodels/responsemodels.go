@@ -20,3 +20,13 @@ type Products struct {
 	CreatedAt time.Time
 	InStock	  bool
 }
+
+type HomePage struct {
+	ID			uint
+	ImageURL	string
+	Name		string
+	Rating		int
+	OldPrice	int
+	Price		int
+	Discount	int
+}

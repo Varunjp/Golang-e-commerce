@@ -133,7 +133,7 @@ func AddCategory (c *gin.Context){
 		return 
 	}
 
-	c.Redirect(http.StatusCreated,"/admin/categories")
+	c.Redirect(http.StatusFound,"/admin/categories")
 
 }
 

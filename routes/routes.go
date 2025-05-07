@@ -13,8 +13,19 @@ func GetUrl(router *gin.Engine){
 	// Welcome
 	router.GET("/",user.WelcomePage)
 	
-	// user
-	router.POST("/login",user.Login)
+	// User
+	router.GET("/user/login",user.LoginPage)
+	router.POST("/user/login",user.Login)
+	router.GET("/user/register",user.RegisterPage)
+	router.POST("/user/register",user.RegisterUser)
+	router.POST("/verify-otp",user.VerfiyOTP)
+	router.GET("/user/home",middleware.AuthUserMiddlerware("user"),user.HomePage)
+	router.GET("/user/logout",user.UserLogout)
+
+
+
+	// Demo
+	router.GET("/demo",user.DemoPage)
 
 	//Admin
 	router.GET("/admin",middleware.AuthMiddlerware("admin"),admin.LoginPage)
@@ -31,6 +42,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/categories",middleware.AuthMiddlerware("admin"),admin.ViewCategory)
 	router.GET("/admin/categories/edit/:id",middleware.AuthMiddlerware("admin"),admin.EditCategoryPage)
 	router.POST("/admin/categories/add",middleware.AuthMiddlerware("admin"),admin.AddCategory)
+	router.GET("/admin/categories/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteCategory)
 	router.POST("/admin/categories/subcategories/add/:id",middleware.AuthMiddlerware("admin"),admin.AddSubCategory)
 	router.GET("/admin/subcategories/edit/:id",middleware.AuthMiddlerware("admin"),admin.EditSubCategoryPage)
 	router.POST("/admin/subcategories/update/:id",middleware.AuthMiddlerware("admin"),admin.UpdateSubCategory)
