@@ -7,11 +7,9 @@ import (
 	"first-project/utils"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-gomail/gomail"
 )
 
 func RegisterPage(c *gin.Context) {
@@ -44,12 +42,12 @@ func RegisterUser(c *gin.Context){
 	}
 
 	
-	// need to continue
 
 	otp,_ := helper.GenerateAndSaveOtp(user.Email)
-	err := SendOTPEmail(user.Email,otp)
 
+	err := helper.SendOTPEmail(user.Email,otp)
 
+	
 	if err != nil{
 		c.HTML(http.StatusInternalServerError,"register.html",gin.H{"error":"Failed to generate Otp"})
 		fmt.Println("Error :",err)
@@ -68,20 +66,6 @@ func RegisterUser(c *gin.Context){
 	})
 }
 
-func SendOTPEmail(email, otp string) error{
-
-	myMail := os.Getenv("Email")
-	Password := os.Getenv("Password")
-
-	msg := gomail.NewMessage()
-	msg.SetHeader("From",myMail)
-	msg.SetHeader("To",email)
-	msg.SetHeader("Subject","Your OTP Code")
-	msg.SetBody("text/plain","Your OTP code is: "+otp)
-
-	d := gomail.NewDialer("smtp.gmail.com",587,myMail,Password)
-	return d.DialAndSend(msg)
-}
 
 func VerfiyOTP (c *gin.Context){
 
@@ -92,7 +76,7 @@ func VerfiyOTP (c *gin.Context){
 
 	if err := c.ShouldBind(&input); err != nil{
 		
-		c.HTML(http.StatusBadRequest,"verfiyOtp.html",gin.H{
+		c.HTML(http.StatusBadRequest,"verifyOtp.html",gin.H{
 			"email":input.Email,
 			"error":"Invalid otp",
 		})
@@ -102,9 +86,10 @@ func VerfiyOTP (c *gin.Context){
 
 	otpcheck, err := helper.VerfiyOTP(input.Email,input.OTP)
 
+
 	if !otpcheck || err != nil{
 		
-		c.HTML(http.StatusBadRequest,"verfiyOtp.html",gin.H{
+		c.HTML(http.StatusBadRequest,"verifyOtp.html",gin.H{
 			"email":input.Email,
 			"error":"Invalid otp",
 		})

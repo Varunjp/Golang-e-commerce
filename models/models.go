@@ -73,7 +73,7 @@ type Product struct {
 }
 
 type Product_Variant struct {
-	ID	uint				`gorm:"primarykey"`
+	ID					uint				`gorm:"primarykey"`
 	ProductID			uint				`gorm:"index"`
 	Variant_name		string				`gorm:"not null"`
 	Size				string
@@ -95,6 +95,7 @@ type Product_image struct {
 	Order_no						int
 	CreatedAt						time.Time
 	Product_Variant					Product_Variant		`gorm:"constraint: OnDelete:CASCADE"`
+	DeleteAt						gorm.DeletedAt		`gorm:"index"`
 }
 
 type Review struct {

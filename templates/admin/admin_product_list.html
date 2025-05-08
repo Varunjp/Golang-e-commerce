@@ -73,8 +73,10 @@
       <div class="topbar">
         <h4 class="mb-0">Product</h4>
         <div class="d-flex align-items-center gap-3">
-          <span>Guy Hawkins (Admin)</span>
           <a href="/admin/product/create" class="btn btn-primary btn-sm">New Product +</a>
+          <span class="text-white">Admin: {{ .username}}</span>
+          <a href="/admin/logout" class="btn btn-outline-danger ms-3">Logout</a>
+          
         </div>
       </div>
 
@@ -128,7 +130,7 @@
               <tr>
                 <td><input type="checkbox" /></td>
                 <td>
-                  <a href="#"><img src="{{ .ImageURl }}" alt="" width="40" class="me-2"> {{ .Name }}</a>
+                  <a href="/admin/products/edit/{{ .ID }}"><img src="/{{ .ImageURl }}" alt="" width="40" class="me-2"> {{ .Name }}</a>
                 </td>
                 <td>${{ .Price }}</td>
                 <td>{{ .Size }}</td>

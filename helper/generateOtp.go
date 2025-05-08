@@ -4,11 +4,18 @@ import (
 	db "first-project/DB"
 	"first-project/models"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 )
 
 func GenerateAndSaveOtp(email string) (string, error) {
+
+	err := db.Db.Where("expires_at < ?",time.Now()).Delete(&models.OTPVerification{}).Error
+
+	if err != nil {
+		log.Fatal("Error on clearing old otp :",err.Error())
+	}
 
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
 	expiresAt := time.Now().Add(5 * time.Minute)

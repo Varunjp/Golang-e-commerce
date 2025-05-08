@@ -2,7 +2,6 @@ package user
 
 import (
 	"first-project/helper"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
@@ -15,8 +14,6 @@ func HomePage(c *gin.Context){
 	username := session.Get("name").(string)
 
 	products, imageUrl, err := helper.GetHomePage()
-
-	fmt.Println("product listing :",products)
 
 	if err != nil{
 		c.HTML(http.StatusBadRequest,"home.html",gin.H{

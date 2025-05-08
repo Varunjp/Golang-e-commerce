@@ -6,27 +6,31 @@ import (
 	"first-project/models"
 	"first-project/models/responsemodels"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func ViewProducts(c *gin.Context){
 
-	var dbProducts []struct {
-		ProductID int `gorm:"column:id"`
-		ProductName string `gorm:"column:variant_name"`
-		ProductSize string `gorm:"column:size"`
-		ProductImage string	`gorm:"column:image_url"`
-		ProductPrice float64 `gorm:"column:price"`
-		ProductStock int	`gorm:"column:stock"`
-		CreatedAt	time.Time	`gorm:"column:created_at"`
-	}
+	var Products []models.Product_Variant
+
+	// var dbProducts []struct {
+	// 	ProductID int `gorm:"column:id"`
+	// 	ProductName string `gorm:"column:variant_name"`
+	// 	ProductSize string `gorm:"column:size"`
+	// 	ProductImage string	`gorm:"column:image_url"`
+	// 	ProductPrice float64 `gorm:"column:price"`
+	// 	ProductStock int	`gorm:"column:stock"`
+	// 	CreatedAt	time.Time	`gorm:"column:created_at"`
+	// }
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
@@ -51,7 +55,13 @@ func ViewProducts(c *gin.Context){
 
 	if keyword == ""{
 			
-		err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.deleted_at IS NULL").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
+		// err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.deleted_at IS NULL").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
+
+
+		err := db.Db.Model(&models.Product_Variant{}).Preload("Product_images",func(db *gorm.DB)*gorm.DB{
+			return db.Where("order_no = ?",1)
+		}).Offset(offset).Find(&Products).Error
+		
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError,gin.H{"error":err.Error()})
@@ -60,33 +70,43 @@ func ViewProducts(c *gin.Context){
 
 			
 		//result.Count(&total)
-		total = len(dbProducts)
+		total = len(Products)
 
-		if len(dbProducts) == 0{
+		if len(Products) == 0{
 			c.HTML(http.StatusOK,"admin_product_list.html",gin.H{"message":"No products listed"})
 			return
 		}
 
-		responseProducts := make([]responsemodels.Products,len(dbProducts))
+		responseProducts := make([]responsemodels.Products,len(Products))
 
-		for i, dbProduct := range dbProducts{
+
+		for i, dbProduct := range Products{
 			status := true 
-			if dbProduct.ProductStock == 0{
+			if dbProduct.Stock == 0{
 				status = false 
 			}
 			responseProducts[i] = responsemodels.Products{
-				ID: uint(dbProduct.ProductID),
-				Name: dbProduct.ProductName,
-				Size: dbProduct.ProductSize,
-				ImageURl: dbProduct.ProductImage,
-				Price: dbProduct.ProductPrice,
-				Quantity: dbProduct.ProductStock,
+				ID: dbProduct.ID,
+				Name: dbProduct.Variant_name,
+				Size: dbProduct.Size,
+				Price: dbProduct.Price,
+				Quantity: dbProduct.Stock,
 				CreatedAt: dbProduct.CreatedAt,
 				InStock: status,
 			}
+			
+			if len(dbProduct.Product_images) > 0{
+				responseProducts[i].ImageURl = dbProduct.Product_images[0].Image_url
+
+			}else{
+				responseProducts[i].ImageURl = ""
+			}
+
 		}
 
+
 		totalPages := int(math.Ceil(float64(total)/ float64(limit)))
+
 
 		c.HTML(http.StatusOK,"admin_product_list.html",gin.H{"products":responseProducts,"page":page,
 		"limit":limit,
@@ -94,47 +114,48 @@ func ViewProducts(c *gin.Context){
 
 	}else{
 
-		var dbProducts []struct {
-			ProductID int `gorm:"column:id"`
-			ProductName string `gorm:"column:variant_name"`
-			ProductSize string `gorm:"column:size"`
-			ProductImage string	`gorm:"column:image_url"`
-			ProductPrice float64 `gorm:"column:price"`
-			ProductStock int	`gorm:"column:stock"`
-			CreatedAt	time.Time	`gorm:"column:created_at"`
-		}
 
-		err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.variant_name ILIKE ?","%"+keyword+"%").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
+		// err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.variant_name ILIKE ?","%"+keyword+"%").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
+
+		err := db.Db.Model(&models.Product_Variant{}).Select("id,variant_name,size,price,stock").Where("variant_name ILIKE ?","%"+keyword+"%").Preload("Product_images",func(db *gorm.DB)*gorm.DB{
+			return db.Where("order_no = ?",1).Select("image_url")
+		}).Offset(offset).Find(&Products).Error
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError,gin.H{"error":err.Error()})
 			return
 		}
 
-		total = len(dbProducts)
+		total = len(Products)
 
 		if total == 0 {
 			c.HTML(http.StatusOK,"admin_product_list.html",gin.H{"error":"Product not found"})
 			return
 		}
 
-		responseProducts := make([]responsemodels.Products,len(dbProducts))
+		responseProducts := make([]responsemodels.Products,len(Products))
 
-		for i, dbProduct := range dbProducts{
+		for i, dbProduct := range Products{
 			status := true 
-			if dbProduct.ProductStock == 0{
+			if dbProduct.Stock == 0{
 				status = false 
 			}
 			responseProducts[i] = responsemodels.Products{
-				ID: uint(dbProduct.ProductID),
-				Name: dbProduct.ProductName,
-				Size: dbProduct.ProductSize,
-				ImageURl: dbProduct.ProductImage,
-				Price: dbProduct.ProductPrice,
-				Quantity: dbProduct.ProductStock,
+				ID: uint(dbProduct.ID),
+				Name: dbProduct.Variant_name,
+				Size: dbProduct.Size,
+				Price: dbProduct.Price,
+				Quantity: dbProduct.Stock,
 				CreatedAt: dbProduct.CreatedAt,
 				InStock: status,
 			}
+
+			if len(dbProduct.Product_images) > 0{
+				responseProducts[i].ImageURl = dbProduct.Product_images[0].Image_url	
+			}else{
+				responseProducts[i].ImageURl = ""
+			}
+			
 		}
 
 		totalPages := int(math.Ceil(float64(total)/ float64(limit)))
@@ -222,7 +243,7 @@ func AddProduct(c *gin.Context){
 
 			filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
 
-			if err := ioutil.WriteFile(filename,decoded,0644); err != nil{
+			if err := os.WriteFile(filename,decoded,0644); err != nil{
 				continue
 			}
 
@@ -269,9 +290,8 @@ func UpdateProductPage(c *gin.Context){
 		return
 	}
 
-	if err := db.Db.Where("product_variant_id = ?",productID).First(&Images).Error; err != nil{
-		c.String(http.StatusNotFound,"Error loading image from DB: %v",err)
-		return
+	if err := db.Db.Where("product_variant_id = ?",productID).Find(&Images).Error; err != nil{
+		log.Println("No images found:",err.Error())
 	}
 
 
@@ -332,35 +352,73 @@ func UpdateProduct(c *gin.Context){
 
 	for i := 0;i < 3;i++{
 		
-		file,err := c.FormFile(fmt.Sprintf("image%d",i))
-		if err == nil && file.Size > 0 {
+		
+		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d",i))
+
+		fmt.Println("checking image :",base64Str)
+
+		if base64Str != ""{
 			
-			filename := fmt.Sprintf("upload/%d_%s",time.Now().UnixNano(),file.Filename)
+			data := strings.Split(base64Str,",")[1]
+			decoded, err := base64.StdEncoding.DecodeString(data)
 			
-			if err := c.SaveUploadedFile(file,filename); err != nil{
-				c.String(http.StatusInternalServerError, "Failed to save image")
-                return
+			if err != nil{
+				continue
 			}
 
-			orderNo,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
-			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i)) == "time"
+			filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
+
+			if err := os.WriteFile(filename,decoded,0644); err != nil{
+				continue
+			}
+
+			order,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
+			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i))=="true"
 
 			image := models.Product_image{
-				ProductVariantID: Product_variant.ID,
+				ProductVariantID: uint(productID),
 				Image_url: filename,
-				Order_no: orderNo,
+				Order_no: order,
 				Is_primary: isPrimary,
 				CreatedAt: time.Now(),
 			}
 
-			if err:= db.Db.Create(&image).Error;err != nil{
-				c.String(http.StatusInternalServerError, "Failed to save image in DB")
-                return
+
+			if err := db.Db.Create(&image).Error; err != nil{
+				c.String(http.StatusInternalServerError,"Error saving image to DB: %v", err)
+				return
 			}
+
+			
+
 		} 
 	}
 
+	
+
 	c.Redirect(http.StatusSeeOther,"/admin/products")
+}
+
+func DeleteImage(c *gin.Context){
+	
+	ID := c.Param("id")
+	var Image models.Product_image
+
+	if err := db.Db.Where("product_image_id = ?",ID).First(&Image).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"edit_Product.html",gin.H{
+			"error":"Image not found "+err.Error(),
+		})
+		return
+	}
+
+	if err := db.Db.Delete(&Image).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"edit_Product.html",gin.H{
+			"error":"Failed to delete image "+err.Error(),
+		})
+		return
+	}
+
+	c.Redirect(http.StatusTemporaryRedirect,"/admin/products")
 }
 
 func DeleteProduct(c *gin.Context){

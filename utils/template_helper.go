@@ -5,6 +5,7 @@ import "html/template"
 // TemplateFuncs returns reusable helper functions for templates
 func TemplateFuncs() template.FuncMap {
 	return template.FuncMap{
+		"gt": func(a,b int) bool { return a > b},
 		"add": func(a, b int) int { return a + b },
 		"sub": func(a, b int) int { return a - b },
 		"iterate": func(start, end int) []int {

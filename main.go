@@ -34,6 +34,12 @@ func main() {
   
   router := gin.Default()
 
+
+  router.Use(gin.Logger(), gin.Recovery())
+
+  // size constrain
+  router.MaxMultipartMemory = 8 << 20
+
   // creating session
   store := cookie.NewStore([]byte("secret-key"))
   router.Use(sessions.Sessions("Mysession",store))

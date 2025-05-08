@@ -2,6 +2,7 @@ package admin
 
 import (
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/models"
 	"fmt"
 	"math"
@@ -256,37 +257,32 @@ func UpdateSubCategory(c *gin.Context){
 }
 
 func DeleteCategory(c *gin.Context){
+	
 	categoryID := c.Param("id")
-	var category models.Category
+	
+	
+	err := helper.DeleteAllUnderCategory(categoryID)
 
-	if err := db.Db.Where("category_id = ?",categoryID).First(&category).Error; err != nil{
-		c.JSON(http.StatusNotFound,gin.H{"error":"category not found"})
-		return 
+	if err != nil {
+		c.HTML(http.StatusInternalServerError,"/admin/categories",gin.H{"error":"Failed delete category"})
+		return
 	}
 
-	if err := db.Db.Delete(&category).Error; err != nil {
-		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed delete category"})
-		return 
-	}
-
-	c.Redirect(http.StatusFound,"/admin/categories")
 	
 }
 
 func DeleteSubCategory(c *gin.Context){
 
 	subCategoryID := c.Param("id")
-	var subcategory models.SubCategory
 
-	if err := db.Db.Where("sub_category_id = ?",subCategoryID).First(&subcategory).Error; err != nil{
-		c.String(http.StatusInternalServerError,"Category not found")
+
+	err := helper.DeleteAllUnderSubCategory(subCategoryID)
+
+	if err != nil{
+		c.HTML(http.StatusInternalServerError,"edit_category.html",gin.H{
+			"error":err.Error(),
+		})
 		return 
 	}
 
-	if err := db.Db.Delete(&subcategory).Error; err != nil{
-		c.String(http.StatusInternalServerError,"Not able delete item")
-		return 
-	}
-
-	c.Redirect(http.StatusFound,"/admin/categories")
 }

@@ -1,4 +1,4 @@
-package user
+package admin
 
 import (
 	"net/http"
@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UserLogout(c *gin.Context){
-	
+func Logout(c *gin.Context) {
+
 	session := sessions.Default(c)
 	session.Delete("name")
 	session.Save()
 
-	c.SetCookie("JWT-User","",-1,"/","",false,true)
+	c.SetCookie("JWT-Admin","",-1,"/","",false,true)
 
-	c.Redirect(http.StatusFound,"/")
+	c.Redirect(http.StatusTemporaryRedirect,"/admin/login")
 }

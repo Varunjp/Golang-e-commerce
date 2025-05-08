@@ -23,16 +23,28 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/logout",user.UserLogout)
 	router.GET("auth/google/login",user.HandleGoogleLogin)
 	router.GET("/auth/google/callback",user.HandleGoogleCallback)
+	router.POST("/user/resend-otp",user.ResendOTP)
+	router.GET("/user/forgot-password",user.ResetPasswordOTP)
+	router.POST("/user/forgot-password",user.ResetPasswordOTPSend)
+	router.GET("/reset-password/verify-otp",user.ResetPasswordOTPpage)
+	router.POST("/reset-password/verify-otp",user.ResetPasswordOTPVerify)
+	router.POST("/reset-password/resend-otp",user.Resetpassword_ResendOTP)
+	router.GET("/user/reset-password",user.ShowRestPasswordPage)
+	router.POST("/user/reset-password",user.ResetPassword)
 
 
+	// User product page
+	router.GET("/user/shop",user.ShowProductList)
 
 	// Demo
 	router.GET("/demo",user.DemoPage)
 
 	//Admin
 	router.GET("/admin",middleware.AuthMiddlerware("admin"),admin.LoginPage)
+	router.POST("/admin",middleware.AuthMiddlerware("admin"),admin.LoginPage)
 	router.GET("/admin/login",middleware.AuthMiddlerware("admin"),admin.LoginPage)
 	router.POST("/admin/login",admin.Login)
+	router.GET("/admin/logout",admin.Logout)
 	
 	// Admin users
 	router.GET("/admin/users-list",middleware.AuthMiddlerware("admin"),admin.ListUsers)
@@ -57,6 +69,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/products/edit/:id",middleware.AuthMiddlerware("admin"),admin.UpdateProductPage)
 	router.POST("/admin/products/edit/:id",middleware.AuthMiddlerware("admin"),admin.UpdateProduct)
 	router.POST("/admin/products/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteProduct)
+	router.POST("/admin/products/images/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteImage)
 	
 
 }
