@@ -118,7 +118,7 @@ func BlockUser(c *gin.Context){
 	var user models.User
 
 	if err := db.Db.First(&user, userID).Error; err != nil{
-		c.JSON(http.StatusNotFound, gin.H{"error":"User not found"})
+		c.HTML(http.StatusNotFound, "user_list.html", gin.H{"error":"User not found"})
 		return 
 	}
 
@@ -141,7 +141,7 @@ func UnblockUser(c *gin.Context){
 	var user models.User
 
 	if err := db.Db.First(&user, userID).Error; err != nil{
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.HTML(http.StatusNotFound, "user_list.html",gin.H{"error": "User not found"})
 		return 
 	}
 
@@ -152,7 +152,7 @@ func UnblockUser(c *gin.Context){
 
 	user.Status = "Active"
 	if err := db.Db.Save(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save user"})
+		c.HTML(http.StatusInternalServerError, "user_list.html",gin.H{"error": "Could not save user"})
 		return 
 	}
 	c.Redirect(http.StatusFound,"/admin/users-list")
