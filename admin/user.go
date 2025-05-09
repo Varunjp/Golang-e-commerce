@@ -9,11 +9,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func ListUsers(c *gin.Context){
 	var users [] responsemodels.User
+
+	session := sessions.Default(c)
+	name := session.Get("name").(string)
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
@@ -52,11 +56,15 @@ func ListUsers(c *gin.Context){
 		"page":page,
 		"limit":limit,
 		"totalPages":totalPages,
+		"user":name,
 	})
 }
 
 func FindUser (c *gin.Context){
 	var users [] responsemodels.User
+
+	session := sessions.Default(c)
+	name := session.Get("name").(string)
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
@@ -109,6 +117,7 @@ func FindUser (c *gin.Context){
 		"page":page,
 		"limit":limit,
 		"totalPages":totalPages,
+		"user":name,
 	})
 	
 }

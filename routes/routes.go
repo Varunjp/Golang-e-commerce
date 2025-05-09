@@ -56,6 +56,7 @@ func GetUrl(router *gin.Engine){
 	// Admin categories
 	router.GET("/admin/categories",middleware.AuthMiddlerware("admin"),admin.ViewCategory)
 	router.GET("/admin/categories/edit/:id",middleware.AuthMiddlerware("admin"),admin.EditCategoryPage)
+	router.POST("/admin/categories/:id/update",middleware.AuthMiddlerware("admin"),admin.EditCategory)
 	router.POST("/admin/categories/add",middleware.AuthMiddlerware("admin"),admin.AddCategory)
 	router.GET("/admin/categories/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteCategory)
 	router.POST("/admin/categories/subcategories/add/:id",middleware.AuthMiddlerware("admin"),admin.AddSubCategory)

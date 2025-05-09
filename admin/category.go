@@ -10,12 +10,16 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func ViewCategory (c *gin.Context){
 	
 	var category []models.Category
+
+	session := sessions.Default(c)
+	name := session.Get("name").(string)
 	
 	// result := db.Db.Raw(
 	// 	`SELECT category_id,category_name
@@ -72,8 +76,10 @@ func ViewCategory (c *gin.Context){
 		totalPage := int(math.Ceil(float64(total)/float64(limit)))
 
 		//c.JSON(http.StatusOK,gin.H{"categories": category})
+		
 
 		c.HTML(http.StatusOK,"category_list.html",gin.H{
+			"user":name,
 			"categoriesList":category,
 			"page":page,
 			"limit":limit,
@@ -97,8 +103,8 @@ func ViewCategory (c *gin.Context){
 
 		totalPages := int(math.Ceil(float64(total)/ float64(limit)))
 
-
 		c.HTML(http.StatusOK,"category_list.html",gin.H{
+			"user":name,
 			"categoriesList":category,
 			"page":page,
 			"limit":limit,

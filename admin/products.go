@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -22,6 +23,8 @@ func ViewProducts(c *gin.Context){
 
 	var Products []models.Product_Variant
 
+	session := sessions.Default(c)
+	name := session.Get("name").(string)
 	// var dbProducts []struct {
 	// 	ProductID int `gorm:"column:id"`
 	// 	ProductName string `gorm:"column:variant_name"`
@@ -110,7 +113,7 @@ func ViewProducts(c *gin.Context){
 
 		c.HTML(http.StatusOK,"admin_product_list.html",gin.H{"products":responseProducts,"page":page,
 		"limit":limit,
-		"totalPages":totalPages,})
+		"totalPages":totalPages,"user":name})
 
 	}else{
 
@@ -162,7 +165,7 @@ func ViewProducts(c *gin.Context){
 
 		c.HTML(http.StatusOK,"admin_product_list.html",gin.H{"products":responseProducts,"page":page,
 		"limit":limit,
-		"totalPages":totalPages,})
+		"totalPages":totalPages,"user":name})
 
 	}
 

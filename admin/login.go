@@ -15,10 +15,16 @@ func LoginPage(c *gin.Context){
 	session := sessions.Default(c)
 	username := session.Get("name")
 
+	var totalUser int64
+	var totalProducts int64
+
+	db.Db.Model(&models.User{}).Count(&totalUser)
+	db.Db.Model(&models.Product_Variant{}).Count(&totalProducts)
+
 	c.HTML(http.StatusOK,"admin_dashboard.html",gin.H{
 		"username" : username.(string),
-		"totalUsers": 10,
-		"totalProducts": 100,
+		"totalUsers": totalUser,
+		"totalProducts": totalProducts,
 		"totalSales": 10000,
 	})
 
