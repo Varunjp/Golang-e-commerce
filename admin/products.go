@@ -60,7 +60,7 @@ func ViewProducts(c *gin.Context){
 
 		err := db.Db.Model(&models.Product_Variant{}).Preload("Product_images",func(db *gorm.DB)*gorm.DB{
 			return db.Where("order_no = ?",1)
-		}).Offset(offset).Find(&Products).Error
+		}).Order("id DESC").Offset(offset).Find(&Products).Error
 		
 
 		if err != nil {
@@ -228,44 +228,96 @@ func AddProduct(c *gin.Context){
 		return 
 	}
 
-	for i := 0; i < 3;i++{
+	// for i := 0; i < 3;i++{
 
-		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d",i))
+	// 	base64Str := c.PostForm(fmt.Sprintf("cropped_image%d",i))
 
-		if base64Str != ""{
+	// 	if base64Str != ""{
 			
-			data := strings.Split(base64Str,",")[1]
-			decoded, err := base64.StdEncoding.DecodeString(data)
+	// 		data := strings.Split(base64Str,",")[1]
+	// 		decoded, err := base64.StdEncoding.DecodeString(data)
 			
-			if err != nil{
-				continue
+	// 		if err != nil{
+	// 			continue
+	// 		}
+
+	// 		filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
+
+	// 		if err := os.WriteFile(filename,decoded,0644); err != nil{
+	// 			continue
+	// 		}
+
+	// 		order,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
+	// 		isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i))=="true"
+
+	// 		image := models.Product_image{
+	// 			ProductVariantID: variant.ID,
+	// 			Image_url: filename,
+	// 			Order_no: order,
+	// 			Is_primary: isPrimary,
+	// 			CreatedAt: time.Now(),
+	// 		}
+
+	// 		if err := db.Db.Create(&image).Error; err != nil{
+	// 			c.String(http.StatusInternalServerError,"Error saving image to DB: %v", err)
+	// 			return
+	// 		}
+
+
+	// 	}
+
+	// }
+
+	for i := 0; i < 3; i++ {
+		
+		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
+	
+		if base64Str != "" {
+			
+			var base64Data string
+			if strings.Contains(base64Str, ",") {
+				// Format: data:image/jpeg;base64,<data>
+				parts := strings.SplitN(base64Str, ",", 2)
+				base64Data = parts[1]
+			} else {
+				// Raw base64 only
+				base64Data = base64Str
 			}
-
-			filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
-
-			if err := os.WriteFile(filename,decoded,0644); err != nil{
-				continue
-			}
-
-			order,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
-			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i))=="true"
-
-			image := models.Product_image{
-				ProductVariantID: variant.ID,
-				Image_url: filename,
-				Order_no: order,
-				Is_primary: isPrimary,
-				CreatedAt: time.Now(),
-			}
-
-			if err := db.Db.Create(&image).Error; err != nil{
-				c.String(http.StatusInternalServerError,"Error saving image to DB: %v", err)
+		
+			decoded, err := base64.StdEncoding.DecodeString(base64Data)
+			if err != nil {
+				c.String(http.StatusBadRequest, fmt.Sprintf("Failed to decode image %d: %v", i+1, err))
 				return
 			}
-
-
+		
+			// Ensure upload folder exists
+			if _, err := os.Stat("upload"); os.IsNotExist(err) {
+				os.Mkdir("upload", 0755)
+			}
+		
+			filename := fmt.Sprintf("upload/cropped_%d_%d.jpg", time.Now().UnixNano(), i)
+			if err := os.WriteFile(filename, decoded, 0644); err != nil {
+				continue
+			}
+		
+			order, _ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d", i)))
+			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d", i)) == "true"
+		
+			image := models.Product_image{
+				ProductVariantID: variant.ID,
+				Image_url:        filename,
+				Order_no:         order,
+				Is_primary:       isPrimary,
+				CreatedAt:        time.Now(),
+			}
+		
+			if err := db.Db.Create(&image).Error; err != nil {
+				c.String(http.StatusInternalServerError, fmt.Sprintf("Error saving image %d to DB: %v", i+1, err))
+				return
+			}
 		}
-
+	
+		
 	}
 
 	c.Redirect(http.StatusSeeOther,"/admin/products")
@@ -350,48 +402,99 @@ func UpdateProduct(c *gin.Context){
         return
 	}
 
-	for i := 0;i < 3;i++{
+	// for i := 0;i < 3;i++{
 		
 		
-		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d",i))
+	// 	base64Str := c.PostForm(fmt.Sprintf("cropped_image%d",i))
 
-		fmt.Println("checking image :",base64Str)
-
-		if base64Str != ""{
+	// 	if base64Str != ""{
 			
-			data := strings.Split(base64Str,",")[1]
-			decoded, err := base64.StdEncoding.DecodeString(data)
+	// 		data := strings.Split(base64Str,",")[1]
+	// 		decoded, err := base64.StdEncoding.DecodeString(data)
 			
-			if err != nil{
-				continue
+	// 		if err != nil{
+	// 			continue
+	// 		}
+
+	// 		filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
+
+	// 		if err := os.WriteFile(filename,decoded,0644); err != nil{
+	// 			continue
+	// 		}
+
+	// 		order,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
+	// 		isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i))=="true"
+
+	// 		image := models.Product_image{
+	// 			ProductVariantID: uint(productID),
+	// 			Image_url: filename,
+	// 			Order_no: order,
+	// 			Is_primary: isPrimary,
+	// 			CreatedAt: time.Now(),
+	// 		}
+
+
+	// 		if err := db.Db.Create(&image).Error; err != nil{
+	// 			c.String(http.StatusInternalServerError,"Error saving image to DB: %v", err)
+	// 			return
+	// 		}
+
+			
+
+	// 	} 
+	// }
+
+
+	for i := 0; i < 3; i++ {
+		
+		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
+	
+		if base64Str != "" {
+			
+			var base64Data string
+			if strings.Contains(base64Str, ",") {
+				// Format: data:image/jpeg;base64,<data>
+				parts := strings.SplitN(base64Str, ",", 2)
+				base64Data = parts[1]
+			} else {
+				// Raw base64 only
+				base64Data = base64Str
 			}
-
-			filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
-
-			if err := os.WriteFile(filename,decoded,0644); err != nil{
-				continue
-			}
-
-			order,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
-			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i))=="true"
-
-			image := models.Product_image{
-				ProductVariantID: uint(productID),
-				Image_url: filename,
-				Order_no: order,
-				Is_primary: isPrimary,
-				CreatedAt: time.Now(),
-			}
-
-
-			if err := db.Db.Create(&image).Error; err != nil{
-				c.String(http.StatusInternalServerError,"Error saving image to DB: %v", err)
+		
+			decoded, err := base64.StdEncoding.DecodeString(base64Data)
+			if err != nil {
+				c.String(http.StatusBadRequest, fmt.Sprintf("Failed to decode image %d: %v", i+1, err))
 				return
 			}
-
-			
-
-		} 
+		
+			// Ensure upload folder exists
+			if _, err := os.Stat("upload"); os.IsNotExist(err) {
+				os.Mkdir("upload", 0755)
+			}
+		
+			filename := fmt.Sprintf("upload/cropped_%d_%d.jpg", time.Now().UnixNano(), i)
+			if err := os.WriteFile(filename, decoded, 0644); err != nil {
+				continue
+			}
+		
+			order, _ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d", i)))
+			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d", i)) == "true"
+		
+			image := models.Product_image{
+				ProductVariantID: uint(productID),
+				Image_url:        filename,
+				Order_no:         order,
+				Is_primary:       isPrimary,
+				CreatedAt:        time.Now(),
+			}
+		
+			if err := db.Db.Create(&image).Error; err != nil {
+				c.String(http.StatusInternalServerError, fmt.Sprintf("Error saving image %d to DB: %v", i+1, err))
+				return
+			}
+		}
+	
+		
 	}
 
 	

@@ -48,6 +48,7 @@
       border-radius: 6px;
     }
   </style>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 </head>
 <body>
 <div class="container-fluid">
@@ -125,7 +126,7 @@
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Upload Image {{$i | add1}}</label>
-                  <input type="file" name="image_file{{$i}}" class="form-control crop-image" data-index="{{$i}}">
+                  <input type="file" class="form-control crop-image" data-index="{{$i}}">
                   <input type="hidden" name="cropped_image{{$i}}" id="cropped_image{{$i}}">
                 </div>
                 <div class="col-md-3">
@@ -162,42 +163,9 @@
   </div>
 </div>
 
-<script>
-  
-  let croppers = {};
-  
-  document.querySelectorAll('.crop-image').forEach(input => {
-    input.addEventListener('change', function () {
-      const index = this.dataset.index;
-      const file = this.files[0];
-      if (!file) return;
-  
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = document.getElementById(`preview${index}`);
-        img.src = e.target.result;
-  
-        if (croppers[index]) croppers[index].destroy();
-        croppers[index] = new Cropper(img, {
-          aspectRatio: 1,
-          viewMode: 1,
-          autoCropArea: 1,
-          cropend: function () {
-            const canvas = croppers[index].getCroppedCanvas();
-            canvas.toBlob(blob => {
-              const fileReader = new FileReader();
-              fileReader.onloadend = () => {
-                document.getElementById(`cropped_image${index}`).value = fileReader.result;
-              };
-              fileReader.readAsDataURL(blob);
-            }, 'image/jpeg');
-          }
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-  });
-  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<script src="/static/js.js"></script>
 
 
 </body>

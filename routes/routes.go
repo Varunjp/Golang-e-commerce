@@ -35,6 +35,7 @@ func GetUrl(router *gin.Engine){
 
 	// User product page
 	router.GET("/user/shop",user.ShowProductList)
+	router.GET("/user/product/:id",user.Product)
 
 	// Demo
 	router.GET("/demo",user.DemoPage)

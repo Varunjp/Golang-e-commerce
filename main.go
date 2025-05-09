@@ -50,6 +50,7 @@ func main() {
   // Load static files
 	router.Static("/static", "./static")
   router.Static("/upload", "./upload")
+  router.Static("/uploads", "./uploads")
 
 	// Load html
 	router.LoadHTMLGlob("templates/**/*")
