@@ -199,7 +199,7 @@ func AddSubCategory(c *gin.Context){
 
 	fmt.Println("created succesfully")
 
-	c.Redirect(http.StatusCreated,"/admin/categories/edit/"+categoryIDStr)
+	c.Redirect(http.StatusTemporaryRedirect,"/admin/categories/edit/"+categoryIDStr)
 	
 }
 
@@ -274,7 +274,7 @@ func DeleteCategory(c *gin.Context){
 		return
 	}
 
-	
+	c.Redirect(http.StatusFound,"/admin/categories")
 }
 
 func DeleteSubCategory(c *gin.Context){
@@ -290,5 +290,7 @@ func DeleteSubCategory(c *gin.Context){
 		})
 		return 
 	}
+
+	c.Redirect(http.StatusFound,"/admin/categories")
 
 }
