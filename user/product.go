@@ -27,11 +27,13 @@ func Product(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Where("product_variant_id = ?",productID).Find(&images).Error; err != nil{
+	if err := db.Db.Where("product_variant_id = ?",productID).Order("order_no ASC").Find(&images).Error; err != nil{
 		log.Println("No images found :",err.Error())
 	}
 
-	c.JSON(http.StatusOK,gin.H{
+	c.HTML(http.StatusOK,"product.html",gin.H{
+		"user":"done",
+		"pagetitle":product_variant.Variant_name,
 		"Product": product,
 		"variant": product_variant,
 		"Images": images,

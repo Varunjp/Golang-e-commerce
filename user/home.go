@@ -11,24 +11,42 @@ import (
 func HomePage(c *gin.Context){
 
 	session := sessions.Default(c)
-	username := session.Get("name").(string)
+	username,usererr := session.Get("name").(string)
 
 	products, imageUrl, err := helper.GetHomePage()
 
-	if err != nil{
+	if usererr{
+			if err != nil{
+			c.HTML(http.StatusBadRequest,"home.html",gin.H{
+				"user": username,
+				"Image_url": imageUrl,
+				"Products": products,
+				"error" : err.Error(),
+			})
+			}
+
+			c.HTML(http.StatusOK,"home.html",gin.H{
+				"user": username,
+				"Image_url": imageUrl,
+				"Products": products,
+			})
+	}else{
+
+		if err != nil{
 		c.HTML(http.StatusBadRequest,"home.html",gin.H{
-			"user": username,
 			"Image_url": imageUrl,
 			"Products": products,
 			"error" : err.Error(),
+			})
+		}
+
+		c.HTML(http.StatusOK,"home.html",gin.H{
+			"Image_url": imageUrl,
+			"Products": products,
 		})
 	}
 
-	c.HTML(http.StatusOK,"home.html",gin.H{
-		"user": username,
-		"Image_url": imageUrl,
-		"Products": products,
-	})
+	
 	
 }
 

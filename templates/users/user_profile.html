@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Profile</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .profile-img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4">
+  <a class="navbar-brand fw-bold" href="/">SHOP.CO</a>
+  <div class="collapse navbar-collapse">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item"><a class="nav-link" href="#">Shop</a></li>
+      <li class="nav-item"><a class="nav-link" href="#">On Sale</a></li>
+      <li class="nav-item"><a class="nav-link" href="#">New Arrivals</a></li>
+      <li class="nav-item"><a class="nav-link" href="#">Brands</a></li>
+    </ul>
+    <form action="/search" method="GET" class="d-flex">
+      <input type="text" name="search" class="form-control" placeholder="Search for products..." />
+      <button type="submit" class="btn btn-dark ms-2">Search</button>
+    </form>
+    <a href="/user/cart" class="btn btn-outline-secondary ms-2"><i class="bi bi-cart"></i>
+    {{ if .user}}
+    <a href="/user/logout" class="btn btn-outline-danger ms-3">Logout</a>
+    {{ else }}
+    <a href="/user/login" class="btn btn-outline-dark ms-3">Login</a>
+    {{ end }}    
+    
+  </div>
+</nav>
+
+  <div class="container mt-5">
+    <div class="row g-4">
+      <!-- Profile Card -->
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <img src="/{{ .Image }}" alt="{{ .user.Username}}" class="profile-img mb-3" id="profileImage">
+            <h5 class="card-title" id="username">{{ .user.Username}}</h5>
+            <p class="text-muted" id="email">{{ .user.Email}}</p>
+            <p class="text-muted" id="phone">{{ .user.Phone}}</p>
+            <button class="btn btn-outline-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#uploadModal">Edit Image</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Info and Actions -->
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-header">User Information</div>
+          <div class="card-body">
+            <h6>Address:</h6>
+            {{range .Addresses}}
+              <div class="mb-2">
+                {{.AddressLine1}}<br>
+                {{.AddressLine2}}<br>
+                {{.City}}, {{.State}} - {{.PostalCode}}<br>
+                {{.Country}}
+              </div>
+            {{else}}
+              <p>No addresses available.</p>
+            {{end}}
+            <a href="/user/edit-profile" class="btn btn-outline-secondary btn-sm">Edit Profile</a>
+            <a href="/user/change-password" class="btn btn-outline-warning btn-sm">Change Password</a>
+            <!-- <a href="/user/forgot-password" class="btn btn-outline-danger btn-sm">Forgot Password</a> -->
+          </div>
+        </div>
+
+        <!-- Orders -->
+        <div class="card">
+          <div class="card-header">Order History</div>
+          <div class="card-body">
+            {{if .Orders}}
+              <ul class="list-group">
+                {{range .Orders}}
+                  <li class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                      <div>
+                        <strong>Order #{{.ID}}</strong>  
+                        <div class="text-muted small">Placed on: {{.OrderDate}}</div>
+                        <div class="text-muted small">Total: ₹{{printf "%.2f" .TotalAmount}}</div>
+                      </div>
+                      <div class="text-end">
+                        <span class="badge bg-{{.BadgeClass}} mb-2">{{.Status}}</span><br>
+                        {{if eq .Status "Processing"}}
+                          <form method="POST" action="/cancel-order" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                            <input type="hidden" name="order_id" value="{{.OrderID}}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel Order</button>
+                          </form>
+                        {{end}}
+                      </div>
+                    </div>
+                  </li>
+                {{end}}
+              </ul>
+            {{else}}
+              <p>No orders found.</p>
+            {{end}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Uploading Profile Image -->
+  <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" method="POST" action="/user/upload-profile-image" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadModalLabel">Upload Profile Image</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="file" name="profile_image" class="form-control" accept="image/*" required>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Upload</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

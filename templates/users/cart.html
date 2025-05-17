@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Your Cart</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    .product-img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4">
+    <a class="navbar-brand fw-bold" href="/">SHOP.CO</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="#">Shop</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">On Sale</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">New Arrivals</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Brands</a></li>
+      </ul>
+      {{ if .user }}
+      <a href="/user/profile" class="btn btn-outline-primary ms-2"><i class="bi bi-person"></i>
+      <a href="/user/logout" class="btn btn-outline-danger ms-3">Logout</a>
+      {{ else }}
+      <a href="/user/login" class="btn btn-outline-dark ms-3">Login</a>
+      {{ end }}
+    </div>
+  </nav>
+
+  <!-- Cart Section -->
+  <div class="container mt-5">
+    <h3 class="mb-4 text-center">Your Shopping Cart</h3>
+
+    {{if .CartItems}}
+    <div class="row">
+      <div class="col-md-8">
+        <ul class="list-group mb-4">
+          {{range .CartItems}}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              {{ if gt (len .Product.Product_images) 0}}
+              <img src="/{{(index .Product.Product_images 0).Image_url}}" alt="{{.Product.Variant_name}}" class="product-img me-3" />
+              {{else}}
+              <img src="" alt="{{.Product.Variant_name}}" class="product-img me-3"/>
+              {{end}}
+              <div>
+                <h6 class="mb-1">{{.Product.Variant_name}}</h6>
+                <p class="text-muted mb-1">₹{{printf "%.2f" .Price}} × {{.Quantity}}</p>
+                <form action="/cart/remove" method="POST" class="d-inline">
+                  <input type="hidden" name="item_id" value="{{.ID}}">
+                  <button class="btn btn-sm btn-outline-danger">Remove</button>
+                </form>
+              </div>
+            </div>
+            <div class="text-end">
+              <form method="POST" action="/cart/update-quantity" class="d-flex align-items-center">
+                <input type="hidden" name="item_id" value="{{ .ProductID }}">
+                <button type="submit" name="action" value="dec" class="btn btn-outline-secondary btn-sm">−</button>
+                <span class="mx-2">{{.Quantity}}</span>
+                <button type="submit" name="action" value="inc" class="btn btn-outline-secondary btn-sm">+</button>
+              </form>
+            </div>
+          </li>
+          {{end}}
+        </ul>
+      </div>
+
+      <!-- Summary -->
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Summary</h5>
+            <hr>
+            <p class="d-flex justify-content-between">
+              <span>Total Items:</span> <strong>{{.TotalItems}}</strong>
+            </p>
+            <p class="d-flex justify-content-between">
+              <span>Total Amount:</span> <strong>₹{{printf "%.2f" .TotalAmount}}</strong>
+            </p>
+            <hr>
+            <a href="/checkout" class="btn btn-dark w-100">Proceed to Checkout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{else}}
+      <div class="alert alert-warning text-center">Your cart is empty. <a href="/">Continue Shopping</a></div>
+    {{end}}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

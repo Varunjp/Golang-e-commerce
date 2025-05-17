@@ -105,7 +105,7 @@ func HandleGoogleCallback(c *gin.Context){
 
 	c.SetCookie("JWT-User",tokenString,3600,"/","",false,true)
 
-	c.Redirect(http.StatusFound,"/user/home")
+	c.Redirect(http.StatusFound,"/")
 
 
 }

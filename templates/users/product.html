@@ -1,82 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Product Details</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body class="bg-white text-black">
-
-<!-- Header -->
 {{ template "header.html" . }}
 
-<!-- Product Info Section -->
-<section class="container mx-auto p-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <!-- Left: Images -->
-        <div class="flex flex-col gap-4">
-            <img src="{{ (index (index .Product.Variants 0).Images 0).URL }}" alt="Product Image" class="w-full rounded-xl shadow-md" />
-            <div class="flex gap-2">
-                {{ range .Product.Variants }}
-                    {{ range .Images }}
-                        <img src="{{ .URL }}" class="w-20 h-20 object-cover rounded cursor-pointer hover:ring-2" />
+
+    
+
+    <!-- Product Info Section -->
+    <section class="container mx-auto p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <!-- Left: Images -->
+            <div class="flex flex-col gap-4">
+                {{ if gt (len .Images) 0 }}
+                <img src="{{ ( index .Images 0).Image_url }}" alt="Product Image" class="w-full rounded-xl shadow-md" />
+                <div class="flex gap-2">
+                        {{ range .Images }}
+                            <img src="/{{ .Image_url }}" class="w-20 h-20 object-cover rounded cursor-pointer hover:ring-2" />
+                        {{ end }}
+                </div>
+                {{ else}}
+                <div><p>No images found</p></div>
+                {{ end }}
+            </div>
+
+            <!-- Right: Product Info -->
+            <div>
+                <h1 class="text-3xl font-bold mb-2">{{ .Product.ProductName }}</h1>
+                <p class="text-gray-600 mb-4">{{ .Product.Description }}</p>
+                <div class="text-xl font-semibold text-green-600 mb-4">${{ .variant.Price }}</div>
+
+                <h3 class="text-lg font-semibold mb-2">Choose Size:</h3>
+                <div class="flex gap-3 mb-6">
+                    {{ if .variant }}
+                        <span class="border rounded px-4 py-2">{{ .variant.Size }}</span>
                     {{ end }}
-                {{ end }}
+                </div>
+
+                <form method="POST" action="/cart/add">
+                    <input type="hidden" name="product_id" value="{{ .variant.ID }}">
+                    <input type="number" name="quantity" value="1" min="1" max="5" class="w-16 border text-center mr-4">
+                    <button type="submit" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800">Add to Cart</button>
+                </form>
             </div>
         </div>
+    </section>
 
-        <!-- Right: Product Info -->
-        <div>
-            <h1 class="text-3xl font-bold mb-2">{{ .Product.Name }}</h1>
-            <p class="text-gray-600 mb-4">{{ .Product.Description }}</p>
-            <div class="text-xl font-semibold text-green-600 mb-4">${{ index .Product.Variants 0 .Price }}</div>
-
-            <h3 class="text-lg font-semibold mb-2">Choose Size:</h3>
-            <div class="flex gap-3 mb-6">
-                {{ range .Product.Variants }}
-                    <span class="border rounded px-4 py-2">{{ .Size }}</span>
+    <!-- Product Detail Table -->
+    <section class="container mx-auto px-8 pt-10">
+        <h2 class="text-2xl font-bold mb-4">Product Variants</h2>
+        <table class="w-full table-auto border">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border px-4 py-2">Variant Name</th>
+                    <th class="border px-4 py-2">Size</th>
+                    <th class="border px-4 py-2">Price</th>
+                    <th class="border px-4 py-2">Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ if .variant }}
+                <tr>
+                    <td class="border px-4 py-2">{{ .variant.Variant_name }}</td>
+                    <td class="border px-4 py-2">{{ .variant.Size }}</td>
+                    <td class="border px-4 py-2">${{ .variant.Price }}</td>
+                    <td class="border px-4 py-2">{{ .variant.Stock }}</td>
+                </tr>
                 {{ end }}
-            </div>
-
-            <form method="POST" action="/cart/add">
-                <input type="hidden" name="product_id" value="{{ .Product.ID }}">
-                <input type="number" name="quantity" value="1" min="1" class="w-16 border text-center mr-4">
-                <button type="submit" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800">Add to Cart</button>
-            </form>
-        </div>
-    </div>
-</section>
-
-<!-- Product Detail Table -->
-<section class="container mx-auto px-8 pt-10">
-    <h2 class="text-2xl font-bold mb-4">Product Variants</h2>
-    <table class="w-full table-auto border">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="border px-4 py-2">Variant Name</th>
-                <th class="border px-4 py-2">Size</th>
-                <th class="border px-4 py-2">Color</th>
-                <th class="border px-4 py-2">Price</th>
-                <th class="border px-4 py-2">Quantity</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{ range .Product.Variants }}
-            <tr>
-                <td class="border px-4 py-2">{{ .VariantName }}</td>
-                <td class="border px-4 py-2">{{ .Size }}</td>
-                <td class="border px-4 py-2">{{ .Color }}</td>
-                <td class="border px-4 py-2">${{ .Price }}</td>
-                <td class="border px-4 py-2">{{ .Quantity }}</td>
-            </tr>
-            {{ end }}
-        </tbody>
-    </table>
-</section>
+            </tbody>
+        </table>
+    </section>
 
 <!-- Footer -->
 {{ template "footer.html" . }}
-
-</body>
-</html>

@@ -11,7 +11,7 @@ import (
 func GetUrl(router *gin.Engine){
 
 	// Welcome
-	router.GET("/",user.WelcomePage)
+	//router.GET("/",user.WelcomePage)
 	
 	// User
 	router.GET("/user/login",user.LoginPage)
@@ -19,7 +19,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/register",user.RegisterPage)
 	router.POST("/user/register",user.RegisterUser)
 	router.POST("/verify-otp",user.VerfiyOTP)
-	router.GET("/user/home",middleware.AuthUserMiddlerware("user"),user.HomePage)
+	router.GET("/",user.HomePage)
 	router.GET("/user/logout",user.UserLogout)
 	router.GET("auth/google/login",user.HandleGoogleLogin)
 	router.GET("/auth/google/callback",user.HandleGoogleCallback)
@@ -32,14 +32,33 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/reset-password",user.ShowRestPasswordPage)
 	router.POST("/user/reset-password",user.ResetPassword)
 
+	// User profile page
+	router.GET("/user/profile",middleware.AuthUserMiddlerware("user"),user.UserProfilePage)
+	router.GET("/user/edit-profile",middleware.AuthUserMiddlerware("user"),user.EditProfilePage)
+	router.POST("/user/update-profile",middleware.AuthUserMiddlerware("user"),user.UpdateProfile)
+	router.POST("/user/add-address",middleware.AuthUserMiddlerware("user"),user.AddAddress)
+	router.POST("/user/edit-address",middleware.AuthUserMiddlerware("user"),user.EditAddress)
+	router.GET("/user/change-password",middleware.AuthUserMiddlerware("user"),user.ChangePasswordPage)
+	router.POST("/user/change-password",middleware.AuthUserMiddlerware("user"),user.ChangePassword)
+	router.POST("/user/upload-profile-image",middleware.AuthUserMiddlerware("user"),user.UploadProfileImage)
+	router.POST("/user/verify-email-otp",middleware.AuthUserMiddlerware("user"),user.UpdateEmail)
 
 	// User product page
 	router.GET("/user/shop",user.ShowProductList)
 	router.GET("/user/product/:id",user.Product)
 
+	// User orders
+	router.POST("/cart/add",middleware.AuthUserMiddlerware("user"),user.AddToCart)
+	router.GET("/user/cart",middleware.AuthUserMiddlerware("user"),user.ListCart)
+	router.POST("/cart/update-quantity",middleware.AuthUserMiddlerware("user"),user.UpdateCartItem)
+	router.POST("/cart/remove",middleware.AuthUserMiddlerware("user"),user.RemoveItem)
+
 	// Demo
 	router.GET("/demo",user.DemoPage)
 
+
+
+	
 	//Admin
 	router.GET("/admin",middleware.AuthMiddlerware("admin"),admin.LoginPage)
 	router.POST("/admin",middleware.AuthMiddlerware("admin"),admin.LoginPage)

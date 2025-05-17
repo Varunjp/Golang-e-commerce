@@ -27,8 +27,12 @@ func DbInit(){
 	autoerr := Db.AutoMigrate(
 		&models.User{},
 		&models.Admin{},
+		&models.ProfileImage{},
 		&models.Category{},
 		&models.Address{},
+		&models.WishList{},
+		&models.CartItem{},
+		&models.Order{},
 		&models.SubCategory{},
 		&models.Product{},
 		&models.Product_Variant{},

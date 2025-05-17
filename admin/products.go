@@ -192,6 +192,10 @@ func AddProduct(c *gin.Context){
 
 	var subCat models.SubCategory
 	
+	if ProductPrice <= 0 {
+		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Price cannot be 0 or less"})
+		return
+	}
 
 	if err := db.Db.Where("sub_category_id = ?",ProductSubCat).First(&subCat).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"category id does not exist"})

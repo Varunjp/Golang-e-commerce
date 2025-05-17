@@ -60,6 +60,6 @@ func Login(c * gin.Context){
 	// Prevent caching
 	c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
 
-	c.Redirect(http.StatusFound,"/user/home")
+	c.Redirect(http.StatusFound,"/")
 
 }

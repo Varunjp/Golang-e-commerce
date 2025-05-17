@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shop Home</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -62,8 +64,12 @@
       <input type="text" name="search" class="form-control" placeholder="Search for products..." />
       <button type="submit" class="btn btn-dark ms-2">Search</button>
     </form>
+    <a href="/user/cart" class="btn btn-outline-secondary ms-2"><i class="bi bi-cart"></i>
     {{ if .user}}
+    <a href="/user/profile" class="btn btn-outline-primary ms-2"><i class="bi bi-person"></i>
+</a>
     <a href="/user/logout" class="btn btn-outline-danger ms-3">Logout</a>
+
     {{ else }}
     <a href="/user/login" class="btn btn-outline-dark ms-3">Login</a>
     {{ end }}    
@@ -106,7 +112,7 @@
   <div class="row g-4">
     {{ range .Products}}
       <div class="col-6 col-md-3">
-        <a href="/product/{{.ID}}" class="text-decoration-none text-dark">
+        <a href="/user/product/{{.ID}}" class="text-decoration-none text-dark">
           <div class="product-card">
             <img src="/{{ .ImageURL }}" alt="{{.Name}}">
             <div class="product-name">{{.Name}}</div>

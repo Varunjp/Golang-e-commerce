@@ -74,6 +74,7 @@ func ShowProductList(c *gin.Context){
 		c.HTML(http.StatusOK,"product_list.html",gin.H{
 			"user":Name,
 			"Products": formatted,
+			"pagetitle":"product_list",
 			"Page": page,
 			"TotalPages": totalPage,
 		})
@@ -82,6 +83,7 @@ func ShowProductList(c *gin.Context){
 
 	c.HTML(http.StatusOK,"product_list.html",gin.H{
 		"Products": formatted,
+		"pagetitle":"Product list",
 		"Page": page,
 		"TotalPages": totalPage,
 	})

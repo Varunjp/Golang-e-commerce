@@ -10,12 +10,12 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-var Secret = []byte("your-secret-key")
+var Secret = []byte("your_secret_key")
 
 type Claims struct {
 	Email string
 	Role string `json:"role"`
-	ID uint
+	ID uint 
 	jwt.StandardClaims
 }
 

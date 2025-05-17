@@ -1,0 +1,50 @@
+{{ template "header.html" . }}
+
+<div class="container mt-5 text-white">
+  <h3 class="mb-4">Your Cart</h3>
+  <div class="row">
+    <div class="col-md-8">
+      {{ range .CartItems }}
+      <div class="card card-dark mb-3">
+        <div class="row g-0">
+          <div class="col-md-2">
+            <img src="/{{ .ImageURL }}" class="img-fluid rounded-start" alt="{{ .Name }}">
+          </div>
+          <div class="col-md-7">
+            <div class="card-body">
+              <h5 class="card-title">{{ .Name }}</h5>
+              <p class="card-text">Size: {{ .Size }}</p>
+              <p class="card-text">Price: ${{ .Price }}</p>
+              <div class="d-flex align-items-center">
+                <form action="/cart/decrease/{{ .ID }}" method="POST" class="me-2">
+                  <button class="btn btn-sm btn-outline-light">-</button>
+                </form>
+                <span class="px-2">{{ .Quantity }}</span>
+                <form action="/cart/increase/{{ .ID }}" method="POST" class="ms-2">
+                  <button class="btn btn-sm btn-outline-light">+</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 d-flex align-items-center justify-content-center">
+            <form action="/cart/remove/{{ .ID }}" method="POST">
+              <button class="btn btn-sm btn-danger">Remove</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {{ end }}
+    </div>
+    <div class="col-md-4">
+      <div class="card card-dark p-3">
+        <h5>Cart Summary</h5>
+        <hr>
+        <p>Total Items: {{ .TotalItems }}</p>
+        <p>Total Price: ${{ .TotalPrice }}</p>
+        <a href="/checkout" class="btn btn-success w-100">Proceed to Checkout</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{ template "footer.html" . }}
