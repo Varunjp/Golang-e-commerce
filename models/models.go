@@ -45,6 +45,7 @@ type Address struct {
 	State 			string  
 	PostalCode 		string
 	Orders			[]Order						`gorm:"constraint:ONDELETE:CASCADE;foreignKey:AddressID"`
+	DeletedAt		gorm.DeletedAt
 }
 
 
@@ -72,6 +73,8 @@ type Order struct{
 	Status					string
 	PaymentStatus			string 		
 	CreateAt				time.Time
+	BadgeClass 				string
+	Reason 					string 	
 	OrderItems				[]OrderItem  `gorm:"constraint:ONDELETE:CASCADE;foreignKey:OrderID"`
 	Address 				Address 	`gorm:"constraint:ONDELETE:CASCADE"`
 }

@@ -33,6 +33,7 @@ func DbInit(){
 		&models.WishList{},
 		&models.CartItem{},
 		&models.Order{},
+		&models.OrderItem{},
 		&models.SubCategory{},
 		&models.Product{},
 		&models.Product_Variant{},

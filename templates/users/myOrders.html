@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Orders</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4">
+  <a class="navbar-brand fw-bold" href="/">SHOP.CO</a>
+  <div class="collapse navbar-collapse">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item"><a class="nav-link" href="#">Shop</a></li>
+      <li class="nav-item"><a class="nav-link" href="#">Orders</a></li>
+    </ul>
+    {{ if .user }}
+    <a href="/user/logout" class="btn btn-outline-danger ms-3">Logout</a>
+    {{ else }}
+    <a href="/user/login" class="btn btn-outline-dark ms-3">Login</a>
+    {{ end }}
+  </div>
+</nav>
+
+<!-- Order Listing -->
+<div class="container mt-5">
+  <h3 class="mb-4 text-center">My Orders</h3>
+  {{ if .error }}<div class="text-danger">{{ .error }}</div>
+  {{ end }}
+  {{if .Orders}}
+  <ul class="list-group mb-4">
+    {{range .Orders}}
+    <li class="list-group-item d-flex justify-content-between align-items-start">
+      <div class="ms-2 me-auto">
+        <div class="fw-bold">Order #{{.ID}}</div>
+        <small class="text-muted">Date: {{.OrderDate}}</small><br>
+        {{if eq .Status "Returned"}}
+        <small class="text-muted">Reason: {{.Reason}}</small><br>
+        {{end}}
+        <span class="badge bg-{{.BadgeClass}}">{{.Status}}</span>
+      </div>
+      <div class="d-flex flex-column align-items-end gap-2">
+        <a href="/user/order/{{.ID}}" class="btn btn-sm btn-outline-primary">View Details</a>
+
+       <a href="/user/invoice/{{.ID}}" class="btn btn-sm btn-outline-success">Download Invoice</a>
+       
+        {{if or (eq .Status "Pending") (eq .Status "Processing")}}
+        <form method="POST" action="/user/cancel-order" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+          <input type="hidden" name="order_id" value="{{.ID}}">
+          <textarea class="form-control form-control-sm mt-1 mb-2" name="reason" rows="2" placeholder="Reason for cancellation" required></textarea>
+          <button type="submit" class="btn btn-sm btn-outline-danger w-100">Cancel</button>
+        </form>
+        {{ else if eq .Status "Delivered" }}
+
+        <form method="POST" action="/user/cancel-order" onsubmit="return confirm('Are you sure you want to return this order?')">
+          <input type="hidden" name="order_id" value="{{.ID}}">
+          <textarea class="form-control form-control-sm mt-1 mb-2" name="reason" rows="2" placeholder="Reason for return" required></textarea>
+          <button type="submit" class="btn btn-sm btn-outline-warning w-100">Return</button>
+        </form>
+
+        {{end}}
+
+      </div>
+    </li>
+    {{end}}
+  </ul>
+  
+  <!-- Pagination -->
+  <nav>
+    <ul class="pagination justify-content-center">
+      {{if .HasPrev}}
+      <li class="page-item">
+        <a class="page-link" href="/user/orders?page={{.PrevPage}}">Previous</a>
+      </li>
+      {{end}}
+
+      {{range .Pages}}
+      <li class="page-item {{if eq .Number $.CurrentPage}}active{{end}}">
+        <a class="page-link" href="/user/orders?page={{.Number}}">{{.Number}}</a>
+      </li>
+      {{end}}
+
+      {{if .HasNext}}
+      <li class="page-item">
+        <a class="page-link" href="/user/orders?page={{.NextPage}}">Next</a>
+      </li>
+      {{end}}
+    </ul>
+  </nav>
+  
+  {{else}}
+  <p class="text-center">No orders found.</p>
+  {{end}}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

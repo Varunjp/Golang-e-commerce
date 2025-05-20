@@ -1,0 +1,83 @@
+{{ template "header.html" . }}
+
+  <!-- Checkout Container -->
+  <div class="container mt-5">
+    <h3 class="mb-4 text-center">Checkout</h3>
+    <form method="POST" action="/place-order">
+      <div class="row g-4">
+
+        <!-- Left: Address and Payment -->
+        <div class="col-md-7">
+
+          <!-- Shipping Address -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Shipping Address</h5>
+            </div>
+            <div class="card-body">
+              {{range .Addresses}}
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="radio" name="address_id" value="{{.AddressID}}" id="address{{.AddressID}}" required>
+                  <label class="form-check-label" for="address{{.AddressID}}">
+                    {{.AddressLine1}}, {{.AddressLine2}}, {{.City}}, {{.State}} - {{.PostalCode}}, {{.Country}}
+                  </label>
+                </div>
+              {{end}}
+
+              <a href="/user/add-address" class="btn btn-outline-primary btn-sm mt-2">+ Add New Address</a>
+            </div>
+          </div>
+
+          <!-- Payment Method -->
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Payment Method</h5>
+            </div>
+            <div class="card-body">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="payment_method" value="cod" id="cod" required>
+                <label class="form-check-label" for="cod">Cash on Delivery</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="payment_method" value="online" id="online">
+                <label class="form-check-label" for="online">Online Payment</label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Order Summary -->
+        <div class="col-md-5">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+              <ul class="list-group mb-3">
+                {{range .CartItems}}
+                <li class="list-group-item d-flex justify-content-between">
+                  <div>
+                    <h6 class="my-0">{{.Name}}</h6>
+                    <small class="text-muted">Qty: {{.Quantity}}</small>
+                  </div>
+                  <span class="text-muted">₹{{printf "%.2f" .Price}}</span>
+                </li>
+                {{end}}
+              </ul>
+              <div class="d-flex justify-content-between">
+                <strong>Total Amount:</strong>
+                <strong>₹{{printf "%.2f" .TotalAmount}}</strong>
+              </div>
+              <hr>
+              <button type="submit" class="btn btn-dark w-100 mt-3">Place Order</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

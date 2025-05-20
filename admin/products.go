@@ -275,6 +275,8 @@ func AddProduct(c *gin.Context){
 
 	// }
 
+	imageCount := 0
+
 	for i := 0; i < 3; i++ {
 		
 		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
@@ -322,9 +324,18 @@ func AddProduct(c *gin.Context){
 				c.String(http.StatusInternalServerError, fmt.Sprintf("Error saving image %d to DB: %v", i+1, err))
 				return
 			}
+
+			imageCount++
 		}
 	
 		
+	}
+
+	if imageCount < 1 {
+		db.Db.Delete(product)
+		db.Db.Delete(variant)
+		c.HTML(http.StatusBadRequest,"admin_addProduct.html",gin.H{"error":"Provide atleast 1 image"})
+		return
 	}
 
 	c.Redirect(http.StatusSeeOther,"/admin/products")

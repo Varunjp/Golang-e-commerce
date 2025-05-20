@@ -19,7 +19,7 @@ func CheckOutPage(c *gin.Context) {
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 
-	if err := db.Db.Preload("Product").Where("user_id = ? AND ",userID).Find(&CartItems).Error; err != nil{
+	if err := db.Db.Preload("Product").Where("user_id = ?",userID).Find(&CartItems).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load data from DB"})
 		return 
 	}
@@ -38,8 +38,8 @@ func CheckOutPage(c *gin.Context) {
 	var Response []struct {
 		ID 				uint 
 		Name 			string
-		ImageUrl 		string 
-		Quantity 		int 
+		Quantity 		int
+		Price  			float64 
 		TotalSum		float64
 		TotalTax		float64
 		TotalDiscount	float64
@@ -52,11 +52,11 @@ func CheckOutPage(c *gin.Context) {
 
 		if res {
 
-			Response = append(Response, struct{ID uint; Name string; ImageUrl string; Quantity int; TotalSum float64; TotalTax float64; TotalDiscount float64; GrandTotal float64}{
+			Response = append(Response, struct{ID uint; Name string; Quantity int;Price float64; TotalSum float64; TotalTax float64; TotalDiscount float64; GrandTotal float64}{
 				ID: item.ProductID,
 				Name: item.Product.Variant_name,
-				ImageUrl: item.Product.Product_images[0].Image_url,
 				Quantity: item.Quantity,
+				Price: item.Price,
 				TotalSum: (item.Price * float64(item.Quantity)),
 				TotalTax: (item.Product.Tax*float64(item.Quantity)),
 				TotalDiscount: 0.0,
@@ -67,7 +67,13 @@ func CheckOutPage(c *gin.Context) {
 
 	}
 
-	c.JSON(http.StatusOK,gin.H{"items":Response,"addresses":Addresses})
+	var totalamount float64
+
+	for _, item := range Response{
+		totalamount += item.GrandTotal
+	}
+
+	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount})
 
 }
 
@@ -75,9 +81,15 @@ func CheckOutOrder(c *gin.Context){
 
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
-	addressOption := c.PostForm("address_option")
+	addressOption := c.PostForm("address_id")
 	paymentOption := c.PostForm("payment_method")
 	var addressID uint 
+
+	if addressOption == ""{
+		c.JSON(http.StatusBadRequest,gin.H{"error":"Need to provide a address details"})
+		return 
+	}
+
 
 	if addressOption == "new" {
 		newAddress := models.Address{
@@ -161,7 +173,49 @@ func CheckOutOrder(c *gin.Context){
 		return 
 	}
 
-	c.JSON(http.StatusOK,gin.H{"message":"Order placed successfully"})
+	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.ID,"user":"done"})
 
 }
 
+func AddNewAddressPage(c *gin.Context){
+	c.HTML(http.StatusOK,"addAddress.html",gin.H{"user":"done"})
+}
+
+func AddNewAddress(c *gin.Context){
+
+	tokenStr,_ := c.Cookie("JWT-User")
+	_,userID,_ := helper.DecodeJWT(tokenStr)
+
+	AddressLine1:= c.PostForm("line1")
+	AddressLine2:= c.PostForm("line2")
+	Country:= c.PostForm("country")
+	State:= c.PostForm("state")
+	PostalCode:= c.PostForm("postalcode")
+	City := c.PostForm("city")
+
+	// address.AddressLine1 = AddressLine1
+	// address.AddressLine2 = AddressLine2
+	// address.Country = Country
+	// address.State = State
+	// address.PostalCode = PostalCode
+	// address.City = City
+	// address.UserID = uint(userID)
+
+	address := models.Address{
+		UserID: uint(userID),
+		AddressLine1: AddressLine1,
+		AddressLine2: AddressLine2,
+		Country: Country,
+		State: State,
+		PostalCode: PostalCode,
+		City: City,
+	}
+
+	if err := db.Db.Create(&address).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to save new address"})
+		return 
+	}
+
+	c.Redirect(http.StatusSeeOther,"/user/checkout")
+
+}

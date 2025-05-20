@@ -19,6 +19,7 @@ func TemplateFuncs() template.FuncMap {
 		"add1": add1,
 		"iter":iter,
 		"itere":itere,
+		"mulFloat":mulFloat,
 	}
 }
 
@@ -45,4 +46,8 @@ func itere(count int) []int {
 		items = append(items, i)
 	}
 	return items
+}
+
+func mulFloat(a float64, b int) float64 {
+    return a * float64(b)
 }

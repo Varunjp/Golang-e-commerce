@@ -52,6 +52,17 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/cart",middleware.AuthUserMiddlerware("user"),user.ListCart)
 	router.POST("/cart/update-quantity",middleware.AuthUserMiddlerware("user"),user.UpdateCartItem)
 	router.POST("/cart/remove",middleware.AuthUserMiddlerware("user"),user.RemoveItem)
+	router.GET("/user/orders",middleware.AuthUserMiddlerware("user"),user.ListOrders)
+	router.POST("/user/cancel-order",middleware.AuthUserMiddlerware("user"),user.ReturnOrder)
+	router.GET("/user/order/:id",middleware.AuthUserMiddlerware("user"),user.OrderItems)
+
+
+	// User checkout
+	router.GET("/user/checkout",middleware.AuthUserMiddlerware("user"),user.CheckOutPage)
+	router.POST("/place-order",middleware.AuthUserMiddlerware("user"),user.CheckOutOrder)
+	router.GET("/user/add-address",middleware.AuthUserMiddlerware("user"),user.AddNewAddressPage)
+	router.POST("/user/save-address",middleware.AuthUserMiddlerware("user"),user.AddNewAddress)
+	router.GET("/user/invoice/:id",middleware.AuthUserMiddlerware("user"),user.DownloadPdf)
 
 	// Demo
 	router.GET("/demo",user.DemoPage)
@@ -92,5 +103,6 @@ func GetUrl(router *gin.Engine){
 	router.POST("/admin/products/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteProduct)
 	router.POST("/admin/products/images/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteImage)
 	
-
+	// Admin Orders
+	router.GET("/admin/orders",middleware.AuthMiddlerware("admin"),admin.AdminOrdersPage)
 }
