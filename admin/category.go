@@ -5,6 +5,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -128,7 +129,7 @@ func AddCategory (c *gin.Context){
 
 	var existingCategory models.Category
 	if err := db.Db.Where("category_name = ?",categoryName).First(&existingCategory).Error; err == nil {
-		c.JSON(http.StatusConflict,gin.H{"error":"Category already exists"})
+		c.HTML(http.StatusConflict,"category_list.html",gin.H{"error":"Category already exists"})
 		return 
 	}
 
@@ -136,7 +137,7 @@ func AddCategory (c *gin.Context){
 	newCategory.CategoryName = categoryName
 
 	if err := db.Db.Create(&newCategory).Error; err != nil{
-		c.JSON(http.StatusInternalServerError,gin.H{"error":"Could not create category"})
+		c.HTML(http.StatusInternalServerError,"category_list.html",gin.H{"error":"Could not create category"})
 		return 
 	}
 
@@ -178,12 +179,14 @@ func AddSubCategory(c *gin.Context){
 	var subCategory models.SubCategory
 
 	if err := db.Db.First(&category,categoryID).Error; err != nil{
-		c.Redirect(http.StatusNotFound,"/admin/categories")
+		c.Redirect(http.StatusSeeOther,"/admin/categories")
 		return 
 	}
 
-	if err := db.Db.Where("sub_category_name=?",newName).Find(&subCategory).Error; err != nil{
-		c.Redirect(http.StatusNotFound,"/admin/categories")
+	if err := db.Db.Where("sub_category_name = ? AND  category_id = ?",newName,categoryID).First(&subCategory).Error; err == nil{
+
+		log.Println("Category already exists")
+		c.Redirect(http.StatusSeeOther,"/admin/categories")
 		return 
 	}
 
@@ -197,9 +200,7 @@ func AddSubCategory(c *gin.Context){
 		return 
 	}
 
-	fmt.Println("created succesfully")
-
-	c.Redirect(http.StatusTemporaryRedirect,"/admin/categories/edit/"+categoryIDStr)
+	c.Redirect(http.StatusSeeOther,"/admin/categories/edit/"+categoryIDStr)
 	
 }
 
@@ -265,12 +266,25 @@ func UpdateSubCategory(c *gin.Context){
 func DeleteCategory(c *gin.Context){
 	
 	categoryID := c.Param("id")
+	var category models.Category
+
+	if err := db.Db.Where("category_id = ?",categoryID).First(&category).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"category_list.html",gin.H{"error":"Failed delete category"})
+		return 
+	}
 	
+	var err error
+
+	if category.IsBlocked{
+		err = helper.UpdateAllUnderCategory(categoryID)
+	}else{
+		err = helper.DeleteAllUnderCategory(categoryID)
+	}
+
 	
-	err := helper.DeleteAllUnderCategory(categoryID)
 
 	if err != nil {
-		c.HTML(http.StatusInternalServerError,"/admin/categories",gin.H{"error":"Failed delete category"})
+		c.HTML(http.StatusInternalServerError,"category_list.html",gin.H{"error":"Failed delete category"})
 		return
 	}
 

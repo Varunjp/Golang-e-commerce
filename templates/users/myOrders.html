@@ -43,9 +43,11 @@
       </div>
       <div class="d-flex flex-column align-items-end gap-2">
         <a href="/user/order/{{.ID}}" class="btn btn-sm btn-outline-primary">View Details</a>
+        
+        {{ if or (eq .Status "Processing") (eq .Status "Delivered") }}
+          <a href="/user/invoice/{{.ID}}" class="btn btn-sm btn-outline-success">Download Invoice</a>
+        {{ end }}
 
-       <a href="/user/invoice/{{.ID}}" class="btn btn-sm btn-outline-success">Download Invoice</a>
-       
         {{if or (eq .Status "Pending") (eq .Status "Processing")}}
         <form method="POST" action="/user/cancel-order" onsubmit="return confirm('Are you sure you want to cancel this order?')">
           <input type="hidden" name="order_id" value="{{.ID}}">

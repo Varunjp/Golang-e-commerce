@@ -84,12 +84,19 @@ func CheckOutOrder(c *gin.Context){
 	addressOption := c.PostForm("address_id")
 	paymentOption := c.PostForm("payment_method")
 	var addressID uint 
-
+	var orderitems []models.OrderItem
+	
 	if addressOption == ""{
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Need to provide a address details"})
+		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Need to provide a address details"})
 		return 
 	}
 
+	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
+		if err != gorm.ErrRecordNotFound{
+			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load user details please try again later"})
+			return 
+		}
+	}
 
 	if addressOption == "new" {
 		newAddress := models.Address{
@@ -117,6 +124,7 @@ func CheckOutOrder(c *gin.Context){
 	var CartItems []models.CartItem
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
+		
 		c.JSON(http.StatusNotFound,gin.H{"error":"Not able to load cart items"})
 		return 
 	}
@@ -148,8 +156,23 @@ func CheckOutOrder(c *gin.Context){
 
 	for _,item := range CartItems{
 
+		itemCount := 0
+
 		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"Insufficient stock"})
+			return 
+		}
+
+		for _, oritems := range orderitems{
+			if item.ProductID == oritems.ProductID{
+				itemCount = item.Quantity + oritems.Quantity
+			}
+		}
+
+		if itemCount > 5 {
+			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+			db.Db.Delete(&models.Order{},order.ID)
+			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"user":"done","error":"User exceeded product purchase limit"})
 			return 
 		}
 
@@ -176,6 +199,7 @@ func CheckOutOrder(c *gin.Context){
 	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.ID,"user":"done"})
 
 }
+
 
 func AddNewAddressPage(c *gin.Context){
 	c.HTML(http.StatusOK,"addAddress.html",gin.H{"user":"done"})

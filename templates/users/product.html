@@ -4,13 +4,13 @@
     
 
     <!-- Product Info Section -->
-    <section class="container mx-auto p-8">
+    <!-- <section class="container mx-auto p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <!-- Left: Images -->
+            
             <div class="flex flex-col gap-4">
                 {{ if gt (len .Images) 0 }}
-                <img src="{{ ( index .Images 0).Image_url }}" alt="Product Image" class="w-full rounded-xl shadow-md" />
-                <div class="flex gap-2">
+                <img src="/{{ ( index .Images 0).Image_url }}" alt="Product Image" class="w-full rounded-xl shadow-md" />
+                <div class="flex gap-4 flex-wrap">
                         {{ range .Images }}
                             <img src="/{{ .Image_url }}" class="w-20 h-20 object-cover rounded cursor-pointer hover:ring-2" />
                         {{ end }}
@@ -18,13 +18,14 @@
                 {{ else}}
                 <div><p>No images found</p></div>
                 {{ end }}
-            </div>
+            </div> -->
+
 
             <!-- Right: Product Info -->
-            <div>
+            <!-- <div>
                 <h1 class="text-3xl font-bold mb-2">{{ .Product.ProductName }}</h1>
                 <p class="text-gray-600 mb-4">{{ .Product.Description }}</p>
-                <div class="text-xl font-semibold text-green-600 mb-4">${{ .variant.Price }}</div>
+                <div class="text-xl font-semibold text-green-600 mb-4">₹{{ .variant.Price }}</div>
 
                 <h3 class="text-lg font-semibold mb-2">Choose Size:</h3>
                 <div class="flex gap-3 mb-6">
@@ -40,10 +41,10 @@
                 </form>
             </div>
         </div>
-    </section>
+    </section> -->
 
     <!-- Product Detail Table -->
-    <section class="container mx-auto px-8 pt-10">
+    <!-- <section class="container mx-auto px-8 pt-10">
         <h2 class="text-2xl font-bold mb-4">Product Variants</h2>
         <table class="w-full table-auto border">
             <thead class="bg-gray-100">
@@ -65,7 +66,71 @@
                 {{ end }}
             </tbody>
         </table>
+    </section> -->
+
+
+    <section class="container py-5">
+        <div class="row g-5"> 
+            <div class="col-12 col-md-6 d-flex flex-column gap-3"> 
+                {{ if gt (len .Images) 0 }}
+                <img src="/{{ ( index .Images 0).Image_url }}" alt="Product Image" class="img-fluid rounded-3 shadow-sm" /> 
+                <div class="d-flex gap-3 flex-wrap"> 
+                    {{ range .Images }}
+                    <img src="/{{ .Image_url }}" class="img-thumbnail rounded cursor-pointer" style="width: 80px; height: 80px; object-fit: cover;" /> 
+                    {{ end }}
+                </div>
+                {{ else}}
+                <div><p>No images found</p></div>
+                {{ end }}
+            </div>
+
+            <div class="col-12 col-md-6">
+                <h1 class="display-5 fw-bold mb-3">{{ .Product.ProductName }}</h1> 
+                <p class="text-muted mb-4">{{ .Product.Description }}</p>
+                <div class="h3 fw-semibold text-success mb-4">₹{{ .variant.Price }}</div>
+
+                <h3 class="h5 fw-semibold mb-2">Choose Size:</h3> 
+                <div class="d-flex gap-2 mb-4"> 
+                    {{ if .variant }}
+                    <span class="border rounded px-3 py-2 text-center">{{ .variant.Size }}</span> 
+                    {{ end }}
+                </div>
+
+                <form method="POST" action="/cart/add" class="d-flex align-items-center"> 
+                    <input type="hidden" name="product_id" value="{{ .variant.ID }}">
+                    <input type="number" name="quantity" value="1" min="1" max="5" class="form-control me-3" style="width: 80px;"> 
+                    <button type="submit" class="btn btn-dark px-4 py-2 rounded">Add to Cart</button> 
+                </form>
+            </div>
+        </div>
     </section>
+
+    <section class="container py-5"> 
+        <h2 class="h4 fw-bold mb-3">Product Variants</h2> 
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover"> 
+                <thead class="table-light"> 
+                    <tr>
+                        <th scope="col">Variant Name</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ if .variant }}
+                    <tr>
+                        <td>{{ .variant.Variant_name }}</td>
+                        <td>{{ .variant.Size }}</td>
+                        <td>${{ .variant.Price }}</td>
+                        <td>{{ .variant.Stock }}</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
 
 <!-- Footer -->
 {{ template "footer.html" . }}

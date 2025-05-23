@@ -53,6 +53,7 @@
         <a class="nav-link" href="/admin/categories">Categories</a>
         <a class="nav-link" href="/admin/reports">Sales Report</a>
         <a class="nav-link" href="/admin/orders">Orders</a>
+        <a class="nav-link" href="/admin/banners">Banners</a>
       </nav>
     </div>
 
@@ -72,8 +73,13 @@
               <input type="text" name="name" class="form-control" required>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Subcategory ID</label>
-              <input type="number" name="subcategory_id" class="form-control" required>
+              <label class="form-label">Subcategory</label>
+                <select name="subcategory_id" class="form-select" required>
+                  {{range .Subcategories}}
+                    <option value="{{.SubCategoryID}}">{{.SubCategoryName}} ({{.CategoryName}})</option>
+                  {{end}}
+                </select>
+
             </div>
             <div class="col-12 mb-3">
               <label class="form-label">Description</label>
@@ -128,7 +134,7 @@
                 </div>
                 <div class="col-md-3">
                   <label class="form-label">Is Primary?</label><br>
-                  <input type="checkbox" name="is_primary{{$i}}" value="true" class="form-check-input mt-2">
+                  <input type="radio" name="is_primary" value="{{$i}}" class="form-check-input mt-2">
                 </div>
 
                 <!-- Preview + Modal -->

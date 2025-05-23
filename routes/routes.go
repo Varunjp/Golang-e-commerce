@@ -38,6 +38,7 @@ func GetUrl(router *gin.Engine){
 	router.POST("/user/update-profile",middleware.AuthUserMiddlerware("user"),user.UpdateProfile)
 	router.POST("/user/add-address",middleware.AuthUserMiddlerware("user"),user.AddAddress)
 	router.POST("/user/edit-address",middleware.AuthUserMiddlerware("user"),user.EditAddress)
+	router.POST("/delete-address",middleware.AuthUserMiddlerware("user"),user.DeleteAddress)
 	router.GET("/user/change-password",middleware.AuthUserMiddlerware("user"),user.ChangePasswordPage)
 	router.POST("/user/change-password",middleware.AuthUserMiddlerware("user"),user.ChangePassword)
 	router.POST("/user/upload-profile-image",middleware.AuthUserMiddlerware("user"),user.UploadProfileImage)
@@ -105,4 +106,12 @@ func GetUrl(router *gin.Engine){
 	
 	// Admin Orders
 	router.GET("/admin/orders",middleware.AuthMiddlerware("admin"),admin.AdminOrdersPage)
+	router.POST("/admin/orders/cancel/:id",middleware.AuthMiddlerware("admin"),admin.AdminOrderCancel)
+
+
+	// Admin banner
+	router.GET("/admin/banners",middleware.AuthMiddlerware("admin"),admin.BannerPage)
+	router.POST("/admin/banners/add",middleware.AuthMiddlerware("admin"),admin.AddBanner)
+	router.POST("/admin/banners/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteBanner)
+	
 }

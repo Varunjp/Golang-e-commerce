@@ -3,6 +3,9 @@
   <!-- Checkout Container -->
   <div class="container mt-5">
     <h3 class="mb-4 text-center">Checkout</h3>
+    {{if .error}}
+      <div class="alert alert-danger">{{.error}}</div>
+    {{end}}
     <form method="POST" action="/place-order">
       <div class="row g-4">
 

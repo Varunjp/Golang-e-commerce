@@ -19,6 +19,7 @@
               <a class="nav-link active" href="/admin/categories">Categories</a>
               <a class="nav-link" href="/admin/reports">Sales Report</a>
               <a class="nav-link" href="/admin/orders">Orders</a>
+              <a class="nav-link" href="/admin/banners">Banners</a>
             </nav>
           </div>
       
@@ -69,7 +70,12 @@
                     <td>{{ .CategoryName }}</td>
                     <td>
                       <a href="/admin/categories/edit/{{ .CategoryID }}" class="btn btn-sm btn-outline-warning">Edit</a>
-                      <a href="/admin/categories/delete/{{ .CategoryID }}" class="btn btn-sm btn-outline-danger" data-action="Delete">Delete</a>
+
+                      {{if .IsBlocked}}
+                      <a href="/admin/categories/delete/{{ .CategoryID }}" class="btn btn-sm btn-outline-success" data-action="Unblock">UnBlock</a>
+                      {{ else }}
+                      <a href="/admin/categories/delete/{{ .CategoryID }}" class="btn btn-sm btn-outline-danger" data-action="Block">Block</a>
+                      {{ end }}
                     </td>
                   </tr>
                   {{ end }}
@@ -135,7 +141,7 @@
             const action = btn.getAttribute('data-action');
             confirmText.textContent = `Are you sure you want to ${action.toLowerCase()} this category?`;
             confirmBtn.href = url;
-            confirmBtn.className = `btn btn-${action === 'Delete' ? 'danger' : 'success'}`;
+            confirmBtn.className = `btn btn-${action === 'Block' ? 'danger' : 'success'}`;
             confirmBtn.textContent = `Yes, ${action}`;
             confirmModal.show();
           });

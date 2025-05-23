@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func AdminOrdersPage(c *gin.Context){
@@ -95,4 +96,33 @@ func AdminOrdersPage(c *gin.Context){
 		"totalPages":totalPages,
 		"limit":limit,
 	})
+}
+
+func AdminOrderCancel(c *gin.Context){
+	
+	orderId,_ := strconv.Atoi(c.Param("id"))
+	reason := c.PostForm("reason")
+	var order models.Order
+
+	if err := db.Db.Preload("OrderItems").Where("id = ?",orderId).First(&order).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orders.html",gin.H{"error":"Failed to load order details"})
+		return 
+	}
+
+	order.Reason = reason
+	order.Status = "Returned"
+
+	if err := db.Db.Save(&order).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orders.html",gin.H{"error":"Failed to update order"})
+		return 
+	}
+
+	for _,item := range order.OrderItems{
+
+		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+
+	}
+
+	c.Redirect(http.StatusSeeOther,"/admin/orders")
+
 }

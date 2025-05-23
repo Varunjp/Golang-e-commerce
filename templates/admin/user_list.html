@@ -19,6 +19,7 @@
                 <a class="nav-link" href="/admin/categories">Categories</a>
                 <a class="nav-link" href="/admin/reports">Sales Report</a>
                 <a class="nav-link" href="/admin/orders">Orders</a>
+                <a class="nav-link" href="/admin/banners">Banners</a>
             </nav>
         </div>
 
@@ -62,8 +63,11 @@
                             <td>{{ .Phone }}</td>
                             <td>{{ .Status }}</td>
                             <td>
+                                {{if eq .Status "Active"}}
                                 <a href="/admin/users/block/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Block">Block</a>
+                                {{ else }}
                                 <a href="/admin/users/unblock/{{ .ID }}" class="btn btn-sm btn-outline-warning" data-action="Unblock">Unblock</a>
+                                {{end}}
                             </td>
                         </tr>
                         {{ end }}

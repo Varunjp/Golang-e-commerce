@@ -88,7 +88,7 @@ type OrderItem struct {
 	Price 		float64	`gorm:"not null"`
 	Discount 	float64	
 	Order 		Order	`gorm:"constraint:ONDELETE:CASCADE"`
-
+	DeletedAt 	gorm.DeletedAt
 }
 
 type WishList struct {
@@ -152,8 +152,8 @@ type Product_Variant struct {
 	UpdatedAt			time.Time
 	Product 			Product				`gorm:"constraint: OnDelete:CASCADE"`
 	Product_images		[]Product_image		`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductVariantID"`
-	CartItems				[]CartItem			`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
-	WishLists				[]WishList					`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
+	CartItems			[]CartItem			`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
+	WishLists			[]WishList			`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
 	DeletedAt			gorm.DeletedAt 		`gorm:"index"`
 }
 
@@ -188,6 +188,7 @@ type Banner struct {
 	Active			bool
 	CreatedAt		time.Time
 	UpdateAt		time.Time 
+	DeletedAt 		gorm.DeletedAt
 }
 
 type OTPVerification struct {

@@ -85,7 +85,7 @@ func ReturnOrder(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Where("id = ?",orderId).First(&order).Error; err != nil{
+	if err := db.Db.Preload("OrderItems").Where("id = ?",orderId).First(&order).Error; err != nil{
 		c.HTML(http.StatusNotFound,"myOrders.html",gin.H{"error":"Order not found","user":"done"})
 		return 
 	}
@@ -106,7 +106,7 @@ func ReturnOrder(c *gin.Context){
 	for _,item := range order.OrderItems {
 
 		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
-
+		db.Db.Delete(&models.OrderItem{},item.ID)
 	}
 
 	c.Redirect(http.StatusSeeOther,"/user/orders")

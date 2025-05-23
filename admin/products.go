@@ -172,7 +172,42 @@ func ViewProducts(c *gin.Context){
 }
 
 func AddProductPage(c *gin.Context){
-	c.HTML(http.StatusOK,"admin_addProduct.html",nil)
+
+	var subcat []models.SubCategory
+	
+	type Response struct {
+		SubCategoryID 		int
+		SubCategoryName		string 
+		CategoryName		string 
+	}
+
+
+	if err := db.Db.Where("is_blocked = ?",false).Find(&subcat).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_addProduct.html",gin.H{"error":"Failed to load subcategory,please try again later"})
+		return 
+	}
+
+	response := make([]Response,len(subcat))
+
+	for i,subitem := range subcat {
+
+		var Category models.Category
+
+		if err := db.Db.Where("category_id = ?",subitem.CategoryID).First(&Category).Error; err != nil{
+			log.Println("Failed to load category details")
+			c.Redirect(http.StatusTemporaryRedirect,"/admin")
+			return 
+		}
+
+		response[i] = Response{
+			SubCategoryID: int(subitem.SubCategoryID),
+			SubCategoryName: subitem.SubCategoryName,
+			CategoryName: Category.CategoryName,
+		}
+
+	}
+
+	c.HTML(http.StatusOK,"admin_addProduct.html",gin.H{"Subcategories":response})
 }
 
 func AddProduct(c *gin.Context){
@@ -195,6 +230,11 @@ func AddProduct(c *gin.Context){
 	if ProductPrice <= 0 {
 		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Price cannot be 0 or less"})
 		return
+	}
+
+	if ProductStock < 1 {
+		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Quanity cannot be less than 1"})
+		return 
 	}
 
 	if err := db.Db.Where("sub_category_id = ?",ProductSubCat).First(&subCat).Error; err != nil{
@@ -310,7 +350,15 @@ func AddProduct(c *gin.Context){
 			}
 		
 			order, _ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d", i)))
-			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d", i)) == "true"
+			checkPrimary := c.PostForm("is_primary")
+			var isPrimary bool
+
+			if checkPrimary != ""{
+				isPrimary = true 
+			}else{
+				isPrimary = false
+			}
+			
 		
 			image := models.Product_image{
 				ProductVariantID: variant.ID,
@@ -332,9 +380,9 @@ func AddProduct(c *gin.Context){
 	}
 
 	if imageCount < 1 {
-		db.Db.Delete(product)
-		db.Db.Delete(variant)
-		c.HTML(http.StatusBadRequest,"admin_addProduct.html",gin.H{"error":"Provide atleast 1 image"})
+		db.Db.Delete(&models.Product{},product.ProductID)
+		db.Db.Delete(&models.Product_Variant{},variant.ID)
+		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Provide atleast 1 image"})
 		return
 	}
 

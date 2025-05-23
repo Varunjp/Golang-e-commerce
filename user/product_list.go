@@ -16,6 +16,65 @@ func ShowProductList(c *gin.Context){
 	pageStr := c.DefaultQuery("page", "1")
 	limitStr := c.DefaultQuery("limit","9")
 
+	var subcat []models.SubCategory
+	type responsecat struct{
+		SubID 		uint
+		SubCategoryName	string
+		CategoryName   string
+	}
+
+	
+	// retrieve filters
+
+	if err := db.Db.Where("is_blocked = ?",false).Find(&subcat).Error; err != nil{
+		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load categories"})
+		return 
+	}
+
+	responeSubcategory := make([]responsecat,len(subcat))
+
+	for i,subItem := range subcat {
+		var category models.Category
+		if err := db.Db.Where("category_id = ?",subItem.CategoryID).First(&category).Error; err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load categories, please try again later"})
+			return 
+		}
+
+		responeSubcategory[i] = responsecat{
+			SubID: subItem.SubCategoryID,
+			SubCategoryName: subItem.SubCategoryName,
+			CategoryName: category.CategoryName,
+		}
+
+	}
+
+	categories := c.QueryArray("category")
+	size := c.Query("size")
+	minPrice,_ := strconv.ParseFloat(c.DefaultQuery("min_price","0"),64)
+	maxPrice,_ := strconv.ParseFloat(c.DefaultQuery("max_price","10000"),64)
+	sortBy := c.DefaultQuery("sort","")
+
+	query := db.Db.
+    Preload("Product_images", func(db *gorm.DB) *gorm.DB {
+        return db.Order("order_no ASC")
+    }).Model(&models.Product_Variant{})
+
+	if len(categories) > 0 {
+		query = query.Joins("JOIN products ON products.product_id = product_variants.product_id").Where("products.sub_category_id IN ?",categories)
+	}
+
+	if size != ""{
+		query = query.Where("size = ?",size)
+	}
+
+	query = query.Where("price BETWEEN ? AND ?",minPrice,maxPrice)
+
+	if sortBy == "price_asc"{
+		query = query.Order("price ASC")
+	}else if sortBy == "price_desc"{
+		query = query.Order("price DESC")
+	}
+
 	page,_ := strconv.Atoi(pageStr)
 	limit,_ := strconv.Atoi(limitStr)
 	offset := (page - 1) * limit
@@ -23,20 +82,24 @@ func ShowProductList(c *gin.Context){
 	var total int64
 	var products []models.Product_Variant
 
-	db.Db.Model(&models.Product_Variant{}).Count(&total)
+	query.Count(&total)
+	query.Offset(offset).Limit(limit).Find(&products)
+	
 
-	err := db.Db.
-    Preload("Product").
-    Preload("Product.SubCategory").
-    Preload("Product_images", func(db *gorm.DB) *gorm.DB {
-        return db.Order("order_no ASC")
-    }).
-    Offset(offset).
-    Limit(limit).
-    Find(&products).Error
+	// db.Db.Model(&models.Product_Variant{}).Count(&total)
+
+	// err := db.Db.
+    // Preload("Product").
+    // Preload("Product.SubCategory").
+    // Preload("Product_images", func(db *gorm.DB) *gorm.DB {
+    //     return db.Order("order_no ASC")
+    // }).
+    // Offset(offset).
+    // Limit(limit).
+    // Find(&products).Error
 
 	
-	if err != nil{
+	if query.Error != nil{
 		c.HTML(http.StatusInternalServerError, "product_list.html", gin.H{"error": "Error fetching products"})
         return
 	}
@@ -51,18 +114,31 @@ func ShowProductList(c *gin.Context){
 
 	for i,p := range products{
 
-		formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice string; ImageURL string}{
-			ID: p.ID,
-			Name: p.Variant_name,
-			Price: p.Price,
-			DiscountedPrice: "",
-		}
+		var pro models.Product
+		var subCat models.SubCategory
 
-		if len(p.Product_images) > 0{
-			formatted[i].ImageURL = p.Product_images[0].Image_url
-		}else{
-			formatted[i].ImageURL = ""
+		db.Db.Where("product_id ? = ",p.ProductID).First(&pro)
+		db.Db.Where("sub_category_id = ",pro.SubCategoryID).First(&subCat)
+
+		if !subCat.IsBlocked{
+			if p.Stock > 0 {
+				formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice string; ImageURL string}{
+					ID: p.ID,
+					Name: p.Variant_name,
+					Price: p.Price,
+					DiscountedPrice: "",
+				}
+
+				if len(p.Product_images) > 0{
+					formatted[i].ImageURL = p.Product_images[0].Image_url
+				}else{
+					formatted[i].ImageURL = ""
+				}
+			}
 		}
+		
+
+		
 	}
 
 	totalPage := int((total + int64(limit) -1 )/ int64(limit))
@@ -70,13 +146,18 @@ func ShowProductList(c *gin.Context){
 	session := sessions.Default(c)
 	Name,_ := session.Get("name").(string)
 
+	queryString := "&"+c.Request.URL.Query().Encode()
+
 	if Name != ""{
 		c.HTML(http.StatusOK,"product_list.html",gin.H{
 			"user":Name,
 			"Products": formatted,
 			"pagetitle":"product_list",
+			"subcategory": responeSubcategory,
 			"Page": page,
 			"TotalPages": totalPage,
+			"QueryString": queryString,
+			"sort": sortBy,
 		})
 		return
 	}
@@ -85,6 +166,9 @@ func ShowProductList(c *gin.Context){
 		"Products": formatted,
 		"pagetitle":"Product list",
 		"Page": page,
+		"subcategory": responeSubcategory,
 		"TotalPages": totalPage,
+		"QueryString": queryString,
+		"sort": sortBy,
 	})
 }

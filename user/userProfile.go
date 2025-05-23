@@ -38,7 +38,9 @@ func UserProfilePage(c *gin.Context) {
 	}
 
 
-	if err := db.Db.Preload("Orders").Preload("Addresses").Preload("ProfileImages",func(db *gorm.DB)*gorm.DB{
+	if err := db.Db.Preload("Orders",func(db *gorm.DB)*gorm.DB{
+		return db.Order("id DESC")
+	}).Preload("Addresses").Preload("ProfileImages",func(db *gorm.DB)*gorm.DB{
 		return db.Order("id DESC")
 	}).Where("email = ? AND id = ?",email,id).First(&User).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"User not found"})

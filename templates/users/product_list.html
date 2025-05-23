@@ -5,40 +5,50 @@
     <!-- Sidebar Filters -->
     <aside class="col-md-3">
       <h5 class="mb-4">Filters</h5>
-      <div class="mb-4">
-        <h6>Category</h6>
-        <ul class="list-unstyled">
-          <li><input type="checkbox" id="category1"> T-shirts</li>
-          <li><input type="checkbox" id="category2"> Shorts</li>
-          <li><input type="checkbox" id="category3"> Hoodies</li>
-          <li><input type="checkbox" id="category4"> Jeans</li>
-        </ul>
-      </div>
-      <div class="mb-4">
-        <h6>Price</h6>
-        <input type="range" class="form-range" min="50" max="500" step="10">
-      </div>
-      <div class="mb-4">
-        <h6>Size</h6>
-        <ul class="list-unstyled">
-          <li><input type="radio" name="size" id="small"> Small</li>
-          <li><input type="radio" name="size" id="medium"> Medium</li>
-          <li><input type="radio" name="size" id="large"> Large</li>
-          <li><input type="radio" name="size" id="xlarge"> X-Large</li>
-        </ul>
-      </div>
-      <button class="btn btn-primary w-100">Apply Filters</button>
+      <form method="GET" action="/user/shop">
+        <div class="mb-4">
+          <h6>Category</h6>
+            <ul class="list-unstyled">
+              {{ range .subcategory }}
+              <li><input type="checkbox" name="category" value="{{ .SubID}}"> {{.SubCategoryName}} ({{.CategoryName}})</li>
+              {{ end }}
+              <!-- <li><input type="checkbox" name="category" value="shorts" id="category2"> Shorts</li>
+              <li><input type="checkbox" name="category" value="hoodies" id="category3"> Hoodies</li>
+              <li><input type="checkbox" name="category" value="jeans" id="category4"> Jeans</li> -->
+            </ul>
+          </div>
+          <div class="mb-4">
+            <h6>Price</h6>
+            Min: <input type="number" name="min_price" class="form-control" value="50">
+            Max: <input type="number" name="max_price" class="form-control" value="500">
+          </div>
+          <div class="mb-4">
+            <h6>Size</h6>
+            <ul class="list-unstyled">
+              <li><input type="radio" name="size" value="S" id="small"> Small</li>
+              <li><input type="radio" name="size" value="M" id="medium"> Medium</li>
+              <li><input type="radio" name="size" value="L" id="large"> Large</li>
+              <li><input type="radio" name="size" value="XL" id="xlarge"> X-Large</li>
+            </ul>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+        </form>
+        <a href="/user/shop" class="btn btn-secondary w-100 mt-2">Clear Filters</a>
     </aside>
 
     <!-- Product Grid -->
     <main class="col-md-9">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h5>Casual</h5>
-        <select class="form-select w-auto">
-          <option selected>Sort by: Most Popular</option>
-          <option>Price: Low to High</option>
-          <option>Price: High to Low</option>
-        </select>
+        
+        <form method="GET" action="/user/shop">
+          <select class="form-select w-auto" name="sort" onchange="this.form.submit()">
+            <option value="" {{ if eq .Sort "" }}selected{{ end }}>Sort by: Most Popular</option>
+            <option value="price_asc" {{ if eq .Sort "price_asc" }}selected{{ end }}>Price: Low to High</option>
+            <option value="price_desc" {{ if eq .Sort "price_desc" }}selected{{ end }}>Price: High to Low</option>
+          </select>
+        </form>
+
       </div>
 
       <div class="row">
@@ -49,7 +59,7 @@
             <div class="card-body">
               <h6 class="card-title">{{ .Name }}</h6>
               <p class="card-text">
-                <span class="text-danger fw-bold">${{ .Price }}</span>
+                <span class="text-danger fw-bold">₹{{ .Price }}</span>
                 {{ if .DiscountedPrice }}
                 <del class="text-muted">${{ .DiscountedPrice }}</del>
                 {{ end }}
@@ -66,19 +76,19 @@
             <ul class="pagination justify-content-center">
             {{ if gt .Page 1 }}
             <li class="page-item">
-                <a class="page-link" href="/products?page={{ sub .Page 1 }}&limit=9">&laquo;</a>
+                <a class="page-link" href="/user/shop?page={{ sub .Page 1 }}&limit=9{{ .QueryString}}">&laquo;</a>
             </li>
             {{ end }}
         
             {{ range $i := itere .TotalPages }}
             <li class="page-item {{ if eq $i $.Page }}active{{ end }}">
-                <a class="page-link" href="/products?page={{ $i }}&limit=9">{{ $i }}</a>
+                <a class="page-link" href="/user/shop?page={{ $i }}&limit=9{{ $.QueryString }}">{{ $i }}</a>
             </li>
             {{ end }}
         
             {{ if lt .Page .TotalPages }}
             <li class="page-item">
-                <a class="page-link" href="/products?page={{ add .Page 1 }}&limit=9">&raquo;</a>
+                <a class="page-link" href="/user/shop?page={{ add .Page 1 }}&limit=9{{ .QueryString }}">&raquo;</a>
             </li>
             {{ end }}
             </ul>

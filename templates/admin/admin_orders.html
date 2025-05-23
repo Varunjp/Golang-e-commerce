@@ -62,6 +62,7 @@
         <a class="nav-link" href="/admin/categories">Categories</a>
         <a class="nav-link" href="/admin/reports">Sales Report</a>
         <a class="nav-link active" href="/admin/orders">Orders</a>
+        <a class="nav-link" href="/admin/banners">Banners</a>
       </nav>
     </div>
 
@@ -120,8 +121,9 @@
                   {{ end }}
                 </td>
                 <td>
-                  {{ if and (ne .Status "Delivered") (ne .Status "Cancelled") }}
+                  {{ if and (ne .Status "Delivered") (ne .Status "Cancelled") (ne .Status "Returned")}}
                   <form action="/admin/orders/cancel/{{.ID}}" method="POST" class="d-inline" onsubmit="return confirm('Cancel this order?')">
+                    <textarea class="form-control form-control-sm mt-1 mb-2" name="reason" rows="2" placeholder="Reason for cancellation" required></textarea>
                     <button class="btn btn-danger btn-sm">Cancel</button>
                   </form>
                   {{ else }}

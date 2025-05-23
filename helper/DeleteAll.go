@@ -29,29 +29,29 @@ func DeleteAllUnderCategory(categoryID string) error {
 				return err 
 			}
 
-			for _, variant := range variants{
+			// for _, variant := range variants{
 
-				if err := db.Db.Where("product_variant_id = ?",variant.ID).Delete(&models.Product_image{}).Error; err != nil{
-					return err
-				}
-			}
+			// 	if err := db.Db.Where("product_variant_id = ?",variant.ID).Delete(&models.Product_image{}).Error; err != nil{
+			// 		return err
+			// 	}
+			// }
 
-			if err := db.Db.Where("product_id = ?",product.ProductID).Delete(&models.Product_Variant{}).Error; err != nil{
+			if err := db.Db.Delete(&variants).Error; err != nil{
 				return err 
 			}
 		}
 
-		if err := db.Db.Where("sub_category_id = ?",subCat.SubCategoryID).Delete(&models.Product{}).Error; err != nil{
+		if err := db.Db.Model(&models.SubCategory{}).Where("sub_category_id = ?",subCat.SubCategoryID).Update("is_blocked",true).Error; err != nil{
 			return err 
 		}
 
 	}
 
-	if err := db.Db.Where("category_id = ?",categoryID).Delete(&models.SubCategory{}).Error; err != nil{
-		return err 
-	}
+	// if err := db.Db.Where("category_id = ?",categoryID).Delete(&models.SubCategory{}).Error; err != nil{
+	// 	return err 
+	// }
 
-	return db.Db.Delete(&models.Category{},categoryID).Error
+	return db.Db.Model(&models.Category{}).Where("category_id = ?",categoryID).Update("is_blocked",true).Error
 
 }
 
@@ -85,5 +85,5 @@ func DeleteAllUnderSubCategory(subCategoryID string)error{
 		}
 	}	
 	
-	return db.Db.Delete(&models.SubCategory{},subCategoryID).Error
+	return db.Db.Model(&models.SubCategory{}).Where("sub_category_id = ?",subCategoryID).Update("is_blocked",true).Error
 }
