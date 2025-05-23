@@ -394,6 +394,40 @@ func UpdateProductPage(c *gin.Context){
 	
 	productID,_ := strconv.Atoi(c.Param("id"))
 
+	var subcat []models.SubCategory
+	
+	type Response struct {
+		SubCategoryID 		int
+		SubCategoryName		string 
+		CategoryName		string 
+	}
+
+
+	if err := db.Db.Where("is_blocked = ?",false).Find(&subcat).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_addProduct.html",gin.H{"error":"Failed to load subcategory,please try again later"})
+		return 
+	}
+
+	response := make([]Response,len(subcat))
+
+	for i,subitem := range subcat {
+
+		var Category models.Category
+
+		if err := db.Db.Where("category_id = ?",subitem.CategoryID).First(&Category).Error; err != nil{
+			log.Println("Failed to load category details")
+			c.Redirect(http.StatusTemporaryRedirect,"/admin")
+			return 
+		}
+
+		response[i] = Response{
+			SubCategoryID: int(subitem.SubCategoryID),
+			SubCategoryName: subitem.SubCategoryName,
+			CategoryName: Category.CategoryName,
+		}
+
+	}
+
 	var Product_Variant models.Product_Variant
 	var Images []models.Product_image
 	var Product models.Product
@@ -417,6 +451,7 @@ func UpdateProductPage(c *gin.Context){
 		"Product": Product,
 		"Variant": Product_Variant,
 		"Images": Images,
+		"Subcategories":response,
 	})
 	
 }

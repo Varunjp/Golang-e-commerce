@@ -91,6 +91,11 @@ func CheckOutOrder(c *gin.Context){
 		return 
 	}
 
+	if paymentOption != "cod"{
+		c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Online option not available yet please change payment method to cod"})
+		return
+	}
+
 	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
 			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load user details please try again later"})

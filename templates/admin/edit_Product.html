@@ -58,9 +58,9 @@
       <h4 class="text-white">Kanky Store</h4>
       <nav class="nav flex-column">
         <a class="nav-link" href="/admin">Dashboard</a>
-        <a class="nav-link active" href="/admin/products">Product</a>
-        <a class="nav-link" href="/admin/categories">Categories</a>
         <a class="nav-link" href="/admin/users">Customers</a>
+        <a class="nav-link active" href="/admin/products">Products</a>
+        <a class="nav-link" href="/admin/categories">Categories</a>
         <a class="nav-link" href="/admin/reports">Sales Report</a>
         <a class="nav-link" href="/admin/orders">Orders</a>
         <a class="nav-link" href="/admin/banners">Banners</a>
@@ -87,8 +87,16 @@
           </div>
 
           <div class="mb-3">
+            <!-- <label class="form-label">Subcategory</label>
+            <input type="text" name="subcategory" value="{{.Product.SubCategoryID}}" class="form-control" required> -->
+
             <label class="form-label">Subcategory</label>
-            <input type="text" name="subcategory" value="{{.Product.SubCategoryID}}" class="form-control" required>
+                <select name="subcategory" class="form-select" required>
+                  {{range .Subcategories}}
+                    <option value="{{.SubCategoryID}}"  {{if eq .SubCategoryID $.Product.SubCategoryID}}selected{{end}} >{{.SubCategoryName}} ({{.CategoryName}})</option>
+                  {{end}}
+                </select>
+
           </div>
 
           <hr>
