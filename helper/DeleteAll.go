@@ -29,6 +29,12 @@ func DeleteAllUnderCategory(categoryID string) error {
 				return err 
 			}
 
+			ids := []uint{}
+
+			for _,data := range variants{
+				ids = append(ids, data.ID)
+			}
+
 			// for _, variant := range variants{
 
 			// 	if err := db.Db.Where("product_variant_id = ?",variant.ID).Delete(&models.Product_image{}).Error; err != nil{
@@ -36,7 +42,7 @@ func DeleteAllUnderCategory(categoryID string) error {
 			// 	}
 			// }
 
-			if err := db.Db.Delete(&variants).Error; err != nil{
+			if err := db.Db.Model(&models.Product_Variant{}).Where("id IN ?",ids).Update("is_active",false).Error; err != nil{
 				return err 
 			}
 		}
@@ -72,17 +78,34 @@ func DeleteAllUnderSubCategory(subCategoryID string)error{
 			return err 
 		}
 
-		for _, variant := range variants{
+		ids := []uint{}
 
-			if err := db.Db.Where("product_variant_id = ?",variant.ID).Delete(&models.Product_image{}).Error; err != nil{
-				return err
-			}
-
+		for _,data := range variants{
+			ids = append(ids, data.ID)
 		}
 
-		if err := db.Db.Where("product_id = ?",product.ProductID).Delete(&models.Product_Variant{}).Error; err != nil{
+		// for _, variant := range variants{
+
+		// 	if err := db.Db.Where("product_variant_id = ?",variant.ID).Delete(&models.Product_image{}).Error; err != nil{
+		// 		return err
+		// 	}
+		// }
+
+		if err := db.Db.Model(&models.Product_Variant{}).Where("id IN ?",ids).Update("is_active",false).Error; err != nil{
 			return err 
 		}
+
+		// for _, variant := range variants{
+
+		// 	if err := db.Db.Where("product_variant_id = ?",variant.ID).Delete(&models.Product_image{}).Error; err != nil{
+		// 		return err
+		// 	}
+
+		// }
+
+		// if err := db.Db.Where("product_id = ?",product.ProductID).Delete(&models.Product_Variant{}).Error; err != nil{
+		// 	return err 
+		// }
 	}	
 	
 	return db.Db.Model(&models.SubCategory{}).Where("sub_category_id = ?",subCategoryID).Update("is_blocked",true).Error

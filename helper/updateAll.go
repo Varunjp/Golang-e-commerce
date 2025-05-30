@@ -32,7 +32,7 @@ func UpdateAllUnderCategory(categoryID string) error {
 
 			for _, variant := range variants {
 
-				if err := db.Db.Model(&models.Product_Variant{}).Where("product_variant_id = ?", variant.ID).Update("deleted_at",nil).Error; err != nil {
+				if err := db.Db.Model(&models.Product_Variant{}).Where("id = ?", variant.ID).Update("is_active",true).Error; err != nil {
 					return err
 				}
 			}

@@ -14,6 +14,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.4.0 // indirect
 	github.com/jung-kurt/gofpdf v1.16.2 // indirect
+	github.com/razorpay/razorpay-go v1.3.3 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )

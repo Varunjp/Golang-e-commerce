@@ -4,7 +4,6 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
-	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -63,9 +62,6 @@ func ViewCategory (c *gin.Context){
 	var total int64
 
 	keyword := c.Query("search")
-
-	//delete
-	fmt.Println(keyword)
 
 	if keyword == ""{
 		adDB := db.Db.Model(&models.Category{})

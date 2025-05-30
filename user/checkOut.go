@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,10 +19,15 @@ func CheckOutPage(c *gin.Context) {
 	var Addresses []models.Address
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
+	var coupons []models.Coupons
 
 	if err := db.Db.Preload("Product").Where("user_id = ?",userID).Find(&CartItems).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load data from DB"})
 		return 
+	}
+
+	if err := db.Db.Where("is_active = ?",true).Find(&coupons).Error; err != nil{
+		log.Println("Error while loading coupons :",err)
 	}
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&Addresses).Error; err != nil{
@@ -73,7 +79,7 @@ func CheckOutPage(c *gin.Context) {
 		totalamount += item.GrandTotal
 	}
 
-	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount})
+	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons})
 
 }
 
@@ -83,18 +89,27 @@ func CheckOutOrder(c *gin.Context){
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 	addressOption := c.PostForm("address_id")
 	paymentOption := c.PostForm("payment_method")
+	couponCode := c.PostForm("coupon_code")
+
 	var addressID uint 
 	var orderitems []models.OrderItem
+	var usedcouponcheck models.UsedCoupon
 	
 	if addressOption == ""{
 		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Need to provide a address details"})
 		return 
 	}
 
-	if paymentOption != "cod"{
-		c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Online option not available yet please change payment method to cod"})
-		return
+	if err := db.Db.Where("user_id = ? AND coupon_id = ?",userID,couponCode).First(&usedcouponcheck).Error; err == nil{
+
+		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Coupon already used"})
+		return 
 	}
+
+	// if paymentOption != "cod"{
+	// 	c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Online option not available yet please change payment method to cod"})
+	// 	return
+	// }
 
 	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
@@ -142,21 +157,73 @@ func CheckOutOrder(c *gin.Context){
 	var total float64
 
 	for _,item := range CartItems{
+		var product models.Product_Variant
 		total += item.Price * float64(item.Quantity)
+		db.Db.Where("id = ?",item.ProductID).First(&product)
+		tax := product.Tax * float64(item.Quantity)
+		total +=tax
 	}
+
+	var coupon models.Coupons
+	var discount float64
+
+	if couponCode != ""{
+
+		if err := db.Db.Where("id = ?",couponCode).First(&coupon).Error; err != nil{
+			log.Println(err)
+			if err != gorm.ErrRecordNotFound{
+				c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load coupon details"})
+				return 
+			}
+			
+		}
+
+		
+		if coupon.ID != 0 {
+			discount = (total * coupon.Discount)/100
+		}
+
+
+	}
+	
 
 	order := models.Order{
 		UserID: uint(userID),
 		AddressID: addressID,
-		TotalAmount: total,
+		TotalAmount: total-discount,
+		SubTotal: total,
+		DiscountTotal: discount,
 		Status: "Processing",
-		PaymentStatus: paymentOption,
+		PaymentMethod: paymentOption,
+		PaymentStatus: "Pending",
 		CreateAt: time.Now(),
 	}
 
 	if err := db.Db.Create(&order).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create order"})
 		return 
+	}
+
+	if couponCode != ""{
+		var coupon models.Coupons
+
+		if err := db.Db.Where("id = ?",couponCode).First(&coupon).Error; err != nil{
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load coupon details"})
+			return 
+		}
+		
+		usedcoupon := models.UsedCoupon{
+			UserID: order.UserID,
+			CouponID: coupon.ID,
+			OrderID: order.ID,
+		}
+
+		if err := db.Db.Create(&usedcoupon).Error; err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Error while saving coupon upadate please try again later."})
+			return 
+		}
+
 	}
 
 	for _,item := range CartItems{
@@ -201,8 +268,16 @@ func CheckOutOrder(c *gin.Context){
 		return 
 	}
 
+	
+
 	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.ID,"user":"done"})
 
+}
+
+func OrderConfirmation(c *gin.Context){
+
+	id := c.Param("id")
+	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":id,"user":"done"})
 }
 
 

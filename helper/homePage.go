@@ -16,7 +16,7 @@ func GetHomePage() ([]responsemodels.HomePage, string, error){
 		Banner.ImageUrl = ""
 	}
 
-	if err := db.Db.Where("deleted_at IS NULL AND stock > 0").Order("id DESC").Limit(10).Find(&Products).Error; err != nil{
+	if err := db.Db.Where("deleted_at IS NULL AND stock > 0 AND is_active = ?",true).Order("id DESC").Limit(10).Find(&Products).Error; err != nil{
 		return []responsemodels.HomePage{},Banner.ImageUrl,fmt.Errorf("no products found")
 	}
 

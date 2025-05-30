@@ -95,6 +95,20 @@ func ReturnOrder(c *gin.Context){
 		return 
 	}
 
+	var couponUsed models.UsedCoupon
+
+	if err := db.Db.Where("order_id = ?",orderId).First(&couponUsed).Error; err != nil{
+		if err != gorm.ErrRecordNotFound{
+			c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to load coupon details","user":"done"})
+			return 
+		}
+	}
+
+	if err := db.Db.Delete(&couponUsed).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to update order please try again later"})
+		return 
+	}
+
 	order.Status = "Returned"
 	order.Reason = reason
 
@@ -125,6 +139,7 @@ func OrderItems(c *gin.Context){
 		Quantity		int
 		Price 			float64
 		Discount		float64
+		Tax 			float64
 	}
 	
 	
@@ -169,7 +184,8 @@ func OrderItems(c *gin.Context){
 				ImageURL: Product.Product_images[0].Image_url,
 				Quantity: item.Quantity,
 				Price: item.Price,
-				Discount: 0,
+				Discount: 0.0,
+				Tax: Product.Tax,
 			}
 		}else{
 			response[i] = Response{
@@ -177,7 +193,8 @@ func OrderItems(c *gin.Context){
 				ImageURL: "",
 				Quantity: item.Quantity,
 				Price: item.Price,
-				Discount: 0,
+				Discount: 0.0,
+				Tax: Product.Tax,
 			}
 		}
 

@@ -64,6 +64,11 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/add-address",middleware.AuthUserMiddlerware("user"),user.AddNewAddressPage)
 	router.POST("/user/save-address",middleware.AuthUserMiddlerware("user"),user.AddNewAddress)
 	router.GET("/user/invoice/:id",middleware.AuthUserMiddlerware("user"),user.DownloadPdf)
+	router.GET("/order/confirmation/:id",middleware.AuthUserMiddlerware("user"),user.OrderConfirmation)
+
+	// User payment online
+	router.POST("/create-razorpay-order",middleware.AuthUserMiddlerware("user"),user.CreateRazorpayOrder)
+	router.POST("/payment/success",user.PaymentSuccess)
 
 	// Demo
 	router.GET("/demo",user.DemoPage)
@@ -113,5 +118,10 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/banners",middleware.AuthMiddlerware("admin"),admin.BannerPage)
 	router.POST("/admin/banners/add",middleware.AuthMiddlerware("admin"),admin.AddBanner)
 	router.POST("/admin/banners/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteBanner)
+
+	// Admin coupons
+	router.GET("/admin/coupons",middleware.AuthMiddlerware("admin"),admin.ListCoupons)
+	router.POST("/admin/coupons/add",middleware.AuthMiddlerware("admin"),admin.AddCoupon)
+	router.GET("/admin/coupons/toggle/:id",middleware.AuthMiddlerware("admin"),admin.ToggleCoupon)
 	
 }

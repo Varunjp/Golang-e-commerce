@@ -87,8 +87,10 @@ func AddToCart(c *gin.Context){
 		if err := db.Db.Where("user_id = ? AND product_id = ?",id,productID).First(&wishlist).Error; err != nil && err != gorm.ErrRecordNotFound{
 			c.JSON(http.StatusNotFound,gin.H{"error":"Failed to load wishlist"})
 			return 
-		}else{
-			db.Db.Delete(&wishlist)
+		}
+
+		if wishlist.ID != 0 {
+			db.Db.Delete(&models.WishList{},wishlist.ID)
 		}
 
 		productIDstr := c.PostForm("product_id")

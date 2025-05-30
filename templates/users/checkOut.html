@@ -68,12 +68,48 @@
                 </li>
                 {{end}}
               </ul>
-              <div class="d-flex justify-content-between">
+
+              <!-- Coupon Section -->
+              <div class="mb-3">
+                <label for="coupon" class="form-label">Apply Coupon</label>
+                <select class="form-select" id="coupon" name="coupon_code">
+                  <option value="">-- Select a Coupon --</option>
+                  {{range .Coupons}}
+                    <option value="{{.ID}}" data-discount="{{.Discount}}">{{.Code}} - {{.Description}}</option>
+                  {{end}}
+                </select>
+                <div class="mt-2 d-flex gap-2">
+                  <button type="button" class="btn btn-outline-success btn-sm" id="applyCouponBtn">Apply</button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" id="removeCouponBtn">Remove</button>
+                </div>
+                <div class="text-success mt-2" id="couponMessage" style="display:none;"></div>
+              </div>
+
+
+              <!-- <div class="d-flex justify-content-between">
                 <strong>Total Amount:</strong>
                 <strong>₹{{printf "%.2f" .TotalAmount}}</strong>
+                <input type="hidden" id="totalAmount" value="{{.TotalAmount}}">
+              </div> -->
+
+              <div class="d-flex justify-content-between">
+                <span>Subtotal:</span>
+                <span>₹{{printf "%.2f" .TotalAmount}}</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Discount:</span>
+                <span id="discountAmount">₹0.00</span>
               </div>
               <hr>
-              <button type="submit" class="btn btn-dark w-100 mt-3">Place Order</button>
+              <div class="d-flex justify-content-between">
+                <strong>Total Amount:</strong>
+                <strong id="finalAmount">₹{{printf "%.2f" .TotalAmount}}</strong>
+              </div>
+              <input type="hidden" id="totalAmount" value="{{.TotalAmount}}">
+              <input type="hidden" name="final_amount" id="finalAmountInput" value="{{.TotalAmount}}">
+
+              <hr>
+              <button type="submit" class="btn btn-dark w-100 mt-3" id="checkout-btn">Place Order</button>
             </div>
           </div>
         </div>
@@ -82,5 +118,120 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  document.getElementById("checkout-btn").addEventListener("click", function(e) {
+      const selectedPaymentMethod = document.querySelector('input[name="payment_method"]:checked');
+      if (!selectedPaymentMethod) return;
+
+      if (selectedPaymentMethod.value === "online") {
+          e.preventDefault(); // Stop regular form
+
+          // Get selected address ID
+          const addressID = document.querySelector('input[name="address_id"]:checked')?.value;
+          const totalAmount = document.getElementById("finalAmountInput").value;
+          if (!addressID) {
+              alert("Please select an address.");
+              return;
+          }
+
+          // Create Razorpay order from backend
+          fetch("/create-razorpay-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                address_id: addressID,
+                amount : Math.round(parseFloat(totalAmount)*100),
+                coupon_code: document.getElementById("coupon").value
+              }) // send address to backend
+          })
+          .then(res => res.json())
+          .then(data => {
+              if (data.error) {
+                  alert("Error creating Razorpay order");
+                  return;
+              }
+
+              const options = {
+                  key: data.key, // Your Razorpay key_id
+                  amount: data.amount, // in paisa
+                  currency: data.currency,
+                  name: "My Shop",
+                  description: "Order Payment",
+                  order_id: data.order_id,
+                  handler: function (response) {
+                      // Send payment verification to backend
+                      const totalAmount = document.getElementById("finalAmountInput").value;
+
+                      fetch("/payment/success", {
+                          method: "POST",
+                          headers: {
+                              "Content-Type": "application/json"
+                          },
+                          body: JSON.stringify({
+                              razorpay_payment_id: response.razorpay_payment_id,
+                              razorpay_order_id: response.razorpay_order_id,
+                              razorpay_signature: response.razorpay_signature,
+                              address_id: addressID,
+                              coupon_code: document.getElementById("coupon").value,
+                              amount : Math.round(parseFloat(totalAmount)),
+                          })
+                      })
+                      .then(res => res.json())
+                      .then(resData => {
+                          if (resData.success) {
+                              window.location.href = resData.redirect;
+                          } else {
+                              alert("Payment failed verification.");
+                          }
+                      });
+                  }
+              };
+              const rzp = new Razorpay(options);
+              rzp.open();
+                });
+            }
+  });
+
+  const originalAmount = parseFloat(document.getElementById("totalAmount").value);
+  const finalAmountElem = document.getElementById("finalAmount");
+  const discountElem = document.getElementById("discountAmount");
+  const finalAmountInput = document.getElementById("finalAmountInput");
+  const couponSelect = document.getElementById("coupon");
+  const couponMsg = document.getElementById("couponMessage");
+
+  document.getElementById("applyCouponBtn").addEventListener("click", function () {
+    const selectedOption = couponSelect.selectedOptions[0];
+    const discount = parseFloat(selectedOption.getAttribute("data-discount") || 0);
+
+    if (!discount || couponSelect.value === "") {
+      alert("Please select a valid coupon.");
+      return;
+    }
+
+    const discountAmount = (originalAmount * discount) / 100;
+    const finalAmount = originalAmount - discountAmount;
+
+    discountElem.textContent = `₹${discountAmount.toFixed(2)}`;
+    finalAmountElem.textContent = `₹${finalAmount.toFixed(2)}`;
+    finalAmountInput.value = finalAmount.toFixed(2);
+    couponMsg.style.display = 'block';
+    couponMsg.textContent = `Coupon applied! You saved ₹${discountAmount.toFixed(2)}`;
+  });
+
+  document.getElementById("removeCouponBtn").addEventListener("click", function () {
+    couponSelect.value = "";
+    discountElem.textContent = "₹0.00";
+    finalAmountElem.textContent = `₹${originalAmount.toFixed(2)}`;
+    finalAmountInput.value = originalAmount.toFixed(2);
+    couponMsg.style.display = 'none';
+  });
+
+
+</script>
+
+
+
 </body>
 </html>

@@ -67,10 +67,12 @@ type Order struct{
 	PaymentID				string
 	OrderDate				time.Time   `gorm:"type:timestamp;default:CURRENT_TIMESTAMP"`
 	TotalTax				float64		`gorm:"not null"`
+	SubTotal 				float64
 	DiscountTotal			float64
 	ShippingFee				float64
 	TotalAmount				float64		`gorm:"not null"`
 	Status					string
+	PaymentMethod 			string 		
 	PaymentStatus			string 		
 	CreateAt				time.Time
 	BadgeClass 				string
@@ -96,6 +98,22 @@ type WishList struct {
 	UserID 		uint 		`gorm:"not null"`
 	ProductID 	uint 		`gorm:"not null"`
 	CreatedAt 	time.Time
+}
+
+type Coupons struct {
+	ID					uint 		`gorm:"primarykey;autoIncrement"`
+	Code 				string 		`gorm:"not null"`
+	Description			string 	
+	Discount			float64
+	IsActive			bool 
+	CreatedAt			time.Time
+}
+
+type UsedCoupon struct {
+	ID 				uint 		`gorm:"primarykey;autoIncrement"`
+	UserID 			uint 		`gorm:"not null"`
+	CouponID		uint 		`gorm:"not null"`
+	OrderID			uint 		`gorm:"not null"`
 }
 
 type Admin struct {
@@ -154,6 +172,7 @@ type Product_Variant struct {
 	Product_images		[]Product_image		`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductVariantID"`
 	CartItems			[]CartItem			`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
 	WishLists			[]WishList			`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
+	IsActive			bool      			`gorm:"default:true"`
 	DeletedAt			gorm.DeletedAt 		`gorm:"index"`
 }
 

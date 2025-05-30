@@ -50,11 +50,12 @@
                     <div class="col-6 col-md-7">
                         <div class="fw-bold">{{.ProductName}}</div>
                         Qty: {{.Quantity}}<br>
-                        Price: ₹{{printf "%.2f" .Price}}
-                        {{if gt .Discount 0}}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
+                        Price: ₹{{printf "%.2f" .Price}}<br>
+                        Tax: ₹{{printf "%.2f" .Tax}}<br>
+                        {{if gtf .Discount 0.0 }}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
                     </div>
                     <div class="col-3 col-md-3 text-end fw-bold">
-                        ₹{{printf "%.2f" (mulFloat .Price .Quantity)}}
+                        ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) .Tax)}}
                     </div>
                     </div>
                 </li>
@@ -72,11 +73,11 @@
         <div class="card-body">
           <div class="d-flex justify-content-between mb-2">
             <span>Subtotal</span>
-            <span>₹{{printf "%.2f" .Order.TotalAmount}}</span>
+            <span>₹{{printf "%.2f" .Order.SubTotal}}</span>
           </div>
           <div class="d-flex justify-content-between mb-2">
             <span>Total Discount</span>
-            <span>- ₹{{printf "%.2f" .Order.TotalDiscount}}</span>
+            <span>- ₹{{printf "%.2f" .Order.DiscountTotal}}</span>
           </div>
           <hr>
           <div class="d-flex justify-content-between fw-bold">
