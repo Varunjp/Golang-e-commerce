@@ -5,6 +5,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -90,6 +91,7 @@ func CheckOutOrder(c *gin.Context){
 	addressOption := c.PostForm("address_id")
 	paymentOption := c.PostForm("payment_method")
 	couponCode := c.PostForm("coupon_code")
+	isWallet := c.PostForm("use_wallet")
 
 	var addressID uint 
 	var orderitems []models.OrderItem
@@ -185,14 +187,35 @@ func CheckOutOrder(c *gin.Context){
 
 
 	}
-	
+
+	var finalAmount	float64
+	var walletUsed float64
+
+	if isWallet == "on"{
+
+		var wallet models.Wallet
+
+		if err := db.Db.Where("user_id = ?",userID).First(&wallet).Error; err != nil{
+			if err != gorm.ErrRecordNotFound{
+				c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Could not load wallet balance, please try again later"})
+				return 
+			}
+		}
+
+		orderTotal := total - discount
+		walletUsed = math.Min(wallet.Balance,orderTotal)
+		finalAmount = orderTotal - walletUsed
+
+	}else{
+		finalAmount = total - discount
+	}
 
 	order := models.Order{
 		UserID: uint(userID),
 		AddressID: addressID,
-		TotalAmount: total-discount,
+		TotalAmount: finalAmount,
 		SubTotal: total,
-		DiscountTotal: discount,
+		DiscountTotal: discount+walletUsed,
 		Status: "Processing",
 		PaymentMethod: paymentOption,
 		PaymentStatus: "Pending",
@@ -201,6 +224,11 @@ func CheckOutOrder(c *gin.Context){
 
 	if err := db.Db.Create(&order).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create order"})
+		return 
+	}
+
+	if err := helper.DebitWallet(uint(userID),walletUsed,order.ID,"Purchase order :"+strconv.Itoa(int(order.ID))); err != nil{
+		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to update wallet"})
 		return 
 	}
 
@@ -261,7 +289,16 @@ func CheckOutOrder(c *gin.Context){
 			return 
 		}
 
+
+		// remove from wishlist
+		var wishlist models.WishList
+
+		if err := db.Db.Where("user_id = ? AND product_id = ?",userID,item.ProductID).First(&wishlist).Error; err == nil{
+			db.Db.Delete(&wishlist)
+		}
+
 	}
+
 
 	if err := db.Db.Delete(&CartItems).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to clear cart items"})

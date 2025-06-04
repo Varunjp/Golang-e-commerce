@@ -70,6 +70,11 @@ func GetUrl(router *gin.Engine){
 	router.POST("/create-razorpay-order",middleware.AuthUserMiddlerware("user"),user.CreateRazorpayOrder)
 	router.POST("/payment/success",user.PaymentSuccess)
 
+	// User wishlist
+	router.GET("/user/add-wishlist/:id",middleware.AuthUserMiddlerware("user"),user.AddToWishlist)
+	router.GET("/user/remove-wishlist/:id",middleware.AuthUserMiddlerware("user"),user.RemoveWishlist)
+	router.GET("/user/wishlist",middleware.AuthUserMiddlerware("user"),user.WishlistPage)
+
 	// Demo
 	router.GET("/demo",user.DemoPage)
 
@@ -123,5 +128,11 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/coupons",middleware.AuthMiddlerware("admin"),admin.ListCoupons)
 	router.POST("/admin/coupons/add",middleware.AuthMiddlerware("admin"),admin.AddCoupon)
 	router.GET("/admin/coupons/toggle/:id",middleware.AuthMiddlerware("admin"),admin.ToggleCoupon)
+
+	// Admin wallet
+	router.GET("/admin/wallet-transactions",middleware.AuthMiddlerware("admin"),admin.WalletTransactions)
+	router.GET("/admin/refund-requests",middleware.AuthMiddlerware("admin"),admin.WalletRefunds)
+	router.POST("/admin/refund/approve",middleware.AuthMiddlerware("admin"),admin.WalletRefundApproval)
+	router.POST("/admin/refund/decline",middleware.AuthMiddlerware("admin"),admin.WalletRefundDecline)
 	
 }

@@ -274,6 +274,14 @@ func PaymentSuccess(c *gin.Context){
 			return 
 		}
 
+		
+		// delete from wishlist
+		var wishlist models.WishList
+
+		if err := db.Db.Where("user_id = ? AND product_id = ?",userID,item.ProductID).First(&wishlist).Error; err == nil{
+			db.Db.Delete(&wishlist)
+		}
+
 	}
 
 	if err := db.Db.Delete(&CartItems).Error; err != nil{

@@ -5,9 +5,11 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jung-kurt/gofpdf"
@@ -99,18 +101,32 @@ func ReturnOrder(c *gin.Context){
 
 	if err := db.Db.Where("order_id = ?",orderId).First(&couponUsed).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
-			c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to load coupon details","user":"done"})
-			return 
+
+			if err := db.Db.Delete(&couponUsed).Error; err != nil{
+				c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to update order please try again later"})
+				return 
+			}
 		}
 	}
 
-	if err := db.Db.Delete(&couponUsed).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to update order please try again later"})
-		return 
+	var walletTransaction models.WalletTransaction
+	if err := db.Db.Where("user_id = ? AND order_id = ?",order.UserID,orderId).First(&walletTransaction).Error; err != nil{
+		if err != gorm.ErrRecordNotFound {
+			log.Println(err)
+			c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to load wallet details"})
+			return 
+		}
 	}
-
-	order.Status = "Returned"
-	order.Reason = reason
+	
+	if walletTransaction.ID != 0 {
+		order.Status = "Refund is being processed"
+		order.Reason = reason
+		walletTransaction.RefundStatus = true
+	}else{
+		order.Status = "Returned"
+		order.Reason = reason
+	}
+	
 
 	if err := db.Db.Save(&order).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to return item","user":"done"})
@@ -121,6 +137,21 @@ func ReturnOrder(c *gin.Context){
 
 		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
 		db.Db.Delete(&models.OrderItem{},item.ID)
+	}
+
+	transaction := models.WalletTransaction{
+		UserID: order.UserID,
+		OrderID: uint(orderId),
+		Amount: math.Abs(walletTransaction.Amount),
+		Type: "Credit",
+		Description: reason,
+		CreatedAt: time.Now(),
+	}
+
+	if err := db.Db.Create(&transaction).Error; err != nil{
+		log.Println(err)
+		c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to create transaction"})
+		return 
 	}
 
 	c.Redirect(http.StatusSeeOther,"/user/orders")

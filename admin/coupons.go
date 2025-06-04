@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -35,6 +36,45 @@ func ListCoupons(c *gin.Context){
 			return 
 		}
 	}
+
+
+	// loading categories
+
+	var subcat []models.SubCategory
+	
+	type Response struct {
+		SubCategoryID 		int
+		SubCategoryName		string 
+		CategoryName		string 
+	}
+
+
+	if err := db.Db.Where("is_blocked = ?",false).Find(&subcat).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_addProduct.html",gin.H{"error":"Failed to load subcategory,please try again later"})
+		return 
+	}
+
+	response := make([]Response,len(subcat))
+
+	for i,subitem := range subcat {
+
+		var Category models.Category
+
+		if err := db.Db.Where("category_id = ?",subitem.CategoryID).First(&Category).Error; err != nil{
+			log.Println("Failed to load category details")
+			c.Redirect(http.StatusTemporaryRedirect,"/admin")
+			return 
+		}
+
+		response[i] = Response{
+			SubCategoryID: int(subitem.SubCategoryID),
+			SubCategoryName: subitem.SubCategoryName,
+			CategoryName: Category.CategoryName,
+		}
+
+	}
+
+
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
@@ -72,6 +112,7 @@ func ListCoupons(c *gin.Context){
 			"page":page,
 			"limit":limit,
 			"totalPages":totaPage,
+			"Subcategories":response,
 		})
 
 	}else{
@@ -98,6 +139,7 @@ func ListCoupons(c *gin.Context){
 			"page":page,
 			"limit":limit,
 			"totalPages":totalPages,
+			"Subcategories":response,
 		})
 
 	}
@@ -113,6 +155,7 @@ func AddCoupon(c *gin.Context){
 		Description 	string 		`form:"code" binding:"required"`
 		Discount 		float64 	`form:"discount" binding:"required"`
 		Active 			string 		`form:"active" binding:"required"`
+		Category 		string		`form:"subcategory_id" binding:"required"`
 	}
 
 
@@ -126,13 +169,31 @@ func AddCoupon(c *gin.Context){
 
 	isActive := input.Active == "true"
 
-	coupon := models.Coupons{
+	var coupon models.Coupons
+
+	if input.Category != ""{
+		catId,_ := strconv.Atoi(input.Category)
+
+		coupon = models.Coupons{
 		Code: input.Code,
 		Description: input.Description,
 		Discount: input.Discount,
 		IsActive: isActive,
 		CreatedAt: time.Now(),
+		CategoryID: uint(catId),
+		}
+	}else{
+
+		coupon = models.Coupons{
+		Code: input.Code,
+		Description: input.Description,
+		Discount: input.Discount,
+		IsActive: isActive,
+		CreatedAt: time.Now(),
+		CategoryID: 0,
+		}
 	}
+	
 
 	if err := db.Db.Create(&coupon).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Failed to add coupon: "+err.Error()})

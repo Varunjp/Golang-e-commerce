@@ -2,6 +2,7 @@ package user
 
 import (
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/models"
 	"net/http"
 	"strconv"
@@ -105,28 +106,50 @@ func ShowProductList(c *gin.Context){
 	}
 
 	formatted := make([]struct{
-		ID		uint
-		Name	string
-		Price	float64
-		DiscountedPrice	string 
-		ImageURL 	string
+		ID					uint
+		Name				string
+		Price				float64
+		DiscountedPrice		string 
+		ImageURL 			string
+		Wishlist 			bool 
 	},len(products))
+
+	tokenStr,errtok:= c.Cookie("JWT-User")
+	var userID float64
+
+	if errtok == nil {
+		_,userId,_ := helper.DecodeJWT(tokenStr)
+		userID = userId
+	}
+	
 
 	for i,p := range products{
 
 		var pro models.Product
 		var subCat models.SubCategory
 
-		db.Db.Where("product_id ? = ",p.ProductID).First(&pro)
-		db.Db.Where("sub_category_id = ",pro.SubCategoryID).First(&subCat)
+		db.Db.Where("product_id  = ?",p.ProductID).First(&pro)
+		db.Db.Where("sub_category_id = ?",pro.SubCategoryID).First(&subCat)
 
 		if !subCat.IsBlocked{
+
+			var wishlist models.WishList
+			isWishlist := false
+
+			if userID != 0 {
+				if err := db.Db.Where("user_id = ? AND product_id = ?",userID,p.ID).First(&wishlist).Error; err == nil{
+					isWishlist = true
+				}
+			}
+			
+
 			if p.Stock > 0 {
-				formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice string; ImageURL string}{
+				formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice string; ImageURL string; Wishlist bool}{
 					ID: p.ID,
 					Name: p.Variant_name,
 					Price: p.Price,
 					DiscountedPrice: "",
+					Wishlist: isWishlist,
 				}
 
 				if len(p.Product_images) > 0{

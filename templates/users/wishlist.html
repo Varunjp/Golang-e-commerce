@@ -1,0 +1,66 @@
+{{ template "header.html" . }}
+
+<div class="container mt-5">
+  <h3 class="mb-4">My Wishlist</h3>
+
+  <div class="row">
+    {{ if not .Products}}
+      <div class="col-12">
+        <p class="text-muted">Your wishlist is empty.</p>
+      </div>
+    {{ else }}
+      {{ range .Products }}
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <img src="/{{ .ImageURL }}" class="card-img-top" alt="{{ .Name }}">
+          <div class="card-body">
+            <h6 class="card-title">{{ .Name }}</h6>
+
+            <!-- Remove from wishlist icon -->
+            <a href="/user/remove-wishlist/{{ .ID }}" class="w-25 m-2 text-danger">
+              <i class="bi bi-star-fill"></i>
+            </a>
+
+            <p class="card-text">
+              <span class="text-danger fw-bold">₹{{ .Price }}</span>
+              {{ if .DiscountedPrice }}
+              <del class="text-muted">₹{{ .DiscountedPrice }}</del>
+              {{ end }}
+            </p>
+
+            <a href="/user/product/{{ .ID }}" class="btn btn-outline-primary w-100">View Details</a>
+          </div>
+        </div>
+      </div>
+      {{ end }}
+    {{ end }}
+  </div>
+
+  <!-- Pagination -->
+  {{ if gt .TotalPages 1 }}
+  <nav>
+    <ul class="pagination justify-content-center">
+      {{ if gt .Page 1 }}
+      <li class="page-item">
+        <a class="page-link" href="/user/wishlist?page={{ sub .Page 1 }}">&laquo;</a>
+      </li>
+      {{ end }}
+
+      {{ range $i := itere .TotalPages }}
+      <li class="page-item {{ if eq $i $.Page }}active{{ end }}">
+        <a class="page-link" href="/user/wishlist?page={{ $i }}">{{ $i }}</a>
+      </li>
+      {{ end }}
+
+      {{ if lt .Page .TotalPages }}
+      <li class="page-item">
+        <a class="page-link" href="/user/wishlist?page={{ add .Page 1 }}">&raquo;</a>
+      </li>
+      {{ end }}
+    </ul>
+  </nav>
+  {{ end }}
+</div>
+
+
+{{ template "footer.html" . }}

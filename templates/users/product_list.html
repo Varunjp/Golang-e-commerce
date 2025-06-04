@@ -58,6 +58,11 @@
             <img src="/{{ .ImageURL }}" class="card-img-top" alt="{{ .Name }}">
             <div class="card-body">
               <h6 class="card-title">{{ .Name }}</h6>
+              {{if .Wishlist}}
+              <a href="/user/remove-wishlist/{{ .ID }}" class=" w-25 m-2"><i class="bi bi-star-fill"></i></a>
+              {{else}}
+              <a href="/user/add-wishlist/{{ .ID }}" class=" w-25 m-2"><i class="bi bi-star"></i></a>
+              {{end}}
               <p class="card-text">
                 <span class="text-danger fw-bold">₹{{ .Price }}</span>
                 {{ if .DiscountedPrice }}
@@ -65,6 +70,7 @@
                 {{ end }}
               </p>
               <a href="/user/product/{{ .ID }}" class="btn btn-outline-primary w-100">View Details</a>
+              
             </div>
           </div>
         </div>

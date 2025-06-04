@@ -43,6 +43,8 @@ func DbInit(){
 		&models.OTPVerification{},
 		&models.Coupons{},
 		&models.UsedCoupon{},
+		&models.Wallet{},
+		&models.WalletTransaction{},
 	)
 
 	if autoerr != nil{

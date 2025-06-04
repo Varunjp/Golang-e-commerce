@@ -21,6 +21,7 @@
         <a class="nav-link" href="/admin/orders">Orders</a>
         <a class="nav-link" href="/admin/banners">Banners</a>
         <a class="nav-link active" href="/admin/coupons">Coupons</a>
+        <a class="nav-link" href="/admin/wallet-transactions">Wallet</a>
       </nav>
     </div>
 
@@ -52,6 +53,12 @@
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
+              <select name="subcategory_id" class="form-control w-25" required>
+                  <option value="">Category</option>
+                  {{range .Subcategories}}
+                    <option value="{{.SubCategoryID}}">{{.SubCategoryName}} ({{.CategoryName}})</option>
+                  {{end}}
+                </select>
               <button type="submit" class="btn btn-primary">Add</button>
             </form>
           </div>

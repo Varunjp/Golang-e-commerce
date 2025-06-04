@@ -37,6 +37,13 @@
               <h5 class="mb-0">Payment Method</h5>
             </div>
             <div class="card-body">
+
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="useWallet" name="use_wallet">
+                <label class="form-check-label" for="useWallet">Use Wallet Balance</label>
+                <div class="text-muted mt-1">Available Wallet Balance: ₹{{printf "%.2f" .WalletBalance}}</div>
+              </div>
+
               <div class="form-check mb-2">
                 <input class="form-check-input" type="radio" name="payment_method" value="cod" id="cod" required>
                 <label class="form-check-label" for="cod">Cash on Delivery</label>

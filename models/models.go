@@ -107,6 +107,7 @@ type Coupons struct {
 	Discount			float64
 	IsActive			bool 
 	CreatedAt			time.Time
+	CategoryID 			uint 		
 }
 
 type UsedCoupon struct {
@@ -114,6 +115,24 @@ type UsedCoupon struct {
 	UserID 			uint 		`gorm:"not null"`
 	CouponID		uint 		`gorm:"not null"`
 	OrderID			uint 		`gorm:"not null"`
+}
+
+type Wallet struct {
+	ID 				uint 		`gorm:"primarykey;autoIncrement"`
+	UserID 			uint 		`gorm:"uniqueIndex"`
+	Balance			float64     
+	UpdatedAt 		time.Time 
+}
+
+type WalletTransaction struct {
+	ID 				uint 		`gorm:"primarykey;autoIncrement"`
+	UserID 			uint 
+	OrderID 		uint 
+	Amount 			float64 	
+	Type 			string 
+	Description 	string 
+	RefundStatus	bool 		`gorm:"default:false"`
+	CreatedAt 		time.Time
 }
 
 type Admin struct {
