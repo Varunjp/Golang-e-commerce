@@ -20,8 +20,7 @@ type User struct{
 	Orders					[]Order						`gorm:"constraint:ONDELETE:CASCADE; foreignKey:UserID"`
 	ProfileImages			[]ProfileImage				`gorm:"constraint:ONDELETE:CASCADE; foreignKey:UserID"`
 	CartItems				[]CartItem					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
-	WishLists				[]WishList						`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
-
+	WishLists				[]WishList					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
 	DeletedAt 				gorm.DeletedAt	
 }
 

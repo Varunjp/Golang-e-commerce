@@ -67,8 +67,10 @@
                             <td>
                                 {{if eq .Status "Active"}}
                                 <a href="/admin/users/block/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Block">Block</a>
+                                <a href="/admin/users/delete/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Delete">Delete</a>
                                 {{ else }}
                                 <a href="/admin/users/unblock/{{ .ID }}" class="btn btn-sm btn-outline-warning" data-action="Unblock">Unblock</a>
+                                <a href="/admin/users/delete/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Delete">Delete</a>
                                 {{end}}
                             </td>
                         </tr>
@@ -136,7 +138,7 @@
       const action = btn.getAttribute('data-action');
       confirmText.textContent = `Are you sure you want to ${action.toLowerCase()} this user?`;
       confirmBtn.href = url;
-      confirmBtn.className = `btn btn-${action === 'Block' ? 'danger' : 'success'}`;
+      confirmBtn.className = `btn btn-${action === 'Block' || 'Delete' ? 'danger' : 'success'}`;
       confirmBtn.textContent = `Yes, ${action}`;
       confirmModal.show();
     });

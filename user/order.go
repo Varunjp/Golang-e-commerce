@@ -9,7 +9,6 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jung-kurt/gofpdf"
@@ -99,14 +98,15 @@ func ReturnOrder(c *gin.Context){
 
 	var couponUsed models.UsedCoupon
 
-	if err := db.Db.Where("order_id = ?",orderId).First(&couponUsed).Error; err != nil{
-		if err != gorm.ErrRecordNotFound{
+	if err := db.Db.Where("user_id = ? AND order_id = ?",order.UserID,orderId).First(&couponUsed).Error; err == nil{
 
-			if err := db.Db.Delete(&couponUsed).Error; err != nil{
-				c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to update order please try again later"})
-				return 
-			}
+		if err := db.Db.Delete(&models.UsedCoupon{},couponUsed.ID).Error; err != nil{
+			c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to update order please try again later"})
+			return 
 		}
+
+	}else{
+		log.Println(err)
 	}
 
 	var walletTransaction models.WalletTransaction
@@ -117,16 +117,42 @@ func ReturnOrder(c *gin.Context){
 			return 
 		}
 	}
+
+	if order.PaymentMethod != "cod"{
+		
+		walletTransaction := models.WalletTransaction{
+			UserID: order.UserID,
+			OrderID: order.ID,
+			Amount: order.TotalAmount,
+			Type: "Credit",
+			Description: "Refund",
+			RefundStatus: true,
+		}
+
+		db.Db.Create(&walletTransaction)
+	}
 	
-	if walletTransaction.ID != 0 {
+	if walletTransaction.ID != 0{
+
+		newTransaction := models.WalletTransaction{
+			UserID: walletTransaction.UserID,
+			OrderID: walletTransaction.OrderID,
+			Amount: walletTransaction.Amount,
+			Type: "Credit",
+			Description: "Refund request for "+strconv.Itoa(int(walletTransaction.ID)),
+			RefundStatus: true,
+		}
+
+		db.Db.Create(&newTransaction)
+	}
+	
+	if walletTransaction.ID != 0 || order.PaymentMethod != "cod"{
 		order.Status = "Refund is being processed"
 		order.Reason = reason
-		walletTransaction.RefundStatus = true
 	}else{
 		order.Status = "Returned"
 		order.Reason = reason
 	}
-	
 
 	if err := db.Db.Save(&order).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to return item","user":"done"})
@@ -139,20 +165,20 @@ func ReturnOrder(c *gin.Context){
 		db.Db.Delete(&models.OrderItem{},item.ID)
 	}
 
-	transaction := models.WalletTransaction{
-		UserID: order.UserID,
-		OrderID: uint(orderId),
-		Amount: math.Abs(walletTransaction.Amount),
-		Type: "Credit",
-		Description: reason,
-		CreatedAt: time.Now(),
-	}
+	// transaction := models.WalletTransaction{
+	// 	UserID: order.UserID,
+	// 	OrderID: uint(orderId),
+	// 	Amount: math.Abs(walletTransaction.Amount),
+	// 	Type: "Credit",
+	// 	Description: reason,
+	// 	CreatedAt: time.Now(),
+	// }
 
-	if err := db.Db.Create(&transaction).Error; err != nil{
-		log.Println(err)
-		c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to create transaction"})
-		return 
-	}
+	// if err := db.Db.Create(&transaction).Error; err != nil{
+	// 	log.Println(err)
+	// 	c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to create transaction"})
+	// 	return 
+	// }
 
 	c.Redirect(http.StatusSeeOther,"/user/orders")
 

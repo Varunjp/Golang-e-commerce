@@ -38,7 +38,7 @@ func WalletTransactions(c *gin.Context){
 			ID: transaction.ID,
 			UserName: user.Username,
 			Type: transaction.Type,
-			Amount: transaction.Amount,
+			Amount: math.Abs(transaction.Amount),
 			Description: transaction.Description,
 			CreatedAt: transaction.CreatedAt,
 		}
@@ -82,7 +82,7 @@ func WalletRefunds(c *gin.Context){
 				ID: transaction.ID,
 				UserName: user.Username,
 				OrderID: transaction.OrderID,
-				Amount: transaction.Amount,
+				Amount: math.Abs(transaction.Amount),
 				Description: transaction.Description,
 				CreatedAt: transaction.CreatedAt,
 			}
@@ -126,6 +126,7 @@ func WalletRefundApproval (c *gin.Context){
 
 
 func WalletRefundDecline (c *gin.Context){
+	
 	transactionId := c.PostForm("request_id")
 	reason := c.PostForm("note")
 	var transaction models.WalletTransaction
@@ -137,7 +138,7 @@ func WalletRefundDecline (c *gin.Context){
 
 	transaction.RefundStatus = false
 	transaction.Description = reason
-	transaction.Type = "Credit"
+	transaction.Type = "Refund declined"
 
 	if err := db.Db.Save(&transaction).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to save transaction, please try again later"})

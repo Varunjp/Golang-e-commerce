@@ -58,7 +58,8 @@ func ShowProductList(c *gin.Context){
 	query := db.Db.
     Preload("Product_images", func(db *gorm.DB) *gorm.DB {
         return db.Order("order_no ASC")
-    }).Where("is_active = ? AND deleted_at IS NULL",true).Model(&models.Product_Variant{})
+    }).Where("is_active = ? AND product_variants.deleted_at IS NULL",true).Model(&models.Product_Variant{})
+	
 
 	if len(categories) > 0 {
 		query = query.Joins("JOIN products ON products.product_id = product_variants.product_id").Where("products.sub_category_id IN ?",categories)
@@ -84,7 +85,7 @@ func ShowProductList(c *gin.Context){
 	var products []models.Product_Variant
 
 	query.Count(&total)
-	query.Offset(offset).Limit(limit).Find(&products)
+	query.Where("stock > 0").Offset(offset).Limit(limit).Find(&products)
 	
 
 	// db.Db.Model(&models.Product_Variant{}).Count(&total)

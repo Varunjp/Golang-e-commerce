@@ -47,7 +47,7 @@ func ListUsers(c *gin.Context){
 	
 	AdDb.Count(&total)
 
-	AdDb.Order("id desc").Limit(limit).Offset(offset).Find(&users)
+	AdDb.Where("deleted_at IS NULL").Order("id desc").Limit(limit).Offset(offset).Find(&users)
 
 	totalPages := int(math.Ceil(float64(total)/ float64(limit)))
 	
@@ -92,7 +92,7 @@ func FindUser (c *gin.Context){
 		return
 	}
 
-	adDb := db.Db.Where("LOWER(username) LIKE ? OR LOWER(email) LIKE ?", "%"+strings.ToLower(keyword)+"%","%"+strings.ToLower(keyword)+"%").Order("id desc").Limit(limit).Offset(offset).Find(&users)
+	adDb := db.Db.Where("deleted_at IS NULL AND LOWER(username) LIKE ? OR LOWER(email) LIKE ?", "%"+strings.ToLower(keyword)+"%","%"+strings.ToLower(keyword)+"%").Order("id desc").Limit(limit).Offset(offset).Find(&users)
 
 	if err := adDb.Error; err != nil{
 		c.JSON(http.StatusInternalServerError, gin.H{"error":"Database error"})
@@ -165,4 +165,20 @@ func UnblockUser(c *gin.Context){
 		return 
 	}
 	c.Redirect(http.StatusFound,"/admin/users-list")
+}
+
+func DeleteUser(c *gin.Context){
+	userID := c.Param("id")
+	var user models.User
+
+	if err := db.Db.Where("id = ?",userID).First(&user).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"user_list.html",gin.H{"error":"Could not remove user"})
+		return 
+	}
+
+	if err := db.Db.Delete(&user).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"user_list.html",gin.H{"error":"Could not remove user"})
+		return 
+	}
+	c.Redirect(http.StatusSeeOther,"/admin/users-list")
 }

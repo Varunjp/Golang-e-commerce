@@ -41,7 +41,8 @@
               <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="useWallet" name="use_wallet">
                 <label class="form-check-label" for="useWallet">Use Wallet Balance</label>
-                <div class="text-muted mt-1">Available Wallet Balance: ₹{{printf "%.2f" .WalletBalance}}</div>
+                <input type="hidden" id="walletBalance" value="{{.Balance}}">
+                <div class="text-muted mt-1">Available Wallet Balance: ₹{{printf "%.2f" .Balance}}</div>
               </div>
 
               <div class="form-check mb-2">
@@ -138,6 +139,7 @@
           // Get selected address ID
           const addressID = document.querySelector('input[name="address_id"]:checked')?.value;
           const totalAmount = document.getElementById("finalAmountInput").value;
+          
           if (!addressID) {
               alert("Please select an address.");
               return;
@@ -150,7 +152,8 @@
               body: JSON.stringify({ 
                 address_id: addressID,
                 amount : Math.round(parseFloat(totalAmount)*100),
-                coupon_code: document.getElementById("coupon").value
+                coupon_code: document.getElementById("coupon").value,
+                is_wallet: document.getElementById("useWallet").checked,
               }) // send address to backend
           })
           .then(res => res.json())
@@ -183,6 +186,7 @@
                               address_id: addressID,
                               coupon_code: document.getElementById("coupon").value,
                               amount : Math.round(parseFloat(totalAmount)),
+                              is_wallet: document.getElementById("useWallet").checked,
                           })
                       })
                       .then(res => res.json())
@@ -201,40 +205,91 @@
             }
   });
 
+  // const originalAmount = parseFloat(document.getElementById("totalAmount").value);
+  // const finalAmountElem = document.getElementById("finalAmount");
+  // const discountElem = document.getElementById("discountAmount");
+  // const finalAmountInput = document.getElementById("finalAmountInput");
+  // const couponSelect = document.getElementById("coupon");
+  // const couponMsg = document.getElementById("couponMessage");
+
+  // document.getElementById("applyCouponBtn").addEventListener("click", function () {
+  //   const selectedOption = couponSelect.selectedOptions[0];
+  //   const discount = parseFloat(selectedOption.getAttribute("data-discount") || 0);
+
+  //   if (!discount || couponSelect.value === "") {
+  //     alert("Please select a valid coupon.");
+  //     return;
+  //   }
+
+  //   const discountAmount = (originalAmount * discount) / 100;
+  //   const finalAmount = originalAmount - discountAmount;
+
+  //   discountElem.textContent = `₹${discountAmount.toFixed(2)}`;
+  //   finalAmountElem.textContent = `₹${finalAmount.toFixed(2)}`;
+  //   finalAmountInput.value = finalAmount.toFixed(2);
+  //   couponMsg.style.display = 'block';
+  //   couponMsg.textContent = `Coupon applied! You saved ₹${discountAmount.toFixed(2)}`;
+  // });
+
+  // document.getElementById("removeCouponBtn").addEventListener("click", function () {
+  //   couponSelect.value = "";
+  //   discountElem.textContent = "₹0.00";
+  //   finalAmountElem.textContent = `₹${originalAmount.toFixed(2)}`;
+  //   finalAmountInput.value = originalAmount.toFixed(2);
+  //   couponMsg.style.display = 'none';
+  // });
+
+
   const originalAmount = parseFloat(document.getElementById("totalAmount").value);
+  const walletCheckbox = document.getElementById("useWallet");
+  const walletBalance = parseFloat(document.getElementById("walletBalance").value);
+
   const finalAmountElem = document.getElementById("finalAmount");
-  const discountElem = document.getElementById("discountAmount");
   const finalAmountInput = document.getElementById("finalAmountInput");
+  const discountElem = document.getElementById("discountAmount");
   const couponSelect = document.getElementById("coupon");
   const couponMsg = document.getElementById("couponMessage");
 
-  document.getElementById("applyCouponBtn").addEventListener("click", function () {
-    const selectedOption = couponSelect.selectedOptions[0];
-    const discount = parseFloat(selectedOption.getAttribute("data-discount") || 0);
+  let couponDiscount = 0;
+  let walletUsed = 0;
 
-    if (!discount || couponSelect.value === "") {
-      alert("Please select a valid coupon.");
-      return;
+  function recalculateFinalAmount() {
+    const selectedOption = couponSelect.selectedOptions[0];
+    const discountPercent = parseFloat(selectedOption?.getAttribute("data-discount") || 0);
+
+    couponDiscount = discountPercent ? (originalAmount * discountPercent) / 100 : 0;
+
+    const afterCoupon = originalAmount - couponDiscount;
+
+    walletUsed = 0;
+    if (walletCheckbox.checked) {
+      walletUsed = Math.min(walletBalance, afterCoupon);
     }
 
-    const discountAmount = (originalAmount * discount) / 100;
-    const finalAmount = originalAmount - discountAmount;
+    const final = afterCoupon - walletUsed;
 
-    discountElem.textContent = `₹${discountAmount.toFixed(2)}`;
-    finalAmountElem.textContent = `₹${finalAmount.toFixed(2)}`;
-    finalAmountInput.value = finalAmount.toFixed(2);
-    couponMsg.style.display = 'block';
-    couponMsg.textContent = `Coupon applied! You saved ₹${discountAmount.toFixed(2)}`;
-  });
+    discountElem.textContent = `₹${(couponDiscount + walletUsed).toFixed(2)}`;
+    finalAmountElem.textContent = `₹${final.toFixed(2)}`;
+    finalAmountInput.value = final.toFixed(2);
 
+    if (discountPercent) {
+      couponMsg.style.display = 'block';
+      couponMsg.textContent = `Coupon applied! You saved ₹${couponDiscount.toFixed(2)}. Wallet used ₹${walletUsed.toFixed(2)}`;
+    } else if (walletUsed > 0) {
+      couponMsg.style.display = 'block';
+      couponMsg.textContent = `Wallet used ₹${walletUsed.toFixed(2)}.`;
+    } else {
+      couponMsg.style.display = 'none';
+    }
+  }
+
+  document.getElementById("applyCouponBtn").addEventListener("click", recalculateFinalAmount);
   document.getElementById("removeCouponBtn").addEventListener("click", function () {
     couponSelect.value = "";
-    discountElem.textContent = "₹0.00";
-    finalAmountElem.textContent = `₹${originalAmount.toFixed(2)}`;
-    finalAmountInput.value = originalAmount.toFixed(2);
-    couponMsg.style.display = 'none';
+    couponDiscount = 0;
+    recalculateFinalAmount();
   });
-
+  walletCheckbox.addEventListener("change", recalculateFinalAmount);
 
 </script>
 

@@ -4,7 +4,6 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -153,9 +152,6 @@ func UpdateCartItem(c *gin.Context){
 	var cart models.CartItem
 	var product models.Product_Variant
 
-	// delete
-	fmt.Println("Id of product :",productID," Action",action)
-
 	if err := db.Db.Where("id = ?",productID).First(&product).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Product details not found"})
 		return
@@ -167,13 +163,14 @@ func UpdateCartItem(c *gin.Context){
 	}
 
 	if action == "inc"{
-		if cart.Quantity + 1 < product.Stock && cart.Quantity + 1 <= Limit {
+		if cart.Quantity + 1 <= product.Stock && cart.Quantity + 1 <= Limit {
 			cart.Quantity++
 			db.Db.Save(&cart)
 		}
 	}else if action == "dec" {
 		if cart.Quantity == 1 {
-			c.JSON(http.StatusConflict,gin.H{"error":"Cannot reduce more"})
+			db.Db.Delete(&cart)
+			c.Redirect(http.StatusFound,"/user/cart")
 			return 
 		}else{
 			cart.Quantity--

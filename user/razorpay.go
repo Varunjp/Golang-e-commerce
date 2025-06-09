@@ -23,10 +23,13 @@ func CreateRazorpayOrder(c *gin.Context){
 
 
 	var req struct {
-		AddressID 	string	`json:"address_id"`
-		Amount 		float64  `json:"amount"`
-		CouponCode	string 	`json:"coupon_code"`
+		AddressID 	string		`json:"address_id"`
+		Amount 		float64  	`json:"amount"`
+		CouponCode	string 		`json:"coupon_code"`
+		IsWallet    bool    	`json:"is_wallet"`
 	}
+
+	
 
 	if err := c.ShouldBindJSON(&req); err != nil{
 		
@@ -42,18 +45,22 @@ func CreateRazorpayOrder(c *gin.Context){
 
 	couponCode := req.CouponCode
 
-	if err := db.Db.Where("user_id = ? AND coupon_id = ?",userID,couponCode).First(&usedcouponcheck).Error; err == nil{
+	if couponCode != ""{
+		
+		if err := db.Db.Where("user_id = ? AND coupon_id = ?",userID,couponCode).First(&usedcouponcheck).Error; err == nil{
+			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Coupon already used"})
+			return 
+		}
 
-		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Coupon already used"})
-		return 
 	}
-
+	
 
 	var orderitems []models.OrderItem
 	
 	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
 			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load user details please try again later"})
+			log.Println(err)
 			return 
 		}
 	}
@@ -63,16 +70,16 @@ func CreateRazorpayOrder(c *gin.Context){
 	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
 		
 		c.JSON(http.StatusNotFound,gin.H{"error":"Not able to load cart items"})
+		log.Println(err)
 		return 
 	}
-
 
 	for _,item := range CartItems{
 
 		itemCount := 0
 
 		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
-			c.JSON(http.StatusBadRequest,gin.H{"error":"Insufficient stock"})
+			c.JSON(http.StatusBadRequest,gin.H{"success":false})
 			return 
 		}
 
@@ -89,7 +96,6 @@ func CreateRazorpayOrder(c *gin.Context){
 			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"user":"done","error":"User exceeded product purchase limit"})
 			return 
 		}
-
 
 	}
 
@@ -128,6 +134,7 @@ func PaymentSuccess(c *gin.Context){
 		AddressID				string 		`json:"address_id"`	
 		CouponCode				string 		`json:"coupon_code"`
 		Amount 					float64  	`json:"amount"`
+		IsWallet    			bool    	`json:"is_wallet"`
 	}
 
 	if err := c.ShouldBindJSON(&payload); err != nil{
@@ -165,20 +172,24 @@ func PaymentSuccess(c *gin.Context){
 	}
 
 	var total float64
-
+	var totalTax float64
 	for _,item := range CartItems{
 		total += item.Price * float64(item.Quantity)
+		totalTax += item.Product.Tax * float64(item.Quantity)
 	}
 
 	addressintId,_ := strconv.Atoi(payload.AddressID)
 	var coupon models.Coupons
 
-	if err := db.Db.Where("id = ?",payload.CouponCode).First(&coupon).Error; err != nil{
-		if err != gorm.ErrRecordNotFound {
-			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load details"})
-			return 
+	if payload.CouponCode != ""{
+		if err := db.Db.Where("id = ?",payload.CouponCode).First(&coupon).Error; err != nil{
+			if err != gorm.ErrRecordNotFound {
+				c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load details"})
+				return 
+			}
 		}
 	}
+	
 
 	var discount float64
 	if coupon.ID != 0 {
@@ -204,6 +215,16 @@ func PaymentSuccess(c *gin.Context){
 	if err := db.Db.Create(&order).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create order"})
 		return 
+	}
+
+	if payload.IsWallet {
+		
+		err := helper.DebitWallet(uint(userID),((total+totalTax) - payload.Amount),order.ID,"Order debit")
+
+		if err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"success":false})
+			return 
+		}
 	}
 
 	couponCode := payload.CouponCode
@@ -288,6 +309,11 @@ func PaymentSuccess(c *gin.Context){
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to clear cart items"})
 		return 
 	}
+
+	// if err := helper.DebitWallet(uint(userID),order.TotalAmount,order.ID,"debit for order"); err != nil {
+	// 	c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed update wallet"})
+	// 	return
+	// }
 
 	c.JSON(http.StatusOK,gin.H{"success":true,"redirect": fmt.Sprintf("/order/confirmation/%d",order.ID)})
 }

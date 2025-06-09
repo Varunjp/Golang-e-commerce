@@ -21,15 +21,31 @@ func CheckOutPage(c *gin.Context) {
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 	var coupons []models.Coupons
+	var usedCoupon models.UsedCoupon
 
 	if err := db.Db.Preload("Product").Where("user_id = ?",userID).Find(&CartItems).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load data from DB"})
 		return 
 	}
 
-	if err := db.Db.Where("is_active = ?",true).Find(&coupons).Error; err != nil{
-		log.Println("Error while loading coupons :",err)
+	if err := db.Db.Where("user_id = ?",userID).First(&usedCoupon).Error; err != nil{
+		if err != gorm.ErrRecordNotFound {
+			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"failed to load coupon details"})
+			return 
+		}
 	}
+
+	if usedCoupon.ID != 0 {
+		if err := db.Db.Where("is_active = ? AND id != ?",true,usedCoupon.CouponID).Find(&coupons).Error; err != nil{
+		log.Println("Error while loading coupons :",err)
+		}
+	}else{
+		if err := db.Db.Where("is_active = ?",true).Find(&coupons).Error; err != nil{
+		log.Println("Error while loading coupons :",err)
+		}
+	}
+
+	
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&Addresses).Error; err != nil{
 
@@ -80,7 +96,24 @@ func CheckOutPage(c *gin.Context) {
 		totalamount += item.GrandTotal
 	}
 
-	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons})
+	var wallet models.Wallet
+
+	if err := db.Db.Where("user_id = ?",userID).First(&wallet).Error; err != nil{
+		if err == gorm.ErrRecordNotFound{
+			errCreate := helper.CreateWallet(uint(userID))
+			if errCreate == nil{
+				db.Db.Where("user_id = ?",userID).First(&wallet)
+			}else{
+				c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load wallet details, please try again later"})
+				return
+			}
+		}else{
+			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load wallet details, please try again later"})
+			return 
+		}
+	}
+
+	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance})
 
 }
 
@@ -227,10 +260,14 @@ func CheckOutOrder(c *gin.Context){
 		return 
 	}
 
-	if err := helper.DebitWallet(uint(userID),walletUsed,order.ID,"Purchase order :"+strconv.Itoa(int(order.ID))); err != nil{
-		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to update wallet"})
-		return 
+	if isWallet == "on" {
+		if err := helper.DebitWallet(uint(userID),walletUsed,order.ID,"Purchase order :"+strconv.Itoa(int(order.ID))); err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to update wallet"})
+			return 
+		}
 	}
+
+	
 
 	if couponCode != ""{
 		var coupon models.Coupons
@@ -304,7 +341,6 @@ func CheckOutOrder(c *gin.Context){
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to clear cart items"})
 		return 
 	}
-
 	
 
 	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.ID,"user":"done"})

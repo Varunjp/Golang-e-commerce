@@ -78,6 +78,27 @@
           </div>
         </div>
 
+        <!-- Wallet -->
+
+        <div class="card mb-4">
+          <div class="card-header">Wallet Balance</div>
+          <div class="card-body">
+            <h6>Wallet: {{ printf "%.2f" .Balance}}</h6>
+            <!-- {{range .Addresses}}
+              <div class="mb-2">
+                {{.AddressLine1}}<br>
+                {{.AddressLine2}}<br>
+                {{.City}}, {{.State}} - {{.PostalCode}}<br>
+                {{.Country}}
+              </div>
+            {{else}}
+              <p>No addresses available.</p>
+            {{end}} -->
+            
+          </div>
+        </div>
+
+
         <!-- Orders -->
         <div class="card">
           <div class="card-header"><a href="/user/orders" class="text-decoration-none text-dark">Order History</a></div>

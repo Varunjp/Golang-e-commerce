@@ -39,7 +39,7 @@ func UserProfilePage(c *gin.Context) {
 
 
 	if err := db.Db.Preload("Orders",func(db *gorm.DB)*gorm.DB{
-		return db.Order("id DESC")
+		return db.Order("id DESC").Limit(10)
 	}).Preload("Addresses").Preload("ProfileImages",func(db *gorm.DB)*gorm.DB{
 		return db.Order("id DESC")
 	}).Where("email = ? AND id = ?",email,id).First(&User).Error; err != nil{
@@ -54,12 +54,30 @@ func UserProfilePage(c *gin.Context) {
 		log.Println(err)
 	}
 
+	var wallet models.Wallet
+
+	if err := db.Db.Where("user_id = ?",id).First(&wallet).Error; err != nil{
+		if err == gorm.ErrRecordNotFound{
+			errCreate := helper.CreateWallet(uint(id))
+			if errCreate == nil{
+				db.Db.Where("user_id = ?",id).First(&wallet)
+			}else{
+				c.HTML(http.StatusInternalServerError,"user_profile.html",gin.H{"error":"Failed to load wallet details, please try again later"})
+				return
+			}
+		}else{
+			c.HTML(http.StatusInternalServerError,"user_profile.html",gin.H{"error":"Failed to load wallet details, please try again later"})
+			return 
+		}
+	}
+
 
 	c.HTML(http.StatusOK,"user_profile.html",gin.H{
 		"user": User,
 		"Image" : image.ImageUrl,
 		"Addresses": User.Addresses,
 		"Orders": User.Orders,
+		"Balance":wallet.Balance,
 	})
 
 }

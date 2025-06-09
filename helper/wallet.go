@@ -3,10 +3,26 @@ package helper
 import (
 	db "first-project/DB"
 	"first-project/models"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
 )
+
+func CreateWallet(userID uint) error {
+	
+	wallet := models.Wallet{
+		UserID: userID,
+		Balance: 0.0,
+	}
+
+	if err := db.Db.Create(&wallet).Error; err != nil{
+		log.Println(err)
+		return err 
+	}
+
+	return nil
+}
 
 func CreditWallet(userId uint, amount float64, reason string) error {
 
@@ -39,6 +55,7 @@ func DebitWallet(userId uint, amount float64, orderID uint,reason string) error 
 		UserID: userId,
 		Amount: -amount,
 		Type: "Debit",
+		OrderID: orderID,
 		Description: reason,
 		CreatedAt: time.Now(),
 	}

@@ -29,7 +29,7 @@ func Login(c * gin.Context){
 	}
 
 	var user models.User
-	if err := db.Db.Where("email = ?",input.Email).First(&user).Error; err != nil{
+	if err := db.Db.Where("email = ? AND deleted_at IS NULL",input.Email).First(&user).Error; err != nil{
 		c.HTML(http.StatusBadRequest,"userLogin.html",gin.H{"error":"User not found"})
 		return 
 	}

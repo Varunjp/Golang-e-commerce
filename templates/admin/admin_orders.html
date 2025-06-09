@@ -80,11 +80,43 @@
 
       <div class="container py-3">
         <!-- Search -->
-        <form method="get" action="/admin/orders" class="d-flex mb-3">
+        <!-- <form method="get" action="/admin/orders" class="d-flex mb-3">
           <input type="text" name="search" class="form-control me-2" placeholder="Search by Order ID or Username" value="{{ .search }}">
           <button type="submit" class="btn btn-outline-light me-2">Search</button>
           <a href="/admin/orders" class="btn btn-secondary">Clear</a>
+        </form> -->
+
+        <!-- filter -->
+
+        <form method="GET" action="/admin/orders" class="row g-3 mb-4">
+          <div class="col-md-3">
+            <input type="text" class="form-control" name="order_id" placeholder="Order ID" value="{{.Filters.OrderID}}">
+          </div>
+          <div class="col-md-3">
+            <input type="text" class="form-control" name="user_name" placeholder="User Name" value="{{.Filters.UserName}}">
+          </div>
+          <div class="col-md-3">
+            <input type="date" class="form-control" name="start_date" value="{{.Filters.StartDate}}">
+          </div>
+          <div class="col-md-3">
+            <input type="date" class="form-control" name="end_date" value="{{.Filters.EndDate}}">
+          </div>
+          <div class="col-md-3">
+            <select name="status" class="form-select">
+              <option value="">-- Order Status --</option>
+              <option value="Pending" {{if eq .Filters.Status "Pending"}}selected{{end}}>Pending</option>
+              <option value="Processing" {{if eq .Filters.Status "Processing"}}selected{{end}}>Processing</option>
+              <option value="Delivered" {{if eq .Filters.Status "Delivered"}}selected{{end}}>Delivered</option>
+              <option value="Returned" {{if eq .Filters.Status "Returned"}}selected{{end}}>Returned</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-dark w-100">Search</button>
+          </div>
+          <a href="/admin/orders" class="btn btn-secondary">Clear</a>
+          
         </form>
+
 
         <!-- Table -->
         <div class="card card-dark p-3">

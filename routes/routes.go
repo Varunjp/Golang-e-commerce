@@ -93,6 +93,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/users",middleware.AuthMiddlerware("admin"),admin.FindUser)
 	router.GET("/admin/users/block/:id",middleware.AuthMiddlerware("admin"),admin.BlockUser)
 	router.GET("/admin/users/unblock/:id",middleware.AuthMiddlerware("admin"),admin.UnblockUser)
+	router.GET("/admin/users/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteUser)
 
 	// Admin categories
 	router.GET("/admin/categories",middleware.AuthMiddlerware("admin"),admin.ViewCategory)
@@ -134,5 +135,9 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/refund-requests",middleware.AuthMiddlerware("admin"),admin.WalletRefunds)
 	router.POST("/admin/refund/approve",middleware.AuthMiddlerware("admin"),admin.WalletRefundApproval)
 	router.POST("/admin/refund/decline",middleware.AuthMiddlerware("admin"),admin.WalletRefundDecline)
+
+	// Admin reports
+	router.GET("/admin/reports",middleware.AuthMiddlerware("admin"),admin.SalesReportPage)
+	router.POST("/admin/reports/download",middleware.AuthMiddlerware("admin"),admin.DownloadSalesReport)
 	
 }

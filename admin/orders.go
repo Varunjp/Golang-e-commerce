@@ -28,6 +28,11 @@ func AdminOrdersPage(c *gin.Context){
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
+	orderId := c.Query("order_id")
+	username := c.Query("user_name")
+	startdate := c.Query("start_date")
+	enddate := c.Query("end_date")
+	orderStatus := c.Query("status")
 
 	page, err := strconv.Atoi(pageStr)
 
@@ -42,15 +47,44 @@ func AdminOrdersPage(c *gin.Context){
 	}
 
 	offset := (page - 1) * limit
+	var total int64
 
-	var total int
+	// adding query - filters
 
-	if err := db.Db.Preload("OrderItems").Order("id DESC").Offset(offset).Limit(limit).Find(&Orders).Error; err != nil{
+	dbQuery := db.Db.Preload("OrderItems",func(db *gorm.DB) *gorm.DB{
+		return db.Unscoped()
+	}).Model(&models.Order{}).Order("create_at DESC")
+	
+	
+
+	if orderId != ""{
+		dbQuery =dbQuery.Where("id = ?",orderId)
+	}
+
+	if username != ""{
+		dbQuery = dbQuery.Joins("JOIN users ON users.id = orders.user_id").Where("users.username ILIKE ?","%"+username+"%")
+	}
+
+	if startdate != "" && enddate != ""{
+		dbQuery = dbQuery.Where("orders.create_at BETWEEN ? AND ?", startdate+" 00:00:00", enddate+" 23:59:59")
+	}else if startdate != ""{
+		dbQuery = dbQuery.Where("orders.create_at >= ?", startdate+" 00:00:00")
+	}else if enddate != ""{
+		dbQuery = dbQuery.Where("orders.create_at <= ?", enddate+" 23:59:59")
+	}
+
+	if orderStatus != ""{
+		dbQuery = dbQuery.Where("orders.status = ?",orderStatus)
+	}
+
+	//
+
+	dbQuery.Count(&total)
+
+	if err := dbQuery.Order("id DESC").Offset(offset).Limit(limit).Find(&Orders).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"admin_orders.html",gin.H{"error":"Failed to load orders list, please try again later"})
 		return 
 	}
-
-	total = len(Orders)
 
 	if total == 0 {
 		c.HTML(http.StatusNotFound,"admin_orders.html",gin.H{"error":"No orders to be found"})
@@ -62,7 +96,7 @@ func AdminOrdersPage(c *gin.Context){
 	for i, order := range Orders{
 
 		itemcount := 0
-
+		
 		for _,item := range order.OrderItems{
 			itemcount += item.Quantity
 		}
@@ -87,7 +121,7 @@ func AdminOrdersPage(c *gin.Context){
 	session := sessions.Default(c)
 	name := session.Get("name").(string)
 
-	totalPages := int(math.Ceil(float64(total)/ float64(limit)))
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	c.HTML(http.StatusOK,"admin_orders.html",gin.H{
 		"user":name,
@@ -95,6 +129,13 @@ func AdminOrdersPage(c *gin.Context){
 		"page":page,
 		"totalPages":totalPages,
 		"limit":limit,
+		"Filters": gin.H{
+			"OrderID": orderId,
+			"UserName": username,
+			"StartDate": startdate,
+			"EndDate": enddate,
+			"Status": orderStatus,
+		},
 	})
 }
 
