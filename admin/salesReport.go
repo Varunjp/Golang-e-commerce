@@ -5,7 +5,9 @@ import (
 	db "first-project/DB"
 	"first-project/models"
 	"fmt"
+	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +16,25 @@ import (
 )
 
 func SalesReportPage(c *gin.Context){
+
+	// Pagination
+	pageStr := c.DefaultQuery("page","1")
+	limitStr := c.DefaultQuery("limit","10")
+
+	page, err := strconv.Atoi(pageStr)
+
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+
+	if err != nil || limit < 1{
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+	var total int64
 	
 	// filters
 	rangeType := c.Query("filter")
@@ -53,7 +74,11 @@ func SalesReportPage(c *gin.Context){
 	
 	var orders []models.Order
 
-	if err := db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ?",start,end).Order("id DESC").Find(&orders).Error; err != nil{
+	dbFullordes := db.Db.Model(&models.Order{})
+
+	dbFullordes.Count(&total)
+
+	if err := db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ?",start,end).Order("id DESC").Limit(limit).Offset(offset).Find(&orders).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
 			c.HTML(http.StatusInternalServerError,"sales_report.html",gin.H{"error":"Could not load any orders, please try again later"})
 			return 
@@ -74,7 +99,7 @@ func SalesReportPage(c *gin.Context){
 	ResponseOrders := make([]response,len(orders))
 
 	totalSales := 0.0
-	totalOrders := len(orders)
+	totalOrders := int(total)
 	totalDiscount := 0.0
 	totalProducts := 0
 
@@ -101,6 +126,7 @@ func SalesReportPage(c *gin.Context){
 		}
 	}
 
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 	
 
 	c.HTML(http.StatusOK,"sales_report.html",gin.H{
@@ -112,6 +138,9 @@ func SalesReportPage(c *gin.Context){
 		"selectedRange":rangeType,
 		"startDate":start.Format("2006-01-02"),
 		"endDate":end.Format("2006-01-02"),
+		"page": page,
+		"totalPages":totalPages,
+		"limit":limit,
 	})
 
 }

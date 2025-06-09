@@ -5,6 +5,7 @@ import (
 	"first-project/models"
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,6 +13,25 @@ import (
 )
 
 func WalletTransactions(c *gin.Context){
+
+	pageStr := c.DefaultQuery("page","1")
+	limitStr := c.DefaultQuery("limit","10")
+
+	page, err := strconv.Atoi(pageStr)
+
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+
+	if err != nil || limit < 1{
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+	var total int64
+
 	
 	var WalletTransactions []models.WalletTransaction
 	type response struct{
@@ -23,13 +43,18 @@ func WalletTransactions(c *gin.Context){
 		CreatedAt 	time.Time 
 	}
 
+	dbOrder := db.Db.Model(&models.WalletTransaction{})
 
-	if err := db.Db.Order("id DESC").Find(&WalletTransactions).Error; err != nil{
+	dbOrder.Count(&total)
+
+	if err := db.Db.Order("id DESC").Limit(limit).Offset(offset).Find(&WalletTransactions).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Could not transaction details, please try again later"})
 		return 
 	}
 
 	ResponseTransactions := make([]response,len(WalletTransactions))
+
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	for i, transaction := range WalletTransactions {
 		var user models.User
@@ -44,7 +69,12 @@ func WalletTransactions(c *gin.Context){
 		}
 	}
 
-	c.HTML(http.StatusOK,"wallet.html",gin.H{"transactions":ResponseTransactions})
+	c.HTML(http.StatusOK,"wallet.html",gin.H{
+		"transactions":ResponseTransactions,
+		"page":page,
+		"totalPages":totalPages,
+		"limit":limit,
+		})
 
 }
 

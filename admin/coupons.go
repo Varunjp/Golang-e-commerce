@@ -235,3 +235,14 @@ func ToggleCoupon(c *gin.Context){
 
 	}
 }
+
+func DeleteCoupon(c *gin.Context){
+	id := c.Param("id")
+
+	if err := db.Db.Delete(&models.Coupons{},id).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Failed to delete coupon"})
+		return 
+	}
+
+	c.Redirect(http.StatusSeeOther,"/admin/coupons")
+}

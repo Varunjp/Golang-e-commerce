@@ -478,6 +478,11 @@ func UpdateProduct(c *gin.Context){
 		return
 	}
 
+	if ProductStock < 1 {
+		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Product stock cannot be updated below 1"})
+		return 
+	}
+
 	if err := db.Db.Where("product_id = ?", Product_variant.ProductID).First(&Product).Error;err != nil{
 		c.String(http.StatusNotFound,"Error loading product detail from DB: %v",err)
 		return

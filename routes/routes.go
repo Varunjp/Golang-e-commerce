@@ -129,6 +129,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/coupons",middleware.AuthMiddlerware("admin"),admin.ListCoupons)
 	router.POST("/admin/coupons/add",middleware.AuthMiddlerware("admin"),admin.AddCoupon)
 	router.GET("/admin/coupons/toggle/:id",middleware.AuthMiddlerware("admin"),admin.ToggleCoupon)
+	router.GET("admin/coupons/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteCoupon)
 
 	// Admin wallet
 	router.GET("/admin/wallet-transactions",middleware.AuthMiddlerware("admin"),admin.WalletTransactions)

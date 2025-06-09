@@ -90,10 +90,11 @@
               <td>{{ if .IsActive }}Active{{ else }}Inactive{{ end }}</td>
               <td>
                 {{ if .IsActive }}
-                <a href="/admin/coupons/toggle/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Deactivate">Deactivate</a>
+                <a href="/admin/coupons/toggle/{{ .ID }}" class="btn btn-sm btn-outline-warning" data-action="Deactivate">Deactivate</a>
                 {{ else }}
                 <a href="/admin/coupons/toggle/{{ .ID }}" class="btn btn-sm btn-outline-success" data-action="Activate">Activate</a>
                 {{ end }}
+                <a href="/admin/coupons/delete/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Delete">Delete</a>
               </td>
             </tr>
             {{ end }}
@@ -159,7 +160,7 @@
       const action = btn.getAttribute('data-action');
       confirmText.textContent = `Are you sure you want to ${action.toLowerCase()} this coupon?`;
       confirmBtn.href = url;
-      confirmBtn.className = `btn btn-${action === 'Deactivate' ? 'danger' : 'success'}`;
+      confirmBtn.className = `btn btn-${action === 'Deactivate' || 'Delete' ? 'danger' : 'success'}`;
       confirmBtn.textContent = `Yes, ${action}`;
       confirmModal.show();
     });

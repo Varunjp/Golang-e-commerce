@@ -35,15 +35,15 @@ func CheckOutPage(c *gin.Context) {
 		}
 	}
 
-	if usedCoupon.ID != 0 {
-		if err := db.Db.Where("is_active = ? AND id != ?",true,usedCoupon.CouponID).Find(&coupons).Error; err != nil{
-		log.Println("Error while loading coupons :",err)
-		}
-	}else{
-		if err := db.Db.Where("is_active = ?",true).Find(&coupons).Error; err != nil{
-		log.Println("Error while loading coupons :",err)
-		}
-	}
+	// if usedCoupon.ID != 0 {
+	// 	if err := db.Db.Where("is_active = ? AND id != ?",true,usedCoupon.CouponID).Find(&coupons).Error; err != nil{
+	// 	log.Println("Error while loading coupons :",err)
+	// 	}
+	// }else{
+	// 	if err := db.Db.Where("is_active = ?",true).Find(&coupons).Error; err != nil{
+	// 	log.Println("Error while loading coupons :",err)
+	// 	}
+	// }
 
 	
 
@@ -69,6 +69,8 @@ func CheckOutPage(c *gin.Context) {
 		GrandTotal		float64
 	}
 
+	subCatID := make([]int,0)
+
 	for _,item := range CartItems{
 
 		res := helper.ValidateProduct(item.ProductID,item.Quantity)
@@ -86,9 +88,27 @@ func CheckOutPage(c *gin.Context) {
 				GrandTotal: (item.Price * float64(item.Quantity))+(item.Product.Tax*float64(item.Quantity)),
 			})
 
+			var tempProduct models.Product_Variant
+			db.Db.Preload("Product").Where("id = ?",item.ProductID).First(&tempProduct)
+			subCatID = append(subCatID, int(tempProduct.Product.SubCategoryID))
 		}
 
 	}
+
+	dbcoupons := db.Db.Model(&models.Coupons{}).Where("is_active = ?",true)
+	dbcoupons = dbcoupons.Where("category_id IN ? OR category_id is NULL",subCatID)
+
+	if usedCoupon.ID != 0 {
+		if err := dbcoupons.Where("id != ?",usedCoupon.CouponID).Find(&coupons).Error; err != nil{
+		log.Println("Error while loading coupons :",err)
+		}
+	}else{
+		if err := dbcoupons.Find(&coupons).Error; err != nil{
+		log.Println("Error while loading coupons :",err)
+		}
+	}
+
+
 
 	var totalamount float64
 
