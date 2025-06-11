@@ -154,6 +154,8 @@ func AddCoupon(c *gin.Context){
 		Code 			string 		`form:"code" binding:"required"`
 		Description 	string 		`form:"code" binding:"required"`
 		Discount 		float64 	`form:"discount" binding:"required"`
+		MinAmount		float64		`form:"min_amount" binding:"required"`
+		MaxAmount 		float64 	`form:"max_amount" binding:"required"`
 		Active 			string 		`form:"active" binding:"required"`
 		Category 		string		`form:"subcategory_id" binding:"required"`
 	}
@@ -178,6 +180,8 @@ func AddCoupon(c *gin.Context){
 		Code: input.Code,
 		Description: input.Description,
 		Discount: input.Discount,
+		MinAmount: input.MinAmount,
+		MaxAmount: input.MaxAmount,
 		IsActive: isActive,
 		CreatedAt: time.Now(),
 		CategoryID: uint(catId),
@@ -188,6 +192,8 @@ func AddCoupon(c *gin.Context){
 		Code: input.Code,
 		Description: input.Description,
 		Discount: input.Discount,
+		MinAmount: input.MinAmount,
+		MaxAmount: input.MaxAmount,
 		IsActive: isActive,
 		CreatedAt: time.Now(),
 		CategoryID: 0,

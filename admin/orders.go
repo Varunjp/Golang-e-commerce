@@ -2,6 +2,7 @@ package admin
 
 import (
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/models"
 	"log"
 	"math"
@@ -9,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -118,8 +118,16 @@ func AdminOrdersPage(c *gin.Context){
 
 	}
 
-	session := sessions.Default(c)
-	name := session.Get("name").(string)
+	tokenStr,_ := c.Cookie("JWT-Admin")
+	_,userId,_ := helper.DecodeJWT(tokenStr)
+	var AdminUser models.Admin
+
+	if err := db.Db.Where("id = ?",userId).First(&AdminUser).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Please login again"})
+		return 
+	}
+
+	name := AdminUser.Username
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 

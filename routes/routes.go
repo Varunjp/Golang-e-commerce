@@ -56,6 +56,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/orders",middleware.AuthUserMiddlerware("user"),user.ListOrders)
 	router.POST("/user/cancel-order",middleware.AuthUserMiddlerware("user"),user.ReturnOrder)
 	router.GET("/user/order/:id",middleware.AuthUserMiddlerware("user"),user.OrderItems)
+	router.POST("/user/cancel-item",middleware.AuthUserMiddlerware("user"),user.CancelItem)
 
 
 	// User checkout

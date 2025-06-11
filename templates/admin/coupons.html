@@ -44,11 +44,36 @@
               <a href="/admin/coupons" class="btn btn-secondary">Clear</a>
             </form>
           </div>
-          <div class="col-md-6">
+          <!-- <div class="col-md-6">
             <form method="post" action="/admin/coupons/add" class="d-flex justify-content-end gap-2">
               <input type="text" name="code" class="form-control w-25" placeholder="Code" required>
               <input type="text" name="description" class="form-control w-25" placeholder="Description" required>
               <input type="number" name="discount" class="form-control w-25" placeholder="Discount %" min="0" max="100" required>
+              <input type="number" name="min_amount" class="form-control w-25" placeholder="Min amount" required>
+              <input type="number" name="max_amount" class="form-control w-25" placeholder="Max amount" required>
+              <select name="active" class="form-control w-25" required>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
+              <select name="subcategory_id" class="form-control w-25" required>
+                  <option value="">Category</option>
+                  {{range .Subcategories}}
+                    <option value="{{.SubCategoryID}}">{{.SubCategoryName}} ({{.CategoryName}})</option>
+                  {{end}}
+                </select>
+              <button type="submit" class="btn btn-primary">Add</button>
+            </form>
+          </div> -->
+        </div>
+
+        <div class="row mb-4">
+          <div class="col-md-12">          
+            <form method="post" action="/admin/coupons/add" class="d-flex justify-content-end gap-2">
+              <input type="text" name="code" class="form-control w-25" placeholder="Code" required>
+              <input type="text" name="description" class="form-control w-25" placeholder="Description" required>
+              <input type="number" name="discount" class="form-control w-25" placeholder="Discount %" min="0" max="100" required>
+              <input type="number" name="min_amount" class="form-control w-25" placeholder="Min amount" required>
+              <input type="number" name="max_amount" class="form-control w-25" placeholder="Max amount" required>
               <select name="active" class="form-control w-25" required>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
@@ -76,6 +101,8 @@
               <th>Code</th>
               <th>Description</th>
               <th>Discount (%)</th>
+              <th>Min amount</th>
+              <th>Max amount</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -87,6 +114,8 @@
               <td>{{ .Code }}</td>
               <td>{{ .Description }}</td>
               <td>{{ .Discount }}</td>
+              <td>{{ .MinAmount}}</td>
+              <td>{{ .MaxAmount}}</td>
               <td>{{ if .IsActive }}Active{{ else }}Inactive{{ end }}</td>
               <td>
                 {{ if .IsActive }}

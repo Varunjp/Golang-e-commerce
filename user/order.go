@@ -165,21 +165,6 @@ func ReturnOrder(c *gin.Context){
 		db.Db.Delete(&models.OrderItem{},item.ID)
 	}
 
-	// transaction := models.WalletTransaction{
-	// 	UserID: order.UserID,
-	// 	OrderID: uint(orderId),
-	// 	Amount: math.Abs(walletTransaction.Amount),
-	// 	Type: "Credit",
-	// 	Description: reason,
-	// 	CreatedAt: time.Now(),
-	// }
-
-	// if err := db.Db.Create(&transaction).Error; err != nil{
-	// 	log.Println(err)
-	// 	c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to create transaction"})
-	// 	return 
-	// }
-
 	c.Redirect(http.StatusSeeOther,"/user/orders")
 
 }
@@ -187,21 +172,30 @@ func ReturnOrder(c *gin.Context){
 func OrderItems(c *gin.Context){
 
 	orderID := c.Param("id")
-	var OrderItems []models.OrderItem
 	var Order models.Order
+	var address models.Address
 
 	type Response struct {
+		ID 				uint 
 		ImageURL		string
 		ProductName		string
 		Quantity		int
+		Status 			string 
 		Price 			float64
 		Discount		float64
 		Tax 			float64
 	}
 	
 	
-	if err := db.Db.Where("id = ?",orderID).First(&Order).Error; err != nil{
+	if err := db.Db.Preload("OrderItems",func(db *gorm.DB)*gorm.DB{
+		return db.Unscoped()
+	}).Where("id = ?",orderID).First(&Order).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":"Unable to find order details"})
+		return 
+	}
+
+	if err := db.Db.Where("address_id = ?",Order.AddressID).First(&address).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
 		return 
 	}
 
@@ -218,14 +212,14 @@ func OrderItems(c *gin.Context){
 	}
 
 
-	if err := db.Db.Where("order_id = ?",orderID).Order("id DESC").Find(&OrderItems).Error; err != nil{
-		c.HTML(http.StatusBadRequest,"orderDetails.html",gin.H{"error":"Order items not found"})
-		return 
-	}
+	// if err := db.Db.Where("order_id = ?",orderID).Order("id DESC").Find(&OrderItems).Error; err != nil{
+	// 	c.HTML(http.StatusBadRequest,"orderDetails.html",gin.H{"error":"Order items not found"})
+	// 	return 
+	// }
 
-	response := make([]Response,len(OrderItems))
+	response := make([]Response,len(Order.OrderItems))
 
-	for i, item := range OrderItems{
+	for i, item := range Order.OrderItems{
 		
 		var Product models.Product_Variant
 		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
@@ -237,18 +231,22 @@ func OrderItems(c *gin.Context){
 
 		if len(Product.Product_images) != 0{
 			response[i] = Response{
+				ID: item.ID,
 				ProductName: Product.Variant_name,
 				ImageURL: Product.Product_images[0].Image_url,
 				Quantity: item.Quantity,
+				Status: item.Status,
 				Price: item.Price,
 				Discount: 0.0,
 				Tax: Product.Tax,
 			}
 		}else{
 			response[i] = Response{
+				ID: item.ID,
 				ProductName: Product.Variant_name,
 				ImageURL: "",
 				Quantity: item.Quantity,
+				Status: item.Status,
 				Price: item.Price,
 				Discount: 0.0,
 				Tax: Product.Tax,
@@ -259,10 +257,42 @@ func OrderItems(c *gin.Context){
 
 	c.HTML(http.StatusOK,"orderDetails.html",gin.H{
 		"OrderItems":response,
+		"address":address,
 		"Order": Order,
 		"user": "done",
 
 	})
+
+}
+
+func CancelItem (c *gin.Context){
+	orderID := c.PostForm("order_id")
+	itemId := c.PostForm("item_id")
+	var Order models.Order
+
+	if err := db.Db.Where("id = ?",orderID).First(&Order).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":"Failed to load order details,please try again later."})
+		return 
+	}
+
+	if Order.PaymentMethod != "cod" {
+		err := helper.ItemCancelOnline(orderID,itemId)
+
+		if err != nil{
+			c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
+			return 
+		}
+	}else{
+		err := helper.ItemCancelCod(orderID,itemId)
+		if err != nil{
+			c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
+			return 
+		}
+	}
+
+	
+
+	c.Redirect(http.StatusSeeOther,"/user/order/"+orderID)
 
 }
 

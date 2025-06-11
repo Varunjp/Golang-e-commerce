@@ -88,6 +88,7 @@ type OrderItem struct {
 	Quantity	int 
 	Price 		float64	`gorm:"not null"`
 	Discount 	float64	
+	Status 		string
 	Order 		Order	`gorm:"constraint:ONDELETE:CASCADE"`
 	DeletedAt 	gorm.DeletedAt
 }
@@ -104,6 +105,8 @@ type Coupons struct {
 	Code 				string 		`gorm:"not null"`
 	Description			string 	
 	Discount			float64
+	MinAmount 			float64
+	MaxAmount			float64
 	IsActive			bool 
 	CreatedAt			time.Time
 	CategoryID 			uint 		

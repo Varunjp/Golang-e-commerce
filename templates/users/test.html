@@ -1,50 +1,32 @@
-{{ template "header.html" . }}
-
-<div class="container mt-5 text-white">
-  <h3 class="mb-4">Your Cart</h3>
-  <div class="row">
-    <div class="col-md-8">
-      {{ range .CartItems }}
-      <div class="card card-dark mb-3">
-        <div class="row g-0">
-          <div class="col-md-2">
-            <img src="/{{ .ImageURL }}" class="img-fluid rounded-start" alt="{{ .Name }}">
-          </div>
-          <div class="col-md-7">
-            <div class="card-body">
-              <h5 class="card-title">{{ .Name }}</h5>
-              <p class="card-text">Size: {{ .Size }}</p>
-              <p class="card-text">Price: ${{ .Price }}</p>
-              <div class="d-flex align-items-center">
-                <form action="/cart/decrease/{{ .ID }}" method="POST" class="me-2">
-                  <button class="btn btn-sm btn-outline-light">-</button>
-                </form>
-                <span class="px-2">{{ .Quantity }}</span>
-                <form action="/cart/increase/{{ .ID }}" method="POST" class="ms-2">
-                  <button class="btn btn-sm btn-outline-light">+</button>
-                </form>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3 d-flex align-items-center justify-content-center">
-            <form action="/cart/remove/{{ .ID }}" method="POST">
-              <button class="btn btn-sm btn-danger">Remove</button>
-            </form>
-          </div>
-        </div>
+<ul class="list-group">
+  {{range .OrderItems}}
+  <li class="list-group-item">
+    <div class="row g-2 align-items-center">
+      <div class="col-3 col-md-2">
+        <img src="/{{.ImageURL}}" class="img-fluid rounded" alt="{{.ProductName}}">
       </div>
-      {{ end }}
-    </div>
-    <div class="col-md-4">
-      <div class="card card-dark p-3">
-        <h5>Cart Summary</h5>
-        <hr>
-        <p>Total Items: {{ .TotalItems }}</p>
-        <p>Total Price: ${{ .TotalPrice }}</p>
-        <a href="/checkout" class="btn btn-success w-100">Proceed to Checkout</a>
+      <div class="col-6 col-md-6">
+        <div class="fw-bold">{{.ProductName}}</div>
+        Qty: {{.Quantity}}<br>
+        Price: ₹{{printf "%.2f" .Price}}<br>
+        Tax: ₹{{printf "%.2f" .Tax}}<br>
+        {{if gtf .Discount 0.0}}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
+      </div>
+      <div class="col-3 col-md-2 text-end fw-bold">
+        ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) .Tax)}}
+      </div>
+      <div class="col-12 col-md-2 text-end">
+        {{if eq .Status "Ordered"}}
+        <form method="POST" action="/user/cancel-item">
+          <input type="hidden" name="order_id" value="{{$.Order.ID}}">
+          <input type="hidden" name="item_id" value="{{.ID}}">
+          <button type="submit" class="btn btn-sm btn-danger mt-2">Cancel</button>
+        </form>
+        {{else}}
+        <span class="badge bg-secondary mt-2">{{.Status}}</span>
+        {{end}}
       </div>
     </div>
-  </div>
-</div>
-
-{{ template "footer.html" . }}
+  </li>
+  {{end}}
+</ul>

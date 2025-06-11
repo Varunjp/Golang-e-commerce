@@ -16,7 +16,7 @@
       <li class="nav-item"><a class="nav-link" href="/">Shop</a></li>
       <li class="nav-item"><a class="nav-link" href="/user/orders">Orders</a></li>
     </ul>
-    {{ if .User }}
+    {{ if .user }}
     <a href="/user/logout" class="btn btn-outline-danger ms-3">Logout</a>
     {{ else }}
     <a href="/user/login" class="btn btn-outline-dark ms-3">Login</a>
@@ -36,6 +36,11 @@
         </div>
         <div class="card-body">
           <p><strong>Order Date:</strong> {{.Order.OrderDate}}</p>
+          <p><strong>Address:</strong>
+                {{.address.AddressLine1}}<br>
+                {{.address.AddressLine2}}<br>
+                {{.address.City}}, {{.address.State}} - {{.address.PostalCode}}<br>
+                {{.address.Country}}</p>
           <p><strong>Status:</strong> <span class="badge bg-{{.Order.BadgeClass}}">{{.Order.Status}}</span></p>
           <hr>
 
@@ -57,6 +62,26 @@
                     <div class="col-3 col-md-3 text-end fw-bold">
                         ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) .Tax)}}
                     </div>
+                    <!--testing-->
+                    <div class="col-12 col-md-2 text-end">
+                      {{if eq .Status "Processing"}}
+                      <form method="POST" action="/user/cancel-item">
+                        <input type="hidden" name="order_id" value="{{$.Order.ID}}">
+                        <input type="hidden" name="item_id" value="{{.ID}}">
+                        <button type="submit" class="btn btn-sm btn-danger mt-2">Cancel</button>
+                      </form>
+                      {{else if eq .Status "Delivered"}}
+                      <form method="POST" action="/user/cancel-item">
+                        <input type="hidden" name="order_id" value="{{$.Order.ID}}">
+                        <input type="hidden" name="item_id" value="{{.ID}}">
+                        <button type="submit" class="btn btn-sm btn-danger mt-2">Return</button>
+                      </form>
+                      {{else}}
+                      <span class="badge bg-secondary mt-2">{{.Status}}</span>
+                      {{end}}
+                    </div>
+
+
                     </div>
                 </li>
                 {{end}}

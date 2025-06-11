@@ -138,7 +138,7 @@
             <tbody>
               {{ range .orders }}
               <tr>
-                <td>#{{ .ID }}</td>
+                <td># <a href="/admin/order/{{ .ID }}">{{ .ID }}</a> </td>
                 <td>{{ .UserName }}</td>
                 <td>${{ .TotalPrice }}</td>
                 <td>{{ .ItemCount }}</td>

@@ -106,7 +106,7 @@ func SalesReportPage(c *gin.Context){
 	for i, order := range orders{
 		var user models.User
 		db.Db.Where("id = ?",order.UserID).First(&user)
-		if order.Status == "delivered"{
+		if order.Status == "Delivered"{
 			totalSales += order.TotalAmount
 			totalDiscount += order.DiscountTotal
 
@@ -180,10 +180,6 @@ func DownloadSalesReport(c *gin.Context){
 	for _, order := range orders {
 		var user models.User
 		db.Db.Where("id = ?",order.UserID).First(&user)
-
-		// delete
-		fmt.Printf("Order ID: %d | User: %s | Amount: ₹%.2f\n",order.ID,user.Username,order.TotalAmount)
-
 		pdf.Cell(0,10,fmt.Sprintf("Order ID: %d | User: %s | Amount: ₹%.2f",order.ID,user.Username,order.TotalAmount))
 		pdf.Ln(8)
 	}

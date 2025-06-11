@@ -83,9 +83,10 @@
                 <select class="form-select" id="coupon" name="coupon_code">
                   <option value="">-- Select a Coupon --</option>
                   {{range .Coupons}}
-                    <option value="{{.ID}}" data-discount="{{.Discount}}">{{.Code}} - {{.Description}}</option>
+                    <option value="{{.ID}}" data-discount="{{.Discount}}" data-min = "{{.MinAmount}}" data-max="{{.MaxAmount}}">{{.Code}} - {{.Description}}</option>
                   {{end}}
                 </select>
+                <div class="text-muted mt-2" id="couponInfo" style="display: none;"></div>
                 <div class="mt-2 d-flex gap-2">
                   <button type="button" class="btn btn-outline-success btn-sm" id="applyCouponBtn">Apply</button>
                   <button type="button" class="btn btn-outline-danger btn-sm" id="removeCouponBtn">Remove</button>
@@ -250,14 +251,55 @@
   const couponSelect = document.getElementById("coupon");
   const couponMsg = document.getElementById("couponMessage");
 
+  couponSelect.addEventListener("change", function () {
+  const selectedOption = couponSelect.selectedOptions[0];
+  const discountPercent = parseFloat(selectedOption?.getAttribute("data-discount") || 0);
+  const minAmount = parseFloat(selectedOption?.getAttribute("data-min") || 0);
+  const maxAmount = parseFloat(selectedOption?.getAttribute("data-max") || Infinity);
+
+  if (discountPercent) {
+    const maxDiscount = maxAmount;
+    document.getElementById("couponInfo").style.display = "block";
+    document.getElementById("couponInfo").innerHTML = `
+      <strong>Coupon Details:</strong><br>
+      Minimum Order Value: ₹${minAmount.toFixed(2)}<br>
+      Maximum Discount: ₹${maxDiscount.toFixed(2)}
+    `;
+  } else {
+    document.getElementById("couponInfo").style.display = "none";
+  }
+  });
+
+
   let couponDiscount = 0;
   let walletUsed = 0;
 
   function recalculateFinalAmount() {
     const selectedOption = couponSelect.selectedOptions[0];
     const discountPercent = parseFloat(selectedOption?.getAttribute("data-discount") || 0);
+    const minAmount = parseFloat(selectedOption?.getAttribute("data-min")||0);
+    const maxAmount = parseFloat(selectedOption?.getAttribute("data-max") || Infinity);
 
-    couponDiscount = discountPercent ? (originalAmount * discountPercent) / 100 : 0;
+    if (discountPercent && originalAmount < minAmount ){
+      couponMsg.style.display = 'block';
+      couponMsg.textContent = `Coupon not applicable. Order must be between ₹${minAmount.toFixed(2)} and ₹${maxAmount.toFixed(2)}.`
+
+      discountElem.textContent = "₹0.00";
+      finalAmountElem.textContent = `₹${originalAmount.toFixed(2)}`;
+      finalAmountInput.value = originalAmount.toFixed(2);
+      return;
+    }
+
+    appliedCoupon = discountPercent ? (originalAmount * discountPercent) / 100 : 0;
+
+    let couponDiscount;
+
+
+    if (appliedCoupon > maxAmount){
+        couponDiscount = maxAmount;
+    }else{
+      couponDiscount = appliedCoupon;
+    }
 
     const afterCoupon = originalAmount - couponDiscount;
 
@@ -290,6 +332,8 @@
     recalculateFinalAmount();
   });
   walletCheckbox.addEventListener("change", recalculateFinalAmount);
+
+  
 
 </script>
 
