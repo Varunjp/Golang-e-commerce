@@ -175,3 +175,79 @@ func AdminOrderCancel(c *gin.Context){
 	c.Redirect(http.StatusSeeOther,"/admin/orders")
 
 }
+
+func AdminOrderDetails(c *gin.Context){
+	var order models.Order
+	var user models.User 
+	var address models.Address
+	orderId := c.Param("id")
+
+	if err := db.Db.Preload("OrderItems",func(db *gorm.DB)*gorm.DB{
+		return db.Unscoped()
+	}).Where("id = ?",orderId).First(&order).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to retrieve order details"})
+		return 
+	}
+
+	if err := db.Db.Where("id = ?",order.UserID).First(&user).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to retrieve user details."})
+		return 
+	}
+
+	if err := db.Db.Where("address_id = ?",order.AddressID).First(&address).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to retrieve address details."})
+		return 
+	}
+
+	type response struct{
+		Image 		string
+		ProductName string
+		Size 		string
+		Price 		float64
+		Quantity 	int 
+		SubTotal 	float64
+	}
+
+	OrderItems := make([]response,len(order.OrderItems))
+
+	for i,item := range order.OrderItems {
+
+		var Product models.Product_Variant
+		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
+
+		if err != nil {
+			c.HTML(http.StatusNotFound,"admin_orderDetails.html",gin.H{"error":"Product details not found"})
+			return 
+		}
+
+		subTotal := Product.Price * float64(item.Quantity)+(Product.Tax* float64(item.Quantity))
+
+		if len(Product.Product_images) != 0 {
+			OrderItems[i] = response{
+				Image: Product.Product_images[0].Image_url,
+				ProductName: Product.Variant_name,
+				Size: Product.Size,
+				Price: Product.Price,
+				Quantity: item.Quantity,
+				SubTotal: subTotal,
+			}
+		}else{
+			OrderItems[i] = response{
+				Image: "",
+				ProductName: Product.Variant_name,
+				Size: Product.Size,
+				Price: Product.Price,
+				Quantity: item.Quantity,
+				SubTotal: subTotal,
+			}
+		}
+
+	}
+
+	c.HTML(http.StatusOK,"admin_orderDetails.html",gin.H{
+		"Order":order,
+		"user":user,
+		"OrderItems":OrderItems,
+		"address":address,
+	})
+}

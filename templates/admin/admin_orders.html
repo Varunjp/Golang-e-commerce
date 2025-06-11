@@ -155,14 +155,16 @@
                   {{ end }}
                 </td>
                 <td>
-                  {{ if and (ne .Status "Delivered") (ne .Status "Cancelled") (ne .Status "Returned")}}
+                  <!-- {{ if and (ne .Status "Delivered") (ne .Status "Cancelled") (ne .Status "Returned")}}
                   <form action="/admin/orders/cancel/{{.ID}}" method="POST" class="d-inline" onsubmit="return confirm('Cancel this order?')">
                     <textarea class="form-control form-control-sm mt-1 mb-2" name="reason" rows="2" placeholder="Reason for cancellation" required></textarea>
                     <button class="btn btn-danger btn-sm">Cancel</button>
                   </form>
                   {{ else }}
                   <span class="text-muted">-</span>
-                  {{ end }}
+                  {{ end }} -->
+
+                  <a href="/admin/order/{{.ID}}" class="btn btn-primary">View</a>
                 </td>
               </tr>
               {{ end }}

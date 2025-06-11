@@ -119,6 +119,7 @@ func GetUrl(router *gin.Engine){
 	// Admin Orders
 	router.GET("/admin/orders",middleware.AuthMiddlerware("admin"),admin.AdminOrdersPage)
 	router.POST("/admin/orders/cancel/:id",middleware.AuthMiddlerware("admin"),admin.AdminOrderCancel)
+	router.GET("/admin/order/:id",middleware.AuthMiddlerware("admin"),admin.AdminOrderDetails)
 
 
 	// Admin banner
