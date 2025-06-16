@@ -13,7 +13,8 @@ import (
 )
 
 func RegisterPage(c *gin.Context) {
-	c.HTML(http.StatusOK,"register.html",nil)
+	ref := c.Query("ref")
+	c.HTML(http.StatusOK,"register.html",gin.H{"ReferralCode":ref})
 }
 
 func RegisterUser(c *gin.Context){
@@ -24,6 +25,9 @@ func RegisterUser(c *gin.Context){
 		Password string		`form:"password" binding:"required"`
 		Phone	 string		`form:"phone" binding:"required"`
 	}
+
+	referralCode := c.PostForm("referral_code")
+
 
 	if err:= c.ShouldBind(&input); err != nil{
 		c.HTML(http.StatusBadRequest,"register.html",gin.H{
@@ -37,11 +41,14 @@ func RegisterUser(c *gin.Context){
 		Username: input.Username,
 		Email: input.Email,
 		Password: hashedPassword,
+		Phone: input.Phone,
 		Status: "inactive",
 		Created_at: time.Now(),
 	}
 
-	
+	if referralCode != ""{
+		user.ReferredBy = referralCode
+	}
 
 	otp,_ := helper.GenerateAndSaveOtp(user.Email)
 
@@ -97,8 +104,20 @@ func VerfiyOTP (c *gin.Context){
 		return 
 	}
 
+	var user models.User
 	db.Db.Model(&models.User{}).Where("email = ?",input.Email).Update("status","Active")
+	db.Db.Model(&models.User{}).Where("email = ?",input.Email).First(&user)
 
+	referralCode := helper.GenerateUniqueReferralCode()
+
+	db.Db.Model(&models.User{}).Where("email = ?",input.Email).Update("referral_code",referralCode)
+
+	Couperr := helper.CreateCoupon(user.ID)
+
+	if Couperr != nil{
+		c.HTML(http.StatusInternalServerError,"userLogin.html",gin.H{"error":err})
+		return 
+	}
 
 	c.HTML(http.StatusOK,"userLogin.html",gin.H{
 		"message":"Email verified. You can now log in.",

@@ -83,7 +83,7 @@
                 <select class="form-select" id="coupon" name="coupon_code">
                   <option value="">-- Select a Coupon --</option>
                   {{range .Coupons}}
-                    <option value="{{.ID}}" data-discount="{{.Discount}}" data-min = "{{.MinAmount}}" data-max="{{.MaxAmount}}">{{.Code}} - {{.Description}}</option>
+                    <option value="{{.ID}}" data-type="{{.Type}}" data-discount="{{.Discount}}" data-min = "{{.MinAmount}}" data-max="{{.MaxAmount}}">{{.Code}} - {{.Description}}</option>
                   {{end}}
                 </select>
                 <div class="text-muted mt-2" id="couponInfo" style="display: none;"></div>
@@ -198,48 +198,31 @@
                               alert("Payment failed verification.");
                           }
                       });
+                  },
+                  modal:{
+                    ondismiss:function(){
+                      fetch("/order/failed",{
+                        method : "POST",
+                        headers : { "Content-Type": "application/json"},
+                        body: JSON.stringify({
+                          address_id: addressID,
+                        })
+                      }).then(res => res.json())
+                      .then(resData => {
+                        if (resData.success){
+                          window.location.href = resData.redirect;
+                        }else{
+                          alert("Falied to load page");
+                        }
+                      })
+                    }
                   }
-              };
+              }
               const rzp = new Razorpay(options);
               rzp.open();
                 });
-            }
+    }
   });
-
-  // const originalAmount = parseFloat(document.getElementById("totalAmount").value);
-  // const finalAmountElem = document.getElementById("finalAmount");
-  // const discountElem = document.getElementById("discountAmount");
-  // const finalAmountInput = document.getElementById("finalAmountInput");
-  // const couponSelect = document.getElementById("coupon");
-  // const couponMsg = document.getElementById("couponMessage");
-
-  // document.getElementById("applyCouponBtn").addEventListener("click", function () {
-  //   const selectedOption = couponSelect.selectedOptions[0];
-  //   const discount = parseFloat(selectedOption.getAttribute("data-discount") || 0);
-
-  //   if (!discount || couponSelect.value === "") {
-  //     alert("Please select a valid coupon.");
-  //     return;
-  //   }
-
-  //   const discountAmount = (originalAmount * discount) / 100;
-  //   const finalAmount = originalAmount - discountAmount;
-
-  //   discountElem.textContent = `₹${discountAmount.toFixed(2)}`;
-  //   finalAmountElem.textContent = `₹${finalAmount.toFixed(2)}`;
-  //   finalAmountInput.value = finalAmount.toFixed(2);
-  //   couponMsg.style.display = 'block';
-  //   couponMsg.textContent = `Coupon applied! You saved ₹${discountAmount.toFixed(2)}`;
-  // });
-
-  // document.getElementById("removeCouponBtn").addEventListener("click", function () {
-  //   couponSelect.value = "";
-  //   discountElem.textContent = "₹0.00";
-  //   finalAmountElem.textContent = `₹${originalAmount.toFixed(2)}`;
-  //   finalAmountInput.value = originalAmount.toFixed(2);
-  //   couponMsg.style.display = 'none';
-  // });
-
 
   const originalAmount = parseFloat(document.getElementById("totalAmount").value);
   const walletCheckbox = document.getElementById("useWallet");
@@ -279,6 +262,7 @@
     const discountPercent = parseFloat(selectedOption?.getAttribute("data-discount") || 0);
     const minAmount = parseFloat(selectedOption?.getAttribute("data-min")||0);
     const maxAmount = parseFloat(selectedOption?.getAttribute("data-max") || Infinity);
+    const couponType = selectedOption?.getAttribute("data-type")
 
     if (discountPercent && originalAmount < minAmount ){
       couponMsg.style.display = 'block';
@@ -290,12 +274,17 @@
       return;
     }
 
-    appliedCoupon = discountPercent ? (originalAmount * discountPercent) / 100 : 0;
+    let appliedCoupon
 
+    if (couponType != ""){
+      appliedCoupon = maxAmount
+    }else{
+      appliedCoupon = discountPercent ? (originalAmount * discountPercent) / 100 : 0;
+    }
+    
     let couponDiscount;
 
-
-    if (appliedCoupon > maxAmount){
+    if (appliedCoupon > maxAmount && couponType != ""){
         couponDiscount = maxAmount;
     }else{
       couponDiscount = appliedCoupon;

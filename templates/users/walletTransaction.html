@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Orders</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4">
+  <a class="navbar-brand fw-bold" href="/">SHOP.CO</a>
+  <div class="collapse navbar-collapse">
+    <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+      <li class="nav-item"><a class="nav-link" href="/user/shop">Shop</a></li>
+      <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+    </ul>
+    {{ if .user }}
+    <a href="/user/logout" class="btn btn-outline-danger ms-3">Logout</a>
+    {{ else }}
+    <a href="/user/login" class="btn btn-outline-dark ms-3">Login</a>
+    {{ end }}
+  </div>
+</nav>
+
+<!-- Order Listing -->
+<div class="container mt-5">
+  <h3 class="mb-4 text-center">Wallet Transactions</h3>
+  {{ if .error }}<div class="text-danger">{{ .error }}</div>
+  {{ end }}
+  {{if .Transactions}}
+    <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-dark">
+        <tr class="text-center">
+          <th scope="col">#</th>
+          <th scope="col">Type</th>
+          <th scope="col">Amount</th>
+          <th scope="col">Description </th>
+          <th scope="col">Date</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Transactions}}
+        <tr>
+          <td class="text-center">{{.ID}}</td>
+          <td class="text-center">
+            {{if eq .Type "Credit"}}
+              <span class="badge bg-success">Credit</span>
+            {{else if eq .Type "Debit"}}
+              <span class="badge bg-danger">Debit</span>
+            {{else}}
+              <span class="badge bg-secondary">{{.Type}}</span>
+            {{end}}
+          </td>
+          <td class="text-center">₹{{printf "%.2f" .Amount}}</td>
+          <td class="text-center">{{ .Description}}</td>
+          <td class="text-center">{{.Date}}</td>
+          <td class="text-center">
+            <span class="badge bg-{{.BadgeClass}}">{{.Status}}</span>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+    
+  <!-- Pagination -->
+  <nav>
+    <ul class="pagination justify-content-center">
+      {{if .HasPrev}}
+      <li class="page-item">
+        <a class="page-link" href="/user/wallet-transactions?page={{.PrevPage}}">Previous</a>
+      </li>
+      {{end}}
+
+      {{range .Pages}}
+      <li class="page-item {{if eq .Number $.CurrentPage}}active{{end}}">
+        <a class="page-link" href="/user/wallet-transactions?page={{.Number}}">{{.Number}}</a>
+      </li>
+      {{end}}
+
+      {{if .HasNext}}
+      <li class="page-item">
+        <a class="page-link" href="/user/wallet-transactions?page={{.NextPage}}">Next</a>
+      </li>
+      {{end}}
+    </ul>
+  </nav>
+  
+  {{else}}
+  <p class="text-center">No orders found.</p>
+  {{end}}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

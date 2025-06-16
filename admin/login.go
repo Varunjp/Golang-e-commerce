@@ -41,21 +41,21 @@ func Login(c *gin.Context){
 	result := db.Db.Where("email=?",email).First(&admin)
 
 	if result.Error != nil{
-		c.JSON(http.StatusUnauthorized,gin.H{
-			"message":"Invalid email or password",
+		c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{
+			"error":"Invalid email or password",
 		})
 		return
 	}
 
 	if admin.Status == "Blocked"{
-		c.JSON(http.StatusUnauthorized, gin.H{
+		c.HTML(http.StatusUnauthorized, "admin_login.html",gin.H{
 			"error":"User has been blocked by admin",
 		})
 		return 
 	}
 
 	if admin.Password != password {
-		c.JSON(http.StatusUnauthorized, gin.H{"message":"Invalid email or password"})
+		c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{"error":"Invalid email or password"})
 		return 
 	}
 
@@ -65,7 +65,7 @@ func Login(c *gin.Context){
 
 	token, err := middleware.CreateToken("admin",admin.Email,admin.ID)
 	if err != nil{
-		c.JSON(http.StatusOK,gin.H{"error": "Error Generating JWT"})
+		c.HTML(http.StatusOK,"admin_login.html",gin.H{"error": "Error Generating JWT"})
 	}
 	
 	c.SetCookie("JWT-Admin",token,3600,"/","",false,true)

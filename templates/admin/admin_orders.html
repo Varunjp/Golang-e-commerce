@@ -117,11 +117,13 @@
           
         </form>
 
+        <a href="/admin/order/return-request" class="btn btn-outline-primary mb-2">Return requests</a>
 
         <!-- Table -->
         <div class="card card-dark p-3">
           {{if .message}} <div class="alert alert-warning">{{.message}}</div> {{end}}
           {{if .error}} <div class="alert alert-danger">{{.error}}</div> {{end}}
+
 
           <table class="table table-dark table-hover">
             <thead>
@@ -140,15 +142,15 @@
               <tr>
                 <td># <a href="/admin/order/{{ .ID }}">{{ .ID }}</a> </td>
                 <td>{{ .UserName }}</td>
-                <td>${{ .TotalPrice }}</td>
+                <td>₹.{{ .TotalPrice }}</td>
                 <td>{{ .ItemCount }}</td>
                 <td>{{ .CreatedAt.Format "01/02/06 at 3:04 PM" }}</td>
                 <td>
                   {{ if eq .Status "Delivered" }}
                     <span class="badge badge-delivered">Delivered</span>
-                  {{ else if eq .Status "Cancelled" }}
+                  {{ else if or (eq .Status "Cancelled") (eq .Status "Refund is being processed" ) }}
                     <span class="badge badge-cancelled">Cancelled</span>
-                  {{ else if eq .Status "Returned"}}
+                  {{ else if or (eq .Status "Returned") (eq .Status "Failed")}}
                     <span class="badge badge-cancelled">Returned</span>
                   {{ else }}
                     <span class="badge badge-pending">Pending</span>

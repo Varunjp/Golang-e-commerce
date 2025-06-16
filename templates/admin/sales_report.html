@@ -36,145 +36,147 @@
     </div>
 
     <!-- Main Content -->
-    <div class="col-md-10">
-      <div class="topbar">
-        <h4 class="mb-0">Sales Report</h4>
+      <div class="col-md-10">
         
-        
-        <!-- <form method="POST" action="/admin/reports/download" id="pdfForm" style="display:none;">
-          <input type="hidden" name="from" id="pdfFrom">
-          <input type="hidden" name="to" id="pdfTo">
-          <input type="hidden" name="range" id="pdfRange">
-          
-        </form>
-        <button type="submit" class="btn btn-outline-info" id="downloadBtn">Download PDF</button> -->
-        
-
-
-        <!-- <a href="/admin/reports/download" class="btn btn-outline-info">Download PDF</a> -->
-      </div>
-
-      <div class="container py-3">
-        {{if .message}}
-        <div class="alert alert-warning">{{.message}}</div>
-        {{end}}
-        {{if .error}}
-        <div class="alert alert-danger">{{.error}}</div>
-        {{end}}
-        <!-- Filters -->
-        <form method="GET" action="/admin/reports" class="row g-3 mb-4">
-          <div class="col-md-3">
-            <select class="form-select" name="filter">
-              <option value="">-- Filter By --</option>
-              <option value="daily" {{if eq .filter "daily"}}selected{{end}}>Daily</option>
-              <option value="weekly" {{if eq .filter "weekly"}}selected{{end}}>Weekly</option>
-              <option value="monthly" {{if eq .filter "monthly"}}selected{{end}}>Monthly</option>
-              <option value="yearly" {{if eq .filter "yearly"}}selected{{end}}>Yearly</option>
-              <option value="custom" {{if eq .filter "custom"}}selected{{end}}>Custom</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <input type="date" name="start" class="form-control" placeholder="Start Date" value="{{.start}}">
-          </div>
-          <div class="col-md-3">
-            <input type="date" name="end" class="form-control" placeholder="End Date" value="{{.end}}">
-          </div>
-          <div class="col-md-3">
-            <button class="btn btn-primary w-100">Apply Filter</button>
-          </div>
-        </form>
-
-
-        <!-- testing -->
-        <form method="POST" action="/admin/reports/download" id="pdfForm" style="display:none;">
-          <input type="hidden" name="from" id="pdfFrom">
-          <input type="hidden" name="to" id="pdfTo">
-          <input type="hidden" name="filter" id="pdfRange">
-          
-        </form>
-        <button type="submit" class="btn btn-outline-info m-2" id="downloadBtn">Download PDF</button>
-
-        <!-- Summary -->
-        <div class="row text-center mb-4">
-          <div class="col-md-3">
-            <div class="card card-dark p-3">
-              <h6 class="card-title text-light">Total Sales</h6>
-              <h4 class="card-text text-light">₹{{printf "%.2f" .totalSales}}</h4>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card card-dark p-3">
-              <h6 class="card-title text-light">Total Orders</h6>
-              <h4 class="card-text text-light">{{.totalOrders}}</h4>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card card-dark p-3">
-              <h6 class="card-title text-light">Total Discount</h6>
-              <h4 class="card-text text-light">₹{{printf "%.2f" .totalDiscount}}</h4>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card card-dark p-3">
-              <h6 class="card-title text-light">Total Products Sold</h6>
-              <h4 class="card-text text-light">{{.totalProducts}}</h4>
-            </div>
+        <div class="topbar">
+          <h4 class="mb-0">Sales Report</h4>
+          <div class="d-flex align-items-center gap-3">
+            <span class="text-white">Admin: {{ .user }}</span>
+            <a href="/admin/logout" class="btn btn-outline-danger ms-3">Logout</a>
           </div>
         </div>
 
-        <!-- Sales Table -->
-        <div class="card card-dark p-3">
-          <table class="table table-dark table-hover">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Date</th>
-                <th>User</th>
-                <th>Total</th>
-                <th>Discount</th>
-                <th>Payment</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{ range .sales }}
-              <tr>
-                <td>{{ .OrderID }}</td>
-                <td>{{ .Date.Format "02/01/06 3:04 PM" }}</td>
-                <td>{{ .UserName }}</td>
-                <td>₹{{ printf "%.2f" .Total }}</td>
-                <td>₹{{ printf "%.2f" .Discount }}</td>
-                <td>{{ .PaymentMethod }}</td>
-                <td>{{ .Status}}</td>
-              </tr>
-              {{ end }}
-            </tbody>
-          </table>
+        <div class="container py-3">
+          <h2>Sales Report</h2>
+          {{if .message}}
+          <div class="alert alert-warning">{{.message}}</div>
+          {{end}}
+          {{if .error}}
+          <div class="alert alert-danger">{{.error}}</div>
+          {{end}}
+          <!-- Filters -->
+          <form method="GET" action="/admin/reports" class="row g-3 mb-4">
+            <div class="col-md-3">
+              <select class="form-select" name="filter">
+                <option value="">-- Filter By --</option>
+                <option value="daily" {{if eq .filter "daily"}}selected{{end}}>Daily</option>
+                <option value="weekly" {{if eq .filter "weekly"}}selected{{end}}>Weekly</option>
+                <option value="monthly" {{if eq .filter "monthly"}}selected{{end}}>Monthly</option>
+                <option value="yearly" {{if eq .filter "yearly"}}selected{{end}}>Yearly</option>
+                <option value="custom" {{if eq .filter "custom"}}selected{{end}}>Custom</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <input type="date" name="start" class="form-control" placeholder="Start Date" value="{{.start}}">
+            </div>
+            <div class="col-md-3">
+              <input type="date" name="end" class="form-control" placeholder="End Date" value="{{.end}}">
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-primary w-100">Apply Filter</button>
+            </div>
+          </form>
 
-          <!-- Pagination -->
-          <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-              {{ if gt .page 1 }}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ sub .page 1 }}&search={{ .search }}">Previous</a>
-              </li>
-              {{ end }}
-              {{ range $i := iterate 1 .totalPages }}
-              <li class="page-item {{ if eq $i $.page }}active{{ end }}">
-                <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
-              </li>
-              {{ end }}
-              {{ if lt .page .totalPages }}
-              <li class="page-item">
-                <a class="page-link" href="?page={{ add .page 1 }}&search={{ .search }}">Next</a>
-              </li>
-              {{ end }}
-            </ul>
-          </nav>
+
+          <!-- Pdf -->
+          <form method="POST" action="/admin/reports/download" id="pdfForm" style="display:none;">
+            <input type="hidden" name="from" id="pdfFrom">
+            <input type="hidden" name="to" id="pdfTo">
+            <input type="hidden" name="filter" id="pdfRange">
+            
+          </form>
+          <button type="button" class="btn btn-outline-info m-2" id="downloadBtn">Download PDF</button>
+
+          <!-- Excel -->
+
+          <form method="POST" class="mb-3" action="/admin/reports/excel">
+            <input type="hidden" name="from" value="{{.start}}">
+            <input type="hidden" name="to" value="{{.end}}">
+            <button class="btn btn-outline-success">Download Excel</button>
+          </form>
+
+
+          <!-- Summary -->
+          <div class="row text-center mb-4">
+            <div class="col-md-3">
+              <div class="card card-dark p-3">
+                <h6 class="card-title text-light">Total Sales</h6>
+                <h4 class="card-text text-light">₹{{printf "%.2f" .totalSales}}</h4>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card card-dark p-3">
+                <h6 class="card-title text-light">Total Orders</h6>
+                <h4 class="card-text text-light">{{.totalOrders}}</h4>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card card-dark p-3">
+                <h6 class="card-title text-light">Total Discount</h6>
+                <h4 class="card-text text-light">₹{{printf "%.2f" .totalDiscount}}</h4>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card card-dark p-3">
+                <h6 class="card-title text-light">Total Products Sold</h6>
+                <h4 class="card-text text-light">{{.totalProducts}}</h4>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales Table -->
+          <div class="card card-dark p-3">
+            <table class="table table-dark table-hover">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Date</th>
+                  <th>User</th>
+                  <th>Total</th>
+                  <th>Discount</th>
+                  <th>Payment</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{ range .sales }}
+                <tr>
+                  <td>{{ .OrderID }}</td>
+                  <td>{{ .Date.Format "02/01/06 3:04 PM" }}</td>
+                  <td>{{ .UserName }}</td>
+                  <td>₹{{ printf "%.2f" .Total }}</td>
+                  <td>₹{{ printf "%.2f" .Discount }}</td>
+                  <td>{{ .PaymentMethod }}</td>
+                  <td>{{ .Status}}</td>
+                </tr>
+                {{ end }}
+              </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <nav class="mt-4">
+              <ul class="pagination justify-content-center">
+                {{ if gt .page 1 }}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ sub .page 1 }}&search={{ .search }}">Previous</a>
+                </li>
+                {{ end }}
+                {{ range $i := iterate 1 .totalPages }}
+                <li class="page-item {{ if eq $i $.page }}active{{ end }}">
+                  <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
+                </li>
+                {{ end }}
+                {{ if lt .page .totalPages }}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ add .page 1 }}&search={{ .search }}">Next</a>
+                </li>
+                {{ end }}
+              </ul>
+            </nav>
+
+          </div>
 
         </div>
-
-      </div>
     </div>
   </div>
 </div>
@@ -182,9 +184,18 @@
 <script>
 document.getElementById("downloadBtn").addEventListener("click", function () {
   // Copy values from filter form
-  document.getElementById("pdfFrom").value = document.querySelector('[name="start"]').value;
-  document.getElementById("pdfTo").value = document.querySelector('[name="end"]').value;
-  document.getElementById("pdfRange").value = document.querySelector('[name="filter"]').value;
+  const from = document.querySelector('[name="start"]').value;
+  const to = document.querySelector('[name="end"]').value;
+  const range = document.querySelector('[name="filter"]').value;
+
+  // Debug
+  console.log("From:", from);
+  console.log("To:", to);
+  console.log("Range:", range);
+
+  document.getElementById("pdfFrom").value = from;
+  document.getElementById("pdfTo").value = to;
+  document.getElementById("pdfRange").value = range;
 
   // Submit hidden form
   document.getElementById("pdfForm").submit();

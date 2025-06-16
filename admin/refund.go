@@ -151,6 +151,38 @@ func WalletRefundApproval (c *gin.Context){
 		return
 	}
 
+	var order models.Order
+	var orderItem models.OrderItem
+
+	if transaction.OrderID != 0 {
+		
+		if err := db.Db.Where("id = ?",transaction.OrderID).First(&order).Error; err != nil{
+			c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to retrive order details"})
+			return 
+		}
+
+		if err := db.Db.Unscoped().Where("id = ?",transaction.OrderItemID).First(&orderItem).Error; err != nil{
+			c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to get order item details"})
+			return
+		}
+
+		newDiscount := order.DiscountTotal - transaction.Amount
+
+		if newDiscount < 0 {
+			order.DiscountTotal = 0.0
+		}else{
+			order.DiscountTotal = newDiscount
+		}
+		
+		order.TotalAmount = order.TotalAmount - transaction.Amount
+		order.SubTotal = order.TotalAmount
+
+		orderItem.PaymentStatus = "Refunded"
+		db.Db.Save(&orderItem)
+		db.Db.Save(&order)
+	}
+	
+
 	c.Redirect(http.StatusSeeOther,"/admin/wallet-transactions")
 }
 
@@ -173,6 +205,18 @@ func WalletRefundDecline (c *gin.Context){
 	if err := db.Db.Save(&transaction).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to save transaction, please try again later"})
 		return
+	}
+
+	if transaction.OrderID != 0 {
+		var orderitem models.OrderItem
+		
+		if err := db.Db.Where("id = ?",transaction.OrderItemID).First(&orderitem).Error; err != nil{
+			c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to load order item details"})
+			return 
+		}
+
+		orderitem.PaymentStatus = "Refund rejected"
+		db.Db.Save(&orderitem)
 	}
 
 	c.Redirect(http.StatusSeeOther,"/admin/wallet-transactions")

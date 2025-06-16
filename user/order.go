@@ -162,7 +162,12 @@ func ReturnOrder(c *gin.Context){
 	for _,item := range order.OrderItems {
 
 		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
-		db.Db.Delete(&models.OrderItem{},item.ID)
+		//db.Db.Delete(&models.OrderItem{},item.ID)
+		if item.Status != "Return requested"{
+			item.Status = "Return"
+			db.Db.Save(&item)
+		}
+		
 	}
 
 	c.Redirect(http.StatusSeeOther,"/user/orders")
@@ -205,7 +210,7 @@ func OrderItems(c *gin.Context){
 		Order.BadgeClass = "success"
 	case "Processing", "Pending":
 		Order.BadgeClass = "warning"
-	case "Cancelled", "Returned":
+	case "Cancelled", "Returned", "Failed":
 		Order.BadgeClass = "danger"
 	default:
 		Order.BadgeClass = "secondary"
@@ -268,6 +273,7 @@ func OrderItems(c *gin.Context){
 func CancelItem (c *gin.Context){
 	orderID := c.PostForm("order_id")
 	itemId := c.PostForm("item_id")
+	reason := c.PostForm("reason")
 	var Order models.Order
 
 	if err := db.Db.Where("id = ?",orderID).First(&Order).Error; err != nil{
@@ -276,14 +282,14 @@ func CancelItem (c *gin.Context){
 	}
 
 	if Order.PaymentMethod != "cod" {
-		err := helper.ItemCancelOnline(orderID,itemId)
+		err := helper.ItemCancelOnline(orderID,itemId,reason)
 
 		if err != nil{
 			c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
 			return 
 		}
 	}else{
-		err := helper.ItemCancelCod(orderID,itemId)
+		err := helper.ItemCancelCod(orderID,itemId,reason)
 		if err != nil{
 			c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
 			return 

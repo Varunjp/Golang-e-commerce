@@ -42,6 +42,8 @@
                 {{.address.City}}, {{.address.State}} - {{.address.PostalCode}}<br>
                 {{.address.Country}}</p>
           <p><strong>Status:</strong> <span class="badge bg-{{.Order.BadgeClass}}">{{.Order.Status}}</span></p>
+          <p><strong>Payment method:</strong> <span class="badge bg-secondary">{{.Order.PaymentMethod}}</span></p>
+          <p><strong>Payment Status:</strong> <span class="badge bg-{{.Order.BadgeClass}}">{{.Order.PaymentStatus}}</span></p>
           <hr>
 
           <h6>Items</h6>
@@ -64,18 +66,26 @@
                     </div>
                     <!--testing-->
                     <div class="col-12 col-md-2 text-end">
-                      {{if eq .Status "Processing"}}
+                      {{if or (eq .Status "Processing") (eq .Status "Pending")}}
                       <form method="POST" action="/user/cancel-item">
                         <input type="hidden" name="order_id" value="{{$.Order.ID}}">
                         <input type="hidden" name="item_id" value="{{.ID}}">
+                        <input type="text" name="reason" placeholder="Reason for return" required>
                         <button type="submit" class="btn btn-sm btn-danger mt-2">Cancel</button>
                       </form>
                       {{else if eq .Status "Delivered"}}
-                      <form method="POST" action="/user/cancel-item">
+                      <span class="badge bg-success mt-2">{{.Status}}</span>
+                      <form method="POST" action="/user/cancel-item" class="mt-2">
                         <input type="hidden" name="order_id" value="{{$.Order.ID}}">
                         <input type="hidden" name="item_id" value="{{.ID}}">
+                        <input type="text" name="reason" placeholder="Reason for return" required>
                         <button type="submit" class="btn btn-sm btn-danger mt-2">Return</button>
                       </form>
+                      
+                      {{else if or (eq .Status "Failed") (eq .Status "Canceled")}}
+                      <span class="badge bg-danger mt-2">{{.Status}}</span>
+                      {{else if eq .Status "Delivered"}}
+                      <span class="badge bg-success mt-2">{{.Status}}</span>
                       {{else}}
                       <span class="badge bg-secondary mt-2">{{.Status}}</span>
                       {{end}}

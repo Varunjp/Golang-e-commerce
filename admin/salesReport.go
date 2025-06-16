@@ -3,6 +3,7 @@ package admin
 import (
 	"bytes"
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/models"
 	"fmt"
 	"math"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jung-kurt/gofpdf"
+	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
 
@@ -52,7 +54,7 @@ func SalesReportPage(c *gin.Context){
 	case "weekly":
 		start = now.AddDate(0,0,-int(now.Weekday()))
 		end = start.AddDate(0,0,7)
-	case "montly":
+	case "monthly":
 		start = time.Date(now.Year(), now.Month(),1,0,0,0,0,now.Location())
 		end = start.AddDate(0,1,0)
 	case "yearly":
@@ -74,7 +76,7 @@ func SalesReportPage(c *gin.Context){
 	
 	var orders []models.Order
 
-	dbFullordes := db.Db.Model(&models.Order{})
+	dbFullordes := db.Db.Model(&models.Order{}).Where("create_at BETWEEN ? AND ?",start,end)
 
 	dbFullordes.Count(&total)
 
@@ -128,6 +130,16 @@ func SalesReportPage(c *gin.Context){
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 	
+	tokenStr,_ := c.Cookie("JWT-Admin")
+	_,userId,_ := helper.DecodeJWT(tokenStr)
+	var AdminUser models.Admin
+
+	if err := db.Db.Where("id = ?",userId).First(&AdminUser).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Please login again"})
+		return 
+	}
+
+	name := AdminUser.Username
 
 	c.HTML(http.StatusOK,"sales_report.html",gin.H{
 		"sales":ResponseOrders,
@@ -141,6 +153,10 @@ func SalesReportPage(c *gin.Context){
 		"page": page,
 		"totalPages":totalPages,
 		"limit":limit,
+		"start":start.Format("2006-01-02"),
+		"end":end.Format("2006-01-02"),
+		"filter":rangeType,
+		"user":name,
 	})
 
 }
@@ -149,18 +165,26 @@ func DownloadSalesReport(c *gin.Context){
 	
 	from := c.PostForm("from")
 	to := c.PostForm("to")
-	// rangeType := c.PostForm("range")
+	//rangeType := c.PostForm("filter")
 
 	start,_ := time.Parse("2006-01-02",from)
 	end,_ := time.Parse("2006-01-02",to)
 
 	var orders []models.Order
-	db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ?",start,end).Find(&orders)
+	db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ? AND status = ?",start,end,"Delivered").Find(&orders)
 
 	pdf := gofpdf.New("P","mm","A4","")
 	pdf.AddPage()
+
 	pdf.SetFont("Arial","B",16)
-	pdf.Cell(40,10,"Sales Report")
+
+	title := "Sales Report"
+
+	pageWidth,_ := pdf.GetPageSize()
+	stringWidth := pdf.GetStringWidth(title)
+
+	pdf.SetX((pageWidth - stringWidth)/2)
+	pdf.CellFormat(stringWidth,10,title,"",1,"C",false,0,"")
 
 	pdf.SetFont("Arial","",12)
 	pdf.Ln(10)
@@ -168,20 +192,33 @@ func DownloadSalesReport(c *gin.Context){
 	pdf.Cell(60,10,"To: "+to)
 	pdf.Ln(12)
 
-	// delete
-	fmt.Println("Date check from :",from)
-	fmt.Println("Date check to :",to)
-	fmt.Println("--------------")
-	fmt.Println("Default start :",start)
-	fmt.Println("Default end :",end)
-	fmt.Println("---------")
+	pdf.SetFont("Arial", "B", 12)
+	pdf.CellFormat(30, 10, "Order ID", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(35, 10, "Date", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(40, 10, "Customer", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(30, 10, "Amount", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(30, 10, "Discount", "1", 1, "C", false, 0, "") // end of row
 
+	pdf.SetFont("Arial", "", 11)
+
+	if len(orders) < 1{
+		pdf.CellFormat(30, 10, "---------", "1", 0, "C", false, 0, "")
+		pdf.CellFormat(35, 10, "---------", "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, "No Sales", "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 10, "---------", "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 10, "---------", "1", 1, "C", false, 0, "")
+	}
 
 	for _, order := range orders {
 		var user models.User
 		db.Db.Where("id = ?",order.UserID).First(&user)
-		pdf.Cell(0,10,fmt.Sprintf("Order ID: %d | User: %s | Amount: ₹%.2f",order.ID,user.Username,order.TotalAmount))
-		pdf.Ln(8)
+		orderDate := order.CreateAt.Format("02-01-2006")
+
+		pdf.CellFormat(30, 10, fmt.Sprintf("%d", order.ID), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(35, 10, orderDate, "1", 0, "C", false, 0, "")
+		pdf.CellFormat(40, 10, user.Username, "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.TotalAmount), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.DiscountTotal), "1", 1, "C", false, 0, "")
 	}
 
 	var buf bytes.Buffer
@@ -194,4 +231,75 @@ func DownloadSalesReport(c *gin.Context){
 
 	c.Header("Content-Disposition","attachment; filename=sales_report.pdf")
 	c.Data(http.StatusOK,"application/pdf",buf.Bytes())
+}
+
+func DownloadExcel(c *gin.Context){
+	from := c.PostForm("from")
+	to := c.PostForm("to")
+
+	start,_ := time.Parse("2006-01-02",from)
+	end,_ := time.Parse("2006-01-02",to)
+
+	var orders []models.Order
+	db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ? AND status = ?",start,end,"Delivered").Find(&orders)
+
+	f := excelize.NewFile()
+	sheet := "SalesReport"
+	f.NewSheet(sheet)
+	f.DeleteSheet("Sheet1")
+
+	headers := []string{"Order ID","Date","Customer","Amount","Discount"}
+	
+	for i, h := range headers {
+		cell,_ := excelize.CoordinatesToCellName(i+1,1)
+		f.SetCellValue(sheet,cell,h)
+	}
+
+	if len(orders) < 1{
+
+		values := []interface{}{
+			"------",
+			"------",
+			"No sales",
+			"------",
+			"------",
+		}
+
+		for col, v := range values{
+			cell,_ := excelize.CoordinatesToCellName(col+1,2)
+			f.SetCellValue(sheet,cell,v)
+		}
+
+	}
+
+	for row, order := range orders{
+		var user models.User
+		db.Db.First(&user,order.UserID)
+
+		values := []interface{}{
+			order.ID,
+			order.CreateAt.Format("02-01-2006"),
+			user.Username,
+			order.TotalAmount,
+			order.DiscountTotal,
+		}
+
+		for col, v := range values{
+			cell,_ := excelize.CoordinatesToCellName(col+1,row+2)
+			f.SetCellValue(sheet,cell,v)
+		}
+	}
+
+	for i := 1; i<= len(headers); i++{
+		col,_ := excelize.ColumnNumberToName(i)
+		f.SetColWidth(sheet,col,col,20)
+	}
+
+	c.Header("Content-Disposition","attachment; filename=sales_report.xlsx")
+	c.Header("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+	if err := f.Write(c.Writer); err != nil{
+		c.JSON(500,"Error generating Excel file")
+	}
+
 }

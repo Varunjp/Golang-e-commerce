@@ -52,7 +52,7 @@ func ViewProducts(c *gin.Context){
 
 	offset := (page - 1) * limit
 
-	var total int
+	var total int64
 
 	keyword := c.Query("search")
 
@@ -60,6 +60,7 @@ func ViewProducts(c *gin.Context){
 			
 		// err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.deleted_at IS NULL").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
 
+		db.Db.Model(&models.Product_Variant{}).Count(&total)
 
 		err := db.Db.Model(&models.Product_Variant{}).Preload("Product_images",func(db *gorm.DB)*gorm.DB{
 			return db.Where("order_no = ?",1)
@@ -70,10 +71,6 @@ func ViewProducts(c *gin.Context){
 			c.JSON(http.StatusInternalServerError,gin.H{"error":err.Error()})
 			return
 		}
-
-			
-		//result.Count(&total)
-		total = len(Products)
 
 		if len(Products) == 0{
 			c.HTML(http.StatusOK,"admin_product_list.html",gin.H{"message":"No products listed"})
@@ -120,16 +117,16 @@ func ViewProducts(c *gin.Context){
 
 		// err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.variant_name ILIKE ?","%"+keyword+"%").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
 
-		err := db.Db.Model(&models.Product_Variant{}).Select("id,variant_name,size,price,stock").Where("variant_name ILIKE ?","%"+keyword+"%").Preload("Product_images",func(db *gorm.DB)*gorm.DB{
-			return db.Where("order_no = ?",1).Select("image_url")
-		}).Offset(offset).Find(&Products).Error
+		db.Db.Model(&models.Product_Variant{}).Where("product_variants.variant_name ILIKE ?","%"+keyword+"%").Count(&total)
+
+		err := db.Db.Model(&models.Product_Variant{}).Preload("Product_images",func(db *gorm.DB)*gorm.DB{
+			return db.Where("order_no = ?",1)
+		}).Where("product_variants.variant_name ILIKE ?","%"+keyword+"%").Offset(offset).Find(&Products).Error
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError,gin.H{"error":err.Error()})
 			return
 		}
-
-		total = len(Products)
 
 		if total == 0 {
 			c.HTML(http.StatusOK,"admin_product_list.html",gin.H{"error":"Product not found"})

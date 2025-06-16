@@ -1,0 +1,20 @@
+{{ template "header.html" . }}
+
+<!-- Order Failed Message -->
+<div class="container text-center mt-5">
+  <img src="/static/images/order_failed.png" alt="Order Failed" class="rounded mx-auto d-block mb-4" style="height: 200px; width: 200px;"/>
+  <h2 class="fw-bold text-danger">Oops! Something Went Wrong</h2>
+  <p class="text-muted">Unfortunately, your order <strong>#{{.OrderID}}</strong> could not be processed.</p>
+  <p class="text-muted">Please check your payment details or try placing the order again.</p>
+
+  <div class="mt-4 d-flex justify-content-center gap-3">
+    <a href="/user/cart" class="btn btn-outline-danger">Retry Order</a>
+    <a href="/" class="btn btn-dark">Back to Home</a>
+  </div>
+</div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

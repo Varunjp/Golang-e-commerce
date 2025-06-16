@@ -45,6 +45,15 @@ func ListUsers(c *gin.Context){
 
 	AdDb := db.Db.Model(&responsemodels.User{})
 	
+	
+
+	keyWord := c.Query("search")
+
+	if keyWord != ""{
+		param := "%"+keyWord+"%"
+		AdDb.Where("username ILIKE ?",param)
+	}
+
 	AdDb.Count(&total)
 
 	AdDb.Where("deleted_at IS NULL").Order("id desc").Limit(limit).Offset(offset).Find(&users)

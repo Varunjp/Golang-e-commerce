@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/middleware"
 	"first-project/models"
 	"net/http"
@@ -70,9 +71,12 @@ func HandleGoogleCallback(c *gin.Context){
 		
 		if errors.Is(err, gorm.ErrRecordNotFound){
 			
+			referralCode := helper.GenerateUniqueReferralCode()
+
 			user = models.User{
 				Username: googleUser.Name,
 				Email: googleUser.Email,
+				ReferralCode: referralCode,
 				Status:	"Active",
 				Created_at: time.Now(),
 			}
@@ -81,6 +85,21 @@ func HandleGoogleCallback(c *gin.Context){
 				c.HTML(http.StatusInternalServerError,"userLogin.html",gin.H{"error":"Failed to create account"})
 				return 
 			}
+
+			tokenString, err := middleware.CreateToken("user",user.Email,user.ID)
+
+			if err != nil{
+				c.HTML(http.StatusInternalServerError,"userLogin.html",gin.H{"error":"Failed to create JWT token"})
+				return
+			}
+
+			session := sessions.Default(c)
+			session.Set("name",user.Username)
+			session.Save()
+
+			c.SetCookie("JWT-User",tokenString,3600,"/","",false,true)
+			c.Redirect(http.StatusSeeOther,"/user/referral")
+			return 
 		} else{
 			c.HTML(http.StatusInternalServerError,"userLogin.html",gin.H{"error":"Unknow issue occured"})
 			return

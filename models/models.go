@@ -14,6 +14,8 @@ type User struct{
 	Phone 					string 		
 	Status 					string 						`gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
 	Addresses 				[]Address 					`gorm:"constraint:OnDelete:CASCADE; foreignKey:UserID"` 
+	ReferralCode			string						`gorm:"unique"`
+	ReferredBy 				string 
 	Created_at 				time.Time
 	Updated_at 				time.Time
 	Reviews					[]Review					`gorm:"constraint:OnDelete:CASCADE; foreignKey:UserID"`
@@ -81,16 +83,18 @@ type Order struct{
 }
 
 type OrderItem struct {
-	ID			uint 	`gorm:"primarykey;autoIncrement"`
-	OrderID		uint	`gorm:"index"`
-	UserID 		uint 	`gorm:"index"`
-	ProductID	uint 	`gorm:"index"`
-	Quantity	int 
-	Price 		float64	`gorm:"not null"`
-	Discount 	float64	
-	Status 		string
-	Order 		Order	`gorm:"constraint:ONDELETE:CASCADE"`
-	DeletedAt 	gorm.DeletedAt
+	ID					uint 	`gorm:"primarykey;autoIncrement"`
+	OrderID				uint	`gorm:"index"`
+	UserID 				uint 	`gorm:"index"`
+	ProductID			uint 	`gorm:"index"`
+	Quantity			int 
+	Price 				float64	`gorm:"not null"`
+	Discount 			float64	
+	Status 				string
+	PaymentStatus 		string 
+	Reason 				string 
+	Order 				Order	`gorm:"constraint:ONDELETE:CASCADE"`
+	DeletedAt 			gorm.DeletedAt
 }
 
 type WishList struct {
@@ -103,6 +107,9 @@ type WishList struct {
 type Coupons struct {
 	ID					uint 		`gorm:"primarykey;autoIncrement"`
 	Code 				string 		`gorm:"not null"`
+	Type 				string 
+	UserID				uint
+	CouponID			uint
 	Description			string 	
 	Discount			float64
 	MinAmount 			float64
@@ -130,6 +137,7 @@ type WalletTransaction struct {
 	ID 				uint 		`gorm:"primarykey;autoIncrement"`
 	UserID 			uint 
 	OrderID 		uint 
+	OrderItemID 	uint
 	Amount 			float64 	
 	Type 			string 
 	Description 	string 

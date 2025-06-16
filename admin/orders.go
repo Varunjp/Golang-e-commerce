@@ -77,8 +77,6 @@ func AdminOrdersPage(c *gin.Context){
 		dbQuery = dbQuery.Where("orders.status = ?",orderStatus)
 	}
 
-	//
-
 	dbQuery.Count(&total)
 
 	if err := dbQuery.Order("id DESC").Offset(offset).Limit(limit).Find(&Orders).Error; err != nil{
@@ -200,12 +198,15 @@ func AdminOrderDetails(c *gin.Context){
 	}
 
 	type response struct{
+		ID 			uint
 		Image 		string
 		ProductName string
 		Size 		string
 		Price 		float64
 		Quantity 	int 
 		SubTotal 	float64
+		Status 		string
+		Reason 		string 
 	}
 
 	OrderItems := make([]response,len(order.OrderItems))
@@ -224,21 +225,27 @@ func AdminOrderDetails(c *gin.Context){
 
 		if len(Product.Product_images) != 0 {
 			OrderItems[i] = response{
+				ID: item.ID,
 				Image: Product.Product_images[0].Image_url,
 				ProductName: Product.Variant_name,
 				Size: Product.Size,
 				Price: Product.Price,
 				Quantity: item.Quantity,
 				SubTotal: subTotal,
+				Status: item.Status,
+				Reason: item.Reason,
 			}
 		}else{
 			OrderItems[i] = response{
+				ID: item.ID,
 				Image: "",
 				ProductName: Product.Variant_name,
 				Size: Product.Size,
 				Price: Product.Price,
 				Quantity: item.Quantity,
 				SubTotal: subTotal,
+				Status: item.Status,
+				Reason: item.Reason,
 			}
 		}
 
@@ -250,4 +257,159 @@ func AdminOrderDetails(c *gin.Context){
 		"OrderItems":OrderItems,
 		"address":address,
 	})
+
+}
+
+func AdminOrderUpdate(c *gin.Context){
+	
+	status := c.PostForm("status")
+	orderId := c.Param("id")
+	var order models.Order
+	
+	if err := db.Db.Preload("OrderItems").Where("id = ?",orderId).First(&order).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to retrieve order details"})
+		return 
+	}
+
+	if status == "Cancelled"{
+		err := helper.AdminOrderCancel(order.ID)
+		if err != nil{
+			c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":err})
+			return 
+		}
+	}else if status == "Delivered"{
+		for _,item := range order.OrderItems{
+
+			if item.Status != "Returned"{
+				item.Status = "Delivered"
+			}
+			
+			db.Db.Save(&item)
+		}
+		order.PaymentStatus = "Success"
+	}
+
+	order.Status = status
+
+	db.Db.Save(&order)
+
+	c.Redirect(http.StatusSeeOther,"/admin/order/"+orderId)
+}
+
+func AdminItemOrder(c *gin.Context){
+	var orderItem models.OrderItem
+	var order models.Order
+	itemId := c.Param("id")
+
+	if err := db.Db.Where("id = ?",itemId).First(&orderItem).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to retrieve order item"})
+		return 
+	}
+
+	if err := db.Db.Preload("OrderItems").Where("id = ?",orderItem.OrderID).First(&order).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to retrieve order"})
+		return 
+	}
+
+	if err := db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity)).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to update order"})
+		return 
+	}
+
+	checkRemaing := 0
+
+	for _,item := range order.OrderItems{
+		if item.Status == "Pending" || item.Status == "Processing" || item.Status == "Delivered"{
+			checkRemaing ++
+		}
+	}
+	
+	if checkRemaing == 0 {
+		order.Status = "Returned"
+		order.PaymentStatus = "Refunded"
+		db.Db.Save(&order)
+		
+	}
+
+	orderItem.Status = "Returned"
+	orderId := orderItem.OrderID
+	orderIdStr := strconv.Itoa(int(orderId))
+	db.Db.Save(&orderItem)
+	db.Db.Delete(&orderItem)
+
+	c.Redirect(http.StatusSeeOther,"/admin/order/"+orderIdStr)
+}
+
+func AdminOrderReturnRequests(c *gin.Context){
+	
+	var orderItems []models.OrderItem
+
+	if err := db.Db.Where("status = ?","Return requested").Find(&orderItems).Error; err != nil{
+		if err != gorm.ErrRecordNotFound{
+			c.HTML(http.StatusInternalServerError,"admin_orders.html",gin.H{"error":err})
+			return 
+		}
+	}
+
+	if len(orderItems) < 1{
+		c.HTML(http.StatusNotFound,"admin_return_requests.html",gin.H{"error":"No Return Requests"})
+		return  
+	}
+	
+	type response struct{
+		ID 			uint
+		Image 		string
+		ProductName string
+		Size 		string
+		Price 		float64
+		Quantity 	int 
+		SubTotal 	float64
+		Status 		string
+		Reason 		string 
+	}
+
+	ResponseItems := make([]response,len(orderItems))
+
+
+	for i,item := range orderItems {
+
+		var Product models.Product_Variant
+		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
+
+		if err != nil {
+			c.HTML(http.StatusNotFound,"admin_orderDetails.html",gin.H{"error":"Product details not found"})
+			return 
+		}
+
+		subTotal := Product.Price * float64(item.Quantity)+(Product.Tax* float64(item.Quantity))
+
+		if len(Product.Product_images) != 0 {
+			ResponseItems[i] = response{
+				ID: item.ID,
+				Image: Product.Product_images[0].Image_url,
+				ProductName: Product.Variant_name,
+				Size: Product.Size,
+				Price: Product.Price,
+				Quantity: item.Quantity,
+				SubTotal: subTotal,
+				Status: item.Status,
+				Reason: item.Reason,
+			}
+		}else{
+			ResponseItems[i] = response{
+				ID: item.ID,
+				Image: "",
+				ProductName: Product.Variant_name,
+				Size: Product.Size,
+				Price: Product.Price,
+				Quantity: item.Quantity,
+				SubTotal: subTotal,
+				Status: item.Status,
+				Reason: item.Reason,
+			}
+		}
+
+	}
+
+	c.HTML(http.StatusOK,"admin_return_requests.html",gin.H{"OrderItems":ResponseItems})
 }

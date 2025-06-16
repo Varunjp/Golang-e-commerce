@@ -136,7 +136,7 @@
                 <td>
                   <a href="/admin/products/edit/{{ .ID }}"><img src="/{{ .ImageURl }}" alt="" width="40" class="me-2"> {{ .Name }}</a>
                 </td>
-                <td>${{ .Price }}</td>
+                <td>₹.{{ .Price }}</td>
                 <td>{{ .Size }}</td>
                 <td>{{ .Quantity }}</td>
                 <td>{{ .CreatedAt.Format "01/02/06 at 3:04 PM" }}</td>

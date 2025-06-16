@@ -44,6 +44,11 @@ func GetUrl(router *gin.Engine){
 	router.POST("/user/upload-profile-image",middleware.AuthUserMiddlerware("user"),user.UploadProfileImage)
 	router.POST("/user/verify-email-otp",middleware.AuthUserMiddlerware("user"),user.UpdateEmail)
 
+	// User referral
+	router.GET("/user/create/referral",middleware.AuthUserMiddlerware("user"),user.GenerateReferralCode)
+	router.POST("/user/referral",middleware.AuthUserMiddlerware("user"),user.SubmitReferralCode)
+	router.GET("/user/referral",middleware.AuthUserMiddlerware("user"),user.SubmitReferralPage)
+
 	// User product page
 	router.GET("/user/shop",user.ShowProductList)
 	router.GET("/user/product/:id",user.Product)
@@ -57,6 +62,8 @@ func GetUrl(router *gin.Engine){
 	router.POST("/user/cancel-order",middleware.AuthUserMiddlerware("user"),user.ReturnOrder)
 	router.GET("/user/order/:id",middleware.AuthUserMiddlerware("user"),user.OrderItems)
 	router.POST("/user/cancel-item",middleware.AuthUserMiddlerware("user"),user.CancelItem)
+	router.POST("/order/failed",middleware.AuthUserMiddlerware("user"),user.OrderFailed)
+	router.GET("/order/failed-page/:id",middleware.AuthUserMiddlerware("user"),user.OrderFailedPage)
 
 
 	// User checkout
@@ -66,6 +73,9 @@ func GetUrl(router *gin.Engine){
 	router.POST("/user/save-address",middleware.AuthUserMiddlerware("user"),user.AddNewAddress)
 	router.GET("/user/invoice/:id",middleware.AuthUserMiddlerware("user"),user.DownloadPdf)
 	router.GET("/order/confirmation/:id",middleware.AuthUserMiddlerware("user"),user.OrderConfirmation)
+
+	// User wallet
+	router.GET("/user/wallet-transactions",middleware.AuthUserMiddlerware("user"),user.WalletTransaction)
 
 	// User payment online
 	router.POST("/create-razorpay-order",middleware.AuthUserMiddlerware("user"),user.CreateRazorpayOrder)
@@ -120,6 +130,13 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/orders",middleware.AuthMiddlerware("admin"),admin.AdminOrdersPage)
 	router.POST("/admin/orders/cancel/:id",middleware.AuthMiddlerware("admin"),admin.AdminOrderCancel)
 	router.GET("/admin/order/:id",middleware.AuthMiddlerware("admin"),admin.AdminOrderDetails)
+	router.POST("/admin/orders/update-status/:id",middleware.AuthMiddlerware("admin"),admin.AdminOrderUpdate)
+	router.GET("/admin/order/item/:id",middleware.AuthMiddlerware("admin"),admin.AdminItemOrder)
+	router.GET("/admin/order/item-reject/:id",middleware.AuthMiddlerware("admin"),admin.AdminItemCancel)
+	router.GET("/admin/order/return-request",middleware.AuthMiddlerware("admin"),admin.AdminOrderReturnRequests)
+	
+	// Admin excel
+	router.POST("/admin/reports/excel",middleware.AuthMiddlerware("admin"),admin.DownloadExcel)
 
 
 	// Admin banner

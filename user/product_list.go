@@ -51,6 +51,7 @@ func ShowProductList(c *gin.Context){
 
 	categories := c.QueryArray("category")
 	size := c.Query("size")
+	search := c.Query("search")
 	minPrice,_ := strconv.ParseFloat(c.DefaultQuery("min_price","0"),64)
 	maxPrice,_ := strconv.ParseFloat(c.DefaultQuery("max_price","10000"),64)
 	sortBy := c.DefaultQuery("sort","")
@@ -60,6 +61,10 @@ func ShowProductList(c *gin.Context){
         return db.Order("order_no ASC")
     }).Where("is_active = ? AND product_variants.deleted_at IS NULL",true).Model(&models.Product_Variant{})
 	
+	if search != ""{
+		searchPattern := "%"+search+"%"
+		query = query.Where("variant_name ILIKE ?",searchPattern)
+	}
 
 	if len(categories) > 0 {
 		query = query.Joins("JOIN products ON products.product_id = product_variants.product_id").Where("products.sub_category_id IN ?",categories)

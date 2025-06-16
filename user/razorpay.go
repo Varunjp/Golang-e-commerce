@@ -30,11 +30,10 @@ func CreateRazorpayOrder(c *gin.Context){
 	}
 
 	
-
 	if err := c.ShouldBindJSON(&req); err != nil{
 		
-		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Invalid request"})
-		log.Println(err)
+		c.JSON(http.StatusBadRequest,gin.H{"success":false})
+		log.Println("Json :",err)
 		return 
 	}
 
@@ -48,7 +47,7 @@ func CreateRazorpayOrder(c *gin.Context){
 	if couponCode != ""{
 		
 		if err := db.Db.Where("user_id = ? AND coupon_id = ?",userID,couponCode).First(&usedcouponcheck).Error; err == nil{
-			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Coupon already used"})
+			c.JSON(http.StatusBadRequest,gin.H{"success":false})
 			return 
 		}
 
@@ -59,7 +58,7 @@ func CreateRazorpayOrder(c *gin.Context){
 	
 	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
-			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load user details please try again later"})
+			c.JSON(http.StatusInternalServerError,gin.H{"success":false})
 			log.Println(err)
 			return 
 		}
@@ -70,7 +69,6 @@ func CreateRazorpayOrder(c *gin.Context){
 	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
 		
 		c.JSON(http.StatusNotFound,gin.H{"error":"Not able to load cart items"})
-		log.Println(err)
 		return 
 	}
 
@@ -93,7 +91,7 @@ func CreateRazorpayOrder(c *gin.Context){
 
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
 
-			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"user":"done","error":"User exceeded product purchase limit"})
+			c.JSON(http.StatusBadRequest,gin.H{"success":false})
 			return 
 		}
 
@@ -111,7 +109,8 @@ func CreateRazorpayOrder(c *gin.Context){
 	body, err := client.Order.Create(data,nil)
 
 	if err != nil {
-		c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to create Razorpay order"})
+		log.Println("error from order :",err.Error())
+		c.JSON(http.StatusInternalServerError,gin.H{"success":false,"error":"Failed to create Razorpay order"})
 		return 
 	}
 
@@ -287,7 +286,8 @@ func PaymentSuccess(c *gin.Context){
 			OrderID: order.ID,
 			ProductID: item.ProductID,
 			Quantity: item.Quantity,
-			Price: item.Price,		
+			Status: "Processing",
+			Price: item.Price,
 		}
 
 		if err := db.Db.Create(&orderItem).Error; err != nil{
@@ -295,7 +295,6 @@ func PaymentSuccess(c *gin.Context){
 			return 
 		}
 
-		
 		// delete from wishlist
 		var wishlist models.WishList
 

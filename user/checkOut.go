@@ -35,17 +35,6 @@ func CheckOutPage(c *gin.Context) {
 		}
 	}
 
-	// if usedCoupon.ID != 0 {
-	// 	if err := db.Db.Where("is_active = ? AND id != ?",true,usedCoupon.CouponID).Find(&coupons).Error; err != nil{
-	// 	log.Println("Error while loading coupons :",err)
-	// 	}
-	// }else{
-	// 	if err := db.Db.Where("is_active = ?",true).Find(&coupons).Error; err != nil{
-	// 	log.Println("Error while loading coupons :",err)
-	// 	}
-	// }
-
-	
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&Addresses).Error; err != nil{
 
@@ -96,7 +85,9 @@ func CheckOutPage(c *gin.Context) {
 	}
 
 	dbcoupons := db.Db.Model(&models.Coupons{}).Where("is_active = ?",true)
-	dbcoupons = dbcoupons.Where("category_id IN ? OR category_id is NULL",subCatID)
+	dbcoupons = dbcoupons.Where("category_id IN ? OR category_id is NULL OR category_id = 0",subCatID)
+	dbcoupons = dbcoupons.Where("user_id = ? OR user_id is NULL",userID)
+	dbcoupons = dbcoupons.Not("type = ?","Base")
 
 	if usedCoupon.ID != 0 {
 		if err := dbcoupons.Where("id != ?",usedCoupon.CouponID).Find(&coupons).Error; err != nil{
@@ -107,8 +98,6 @@ func CheckOutPage(c *gin.Context) {
 		log.Println("Error while loading coupons :",err)
 		}
 	}
-
-
 
 	var totalamount float64
 
@@ -338,6 +327,7 @@ func CheckOutOrder(c *gin.Context){
 			OrderID: order.ID,
 			ProductID: item.ProductID,
 			Quantity: item.Quantity,
+			Status: "Processing",
 			Price: item.Price,		
 		}
 
