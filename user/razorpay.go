@@ -9,6 +9,7 @@ import (
 	"first-project/models"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -76,10 +77,10 @@ func CreateRazorpayOrder(c *gin.Context){
 
 		itemCount := 0
 
-		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
-			c.JSON(http.StatusBadRequest,gin.H{"success":false})
-			return 
-		}
+		// if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
+		// 	c.JSON(http.StatusBadRequest,gin.H{"success":false})
+		// 	return 
+		// }
 
 		for _, oritems := range orderitems{
 			if item.ProductID == oritems.ProductID{
@@ -87,7 +88,7 @@ func CreateRazorpayOrder(c *gin.Context){
 			}
 		}
 
-		if itemCount > 5 {
+		if itemCount >= 5 {
 
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
 
@@ -173,8 +174,10 @@ func PaymentSuccess(c *gin.Context){
 	var total float64
 	var totalTax float64
 	for _,item := range CartItems{
+		var product models.Product_Variant
+		db.Db.Where("id = ?",item.ProductID).First(&product)
 		total += item.Price * float64(item.Quantity)
-		totalTax += item.Product.Tax * float64(item.Quantity)
+		totalTax += product.Tax * float64(item.Quantity)
 	}
 
 	addressintId,_ := strconv.Atoi(payload.AddressID)
@@ -192,7 +195,13 @@ func PaymentSuccess(c *gin.Context){
 
 	var discount float64
 	if coupon.ID != 0 {
-		discount = (total * coupon.Discount)/100
+		if coupon.MaxAmount < total+totalTax {
+			discount = coupon.MaxAmount
+		}else{
+			discount = (total * coupon.Discount)/100
+		}
+	}else if payload.IsWallet {
+		discount = (total+totalTax) - payload.Amount
 	}
 
 	
@@ -201,7 +210,8 @@ func PaymentSuccess(c *gin.Context){
 		UserID: uint(userID),
 		AddressID: uint(addressintId),
 		DiscountTotal: discount,
-		SubTotal: total,
+		SubTotal: total+totalTax,
+		TotalTax: totalTax,
 		TotalAmount: payload.Amount,
 		Status: "Processing",
 		PaymentStatus: "Successful",
@@ -216,26 +226,16 @@ func PaymentSuccess(c *gin.Context){
 		return 
 	}
 
-	if payload.IsWallet {
-		
-		err := helper.DebitWallet(uint(userID),((total+totalTax) - payload.Amount),order.ID,"Order debit")
-
-		if err != nil{
-			c.JSON(http.StatusInternalServerError,gin.H{"success":false})
-			return 
-		}
-	}
-
 	couponCode := payload.CouponCode
 
 	if couponCode != ""{
-		var coupon models.Coupons
+		// var coupon models.Coupons
 
-		if err := db.Db.Where("id = ?",couponCode).First(&coupon).Error; err != nil{
-			log.Println(err)
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load coupon details"})
-			return 
-		}
+		// if err := db.Db.Where("id = ?",couponCode).First(&coupon).Error; err != nil{
+		// 	log.Println(err)
+		// 	c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load coupon details"})
+		// 	return 
+		// }
 		
 		usedcoupon := models.UsedCoupon{
 			UserID: order.UserID,
@@ -248,6 +248,25 @@ func PaymentSuccess(c *gin.Context){
 			return 
 		}
 
+	}
+
+	if payload.IsWallet {
+
+		var walletAmount float64
+
+		if coupon.ID != 0 {
+			couponDiscount := math.Round((total+totalTax) * coupon.Discount /100) 
+			walletAmount = ((total+totalTax) - payload.Amount)-couponDiscount
+		}else{
+			walletAmount = (total+totalTax) - payload.Amount
+		}
+
+		err := helper.DebitWallet(uint(userID),walletAmount,order.ID,"Order debit")
+
+		if err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"success":false})
+			return 
+		}
 	}
 
 	var orderitems []models.OrderItem
@@ -274,7 +293,7 @@ func PaymentSuccess(c *gin.Context){
 			}
 		}
 
-		if itemCount > 5 {
+		if itemCount >= 5 {
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
 			db.Db.Delete(&models.Order{},order.ID)
 			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"user":"done","error":"User exceeded product purchase limit"})
@@ -309,10 +328,6 @@ func PaymentSuccess(c *gin.Context){
 		return 
 	}
 
-	// if err := helper.DebitWallet(uint(userID),order.TotalAmount,order.ID,"debit for order"); err != nil {
-	// 	c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed update wallet"})
-	// 	return
-	// }
 
 	c.JSON(http.StatusOK,gin.H{"success":true,"redirect": fmt.Sprintf("/order/confirmation/%d",order.ID)})
 }

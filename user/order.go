@@ -110,7 +110,7 @@ func ReturnOrder(c *gin.Context){
 	}
 
 	var walletTransaction models.WalletTransaction
-	if err := db.Db.Where("user_id = ? AND order_id = ?",order.UserID,orderId).First(&walletTransaction).Error; err != nil{
+	if err := db.Db.Where("user_id = ? AND order_id = ? AND type = ?",order.UserID,orderId,"Debit").First(&walletTransaction).Error; err != nil{
 		if err != gorm.ErrRecordNotFound {
 			log.Println(err)
 			c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to load wallet details"})
@@ -118,7 +118,7 @@ func ReturnOrder(c *gin.Context){
 		}
 	}
 
-	if order.PaymentMethod != "cod"{
+	if order.PaymentMethod != "cod" && walletTransaction.ID != 0{
 		
 		walletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
@@ -130,27 +130,28 @@ func ReturnOrder(c *gin.Context){
 		}
 
 		db.Db.Create(&walletTransaction)
-	}
-	
-	if walletTransaction.ID != 0{
-
+	}else if order.PaymentMethod == "cod" && walletTransaction.ID != 0{
+		
 		newTransaction := models.WalletTransaction{
 			UserID: walletTransaction.UserID,
 			OrderID: walletTransaction.OrderID,
 			Amount: walletTransaction.Amount,
 			Type: "Credit",
-			Description: "Refund request for "+strconv.Itoa(int(walletTransaction.ID)),
+			Description: "Refund request for order :"+strconv.Itoa(int(walletTransaction.OrderID)),
 			RefundStatus: true,
 		}
 
 		db.Db.Create(&newTransaction)
 	}
 	
-	if walletTransaction.ID != 0 || order.PaymentMethod != "cod"{
-		order.Status = "Refund is being processed"
+	
+	if walletTransaction.ID != 0 || order.PaymentMethod != "cod" || order.Status == "Delivered"{
+		order.Status = "Return requested"
+		order.PaymentStatus = "Refund is being processed"
 		order.Reason = reason
 	}else{
-		order.Status = "Returned"
+		order.Status = "Return requested"
+		order.PaymentStatus = "Failed"
 		order.Reason = reason
 	}
 
@@ -161,10 +162,11 @@ func ReturnOrder(c *gin.Context){
 
 	for _,item := range order.OrderItems {
 
-		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
 		//db.Db.Delete(&models.OrderItem{},item.ID)
-		if item.Status != "Return requested"{
-			item.Status = "Return"
+		if item.Status != "Returned"{
+			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+			item.Status = "Return requested"
+			item.Reason =  reason
 			db.Db.Save(&item)
 		}
 		

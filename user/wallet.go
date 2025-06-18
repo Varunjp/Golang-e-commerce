@@ -55,9 +55,9 @@ func WalletTransaction(c *gin.Context){
 	offset := (page - 1) * limit
 
 	var total int64
-	db.Db.Model(&models.WalletTransaction{}).Where("user_id = ?",UserId).Count(&total)
+	db.Db.Unscoped().Model(&models.WalletTransaction{}).Where("user_id = ?",UserId).Count(&total)
 
-	if err := db.Db.Where("user_id = ?",UserId).Order("id desc").Offset(offset).Limit(limit).Find(&walletTransaction).Error; err != nil{
+	if err := db.Db.Unscoped().Where("user_id = ?",UserId).Order("id desc").Offset(offset).Limit(limit).Find(&walletTransaction).Error; err != nil{
 		if err != gorm.ErrRecordNotFound {
 			c.HTML(http.StatusInternalServerError,"walletTransaction.html",gin.H{"error":"Failed to load wallet transactions, please try again later"})
 			return 

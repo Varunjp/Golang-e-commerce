@@ -162,10 +162,9 @@ func AddCoupon(c *gin.Context){
 		MaxAmount 		float64 	`form:"max_amount" binding:"required"`
 		Type 			string 		`form:"type" binding:"required"`
 		Active 			string 		`form:"active" binding:"required"`
-		Category 		string		`form:"subcategory_id" binding:"required"`
 	}
 
-
+	categoryID := c.PostForm("subcategory_id")
 	var input couponInput
 
 	if err := c.ShouldBind(&input); err != nil{
@@ -178,8 +177,8 @@ func AddCoupon(c *gin.Context){
 
 	var coupon models.Coupons
 
-	if input.Category != ""{
-		catId,_ := strconv.Atoi(input.Category)
+	if categoryID != ""{
+		catId,_ := strconv.Atoi(categoryID)
 
 		coupon = models.Coupons{
 		Code: input.Code,

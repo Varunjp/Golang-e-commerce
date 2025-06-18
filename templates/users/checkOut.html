@@ -235,22 +235,23 @@
   const couponMsg = document.getElementById("couponMessage");
 
   couponSelect.addEventListener("change", function () {
-  const selectedOption = couponSelect.selectedOptions[0];
-  const discountPercent = parseFloat(selectedOption?.getAttribute("data-discount") || 0);
-  const minAmount = parseFloat(selectedOption?.getAttribute("data-min") || 0);
-  const maxAmount = parseFloat(selectedOption?.getAttribute("data-max") || Infinity);
+    const originalAmount = parseFloat(document.getElementById("totalAmount").value);
+    const selectedOption = couponSelect.selectedOptions[0];
+    const discountPercent = parseFloat(selectedOption?.getAttribute("data-discount") || 0);
+    const minAmount = parseFloat(selectedOption?.getAttribute("data-min") || 0);
+    const maxAmount = parseFloat(selectedOption?.getAttribute("data-max") || Infinity);
 
-  if (discountPercent) {
-    const maxDiscount = maxAmount;
-    document.getElementById("couponInfo").style.display = "block";
-    document.getElementById("couponInfo").innerHTML = `
-      <strong>Coupon Details:</strong><br>
-      Minimum Order Value: ₹${minAmount.toFixed(2)}<br>
-      Maximum Discount: ₹${maxDiscount.toFixed(2)}
-    `;
-  } else {
-    document.getElementById("couponInfo").style.display = "none";
-  }
+    // if (discountPercent) {
+    //   const maxDiscount = maxAmount;
+    //   document.getElementById("couponInfo").style.display = "block";
+    //   document.getElementById("couponInfo").innerHTML = `
+    //     <strong>Coupon Details:</strong><br>
+    //     Minimum Order Value: ₹${minAmount.toFixed(2)}<br>
+    //     Maximum Discount: ₹${maxDiscount.toFixed(2)}
+    //   `;
+    // } else {
+    //   document.getElementById("couponInfo").style.display = "none";
+    // }
   });
 
 
@@ -258,15 +259,20 @@
   let walletUsed = 0;
 
   function recalculateFinalAmount() {
+    const originalAmount = parseFloat(document.getElementById("totalAmount").value);
     const selectedOption = couponSelect.selectedOptions[0];
     const discountPercent = parseFloat(selectedOption?.getAttribute("data-discount") || 0);
-    const minAmount = parseFloat(selectedOption?.getAttribute("data-min")||0);
-    const maxAmount = parseFloat(selectedOption?.getAttribute("data-max") || Infinity);
-    const couponType = selectedOption?.getAttribute("data-type")
+    const minAmount = parseFloat(selectedOption?.getAttribute("data-min") || 0);
+    const maxAmount = parseFloat(selectedOption?.getAttribute("data-max") || 0);
+    const couponType = selectedOption?.getAttribute("data-type");
+    couponMsg.classList.remove("text-danger");
+    let couponDiscount = 0;
 
-    if (discountPercent && originalAmount < minAmount ){
+    // Apply coupon only if eligible
+    if (discountPercent && originalAmount < minAmount) {
       couponMsg.style.display = 'block';
-      couponMsg.textContent = `Coupon not applicable. Order must be between ₹${minAmount.toFixed(2)} and ₹${maxAmount.toFixed(2)}.`
+      couponMsg.classList.add("text-danger");
+      couponMsg.textContent = `Coupon not applicable. Order must be above ₹${minAmount.toFixed(2)}.`;
 
       discountElem.textContent = "₹0.00";
       finalAmountElem.textContent = `₹${originalAmount.toFixed(2)}`;
@@ -274,24 +280,17 @@
       return;
     }
 
-    let appliedCoupon
+    let appliedCoupon = 0;
+    if (discountPercent) {
 
-    if (couponType != ""){
-      appliedCoupon = maxAmount
-    }else{
-      appliedCoupon = discountPercent ? (originalAmount * discountPercent) / 100 : 0;
-    }
-    
-    let couponDiscount;
+      appliedCoupon = (originalAmount * discountPercent) / 100;
 
-    if (appliedCoupon > maxAmount && couponType != ""){
-        couponDiscount = maxAmount;
-    }else{
-      couponDiscount = appliedCoupon;
+      couponDiscount = Math.min(appliedCoupon, maxAmount);
     }
 
     const afterCoupon = originalAmount - couponDiscount;
 
+    // Apply wallet
     walletUsed = 0;
     if (walletCheckbox.checked) {
       walletUsed = Math.min(walletBalance, afterCoupon);
@@ -299,15 +298,18 @@
 
     const final = afterCoupon - walletUsed;
 
+    // Update UI values
     discountElem.textContent = `₹${(couponDiscount + walletUsed).toFixed(2)}`;
     finalAmountElem.textContent = `₹${final.toFixed(2)}`;
     finalAmountInput.value = final.toFixed(2);
 
-    if (discountPercent) {
-      couponMsg.style.display = 'block';
-      couponMsg.textContent = `Coupon applied! You saved ₹${couponDiscount.toFixed(2)}. Wallet used ₹${walletUsed.toFixed(2)}`;
+    // Show message
+    couponMsg.style.display = 'block';
+    if (couponDiscount > 0 && walletUsed > 0) {
+      couponMsg.textContent = `Coupon applied! You saved ₹${couponDiscount.toFixed(2)}. Wallet used ₹${walletUsed.toFixed(2)}.`;
+    } else if (couponDiscount > 0) {
+      couponMsg.textContent = `Coupon applied! You saved ₹${couponDiscount.toFixed(2)}.`;
     } else if (walletUsed > 0) {
-      couponMsg.style.display = 'block';
       couponMsg.textContent = `Wallet used ₹${walletUsed.toFixed(2)}.`;
     } else {
       couponMsg.style.display = 'none';
@@ -318,6 +320,9 @@
   document.getElementById("removeCouponBtn").addEventListener("click", function () {
     couponSelect.value = "";
     couponDiscount = 0;
+    document.getElementById("couponInfo").style.display = "none";
+    couponMsg.style.display = 'none';
+    
     recalculateFinalAmount();
   });
   walletCheckbox.addEventListener("change", recalculateFinalAmount);

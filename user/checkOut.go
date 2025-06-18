@@ -21,20 +21,27 @@ func CheckOutPage(c *gin.Context) {
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 	var coupons []models.Coupons
-	var usedCoupon models.UsedCoupon
+	var usedCoupon []models.UsedCoupon
 
 	if err := db.Db.Preload("Product").Where("user_id = ?",userID).Find(&CartItems).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load data from DB"})
 		return 
 	}
 
-	if err := db.Db.Where("user_id = ?",userID).First(&usedCoupon).Error; err != nil{
+	if err := db.Db.Where("user_id = ?",userID).Find(&usedCoupon).Error; err != nil{
 		if err != gorm.ErrRecordNotFound {
 			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"failed to load coupon details"})
 			return 
 		}
 	}
 
+	usedCouponId := make([]uint,len(usedCoupon))
+
+	if len(usedCoupon) > 0 {
+		for i,coupon := range usedCoupon{
+			usedCouponId[i] = coupon.CouponID
+		}
+	}
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&Addresses).Error; err != nil{
 
@@ -86,11 +93,11 @@ func CheckOutPage(c *gin.Context) {
 
 	dbcoupons := db.Db.Model(&models.Coupons{}).Where("is_active = ?",true)
 	dbcoupons = dbcoupons.Where("category_id IN ? OR category_id is NULL OR category_id = 0",subCatID)
-	dbcoupons = dbcoupons.Where("user_id = ? OR user_id is NULL",userID)
+	dbcoupons = dbcoupons.Where("user_id = ? OR user_id is NULL OR user_id = 0",userID)
 	dbcoupons = dbcoupons.Not("type = ?","Base")
 
-	if usedCoupon.ID != 0 {
-		if err := dbcoupons.Where("id != ?",usedCoupon.CouponID).Find(&coupons).Error; err != nil{
+	if len(usedCoupon) != 0 {
+		if err := dbcoupons.Where("id NOT IN ?",usedCouponId).Find(&coupons).Error; err != nil{
 		log.Println("Error while loading coupons :",err)
 		}
 	}else{
@@ -98,6 +105,7 @@ func CheckOutPage(c *gin.Context) {
 		log.Println("Error while loading coupons :",err)
 		}
 	}
+
 
 	var totalamount float64
 
@@ -225,6 +233,10 @@ func CheckOutOrder(c *gin.Context){
 		
 		if coupon.ID != 0 {
 			discount = (total * coupon.Discount)/100
+
+			if discount > coupon.MaxAmount {
+				discount = coupon.MaxAmount
+			}
 		}
 
 

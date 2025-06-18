@@ -86,7 +86,7 @@
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
-              <select name="subcategory_id" class="form-control w-25" required>
+              <select name="subcategory_id" class="form-control w-25">
                   <option value="">Category</option>
                   {{range .Subcategories}}
                     <option value="{{.SubCategoryID}}">{{.SubCategoryName}} ({{.CategoryName}})</option>

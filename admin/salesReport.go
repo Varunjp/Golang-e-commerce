@@ -113,7 +113,10 @@ func SalesReportPage(c *gin.Context){
 			totalDiscount += order.DiscountTotal
 
 			for _, item := range order.OrderItems{
-				totalProducts += item.Quantity
+				if item.Status == "Delivered"{
+					totalProducts += item.Quantity
+				}
+				
 			}
 		}
 

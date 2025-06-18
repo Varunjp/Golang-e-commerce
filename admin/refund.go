@@ -3,6 +3,7 @@ package admin
 import (
 	db "first-project/DB"
 	"first-project/models"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -166,16 +167,45 @@ func WalletRefundApproval (c *gin.Context){
 			return
 		}
 
+		var product models.Product_Variant
+		db.Db.Where("id = ?",orderItem.ProductID).First(&product)
+		itemTotal := orderItem.Price * float64(orderItem.Quantity) + product.Tax * float64(orderItem.Quantity)
+		updatedTotal := order.SubTotal - itemTotal
+
+		var usedCoupon models.UsedCoupon
+		var coupon models.Coupons
+
+		if err := db.Db.Where("order_id = ? AND user_id = ?",order.ID,order.UserID).First(&usedCoupon).Error; err != nil{
+			log.Println(err)
+		}
+
+		if err := db.Db.Where("id = ?",usedCoupon.CouponID).First(&coupon).Error; err != nil{
+			log.Println(err)
+		}
+
+
 		newDiscount := order.DiscountTotal - transaction.Amount
 
-		if newDiscount < 0 {
-			order.DiscountTotal = 0.0
+		if coupon.ID != 0 {
+			if coupon.MaxAmount > updatedTotal{
+				if newDiscount < 0 {
+					order.DiscountTotal = 0.0
+				}else{
+					order.DiscountTotal = newDiscount
+				}
+			}
 		}else{
-			order.DiscountTotal = newDiscount
+			if newDiscount <= 0 {
+				order.DiscountTotal = 0.0
+			}else{
+				order.DiscountTotal = newDiscount
+			}
 		}
 		
-		order.TotalAmount = order.TotalAmount - transaction.Amount
-		order.SubTotal = order.TotalAmount
+		
+
+		// order.TotalAmount = order.TotalAmount - transaction.Amount
+		// order.SubTotal = order.TotalAmount
 
 		orderItem.PaymentStatus = "Refunded"
 		db.Db.Save(&orderItem)

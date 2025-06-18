@@ -323,20 +323,85 @@ func AdminItemOrder(c *gin.Context){
 			checkRemaing ++
 		}
 	}
+
+	var product models.Product_Variant
+	db.Db.Where("id = ?",orderItem.ProductID).First(&product)
+
+	retrunAmount := orderItem.Price * float64(orderItem.Quantity) + product.Tax * float64(orderItem.Quantity)
 	
-	if checkRemaing == 0 {
-		order.Status = "Returned"
-		order.PaymentStatus = "Refunded"
-		db.Db.Save(&order)
+	newTotal := order.SubTotal - retrunAmount
+	
+	// issue with order having coupon with higher than minimum order amount
+
+	valueCheck,usedCouponId,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
+	var walletTransaction models.WalletTransaction
+	db.Db.Unscoped().Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction)
+
+	if valueCheck && errVal == nil{
+
+		order.SubTotal = order.SubTotal - retrunAmount
+		order.TotalAmount = order.TotalAmount - retrunAmount
+	}else if !valueCheck && errVal == nil{
+
+		if walletTransaction.ID != 0 {
+			// var updateTotal float64
+			// if order.PaymentMethod == "cod"{
+			// 	order.SubTotal = order.SubTotal - retrunAmount
+			// 	updateTotal = order.SubTotal + walletTransaction.Amount
+			// }else{
+			// 	order.SubTotal = order.SubTotal - retrunAmount
+			// }
+
+			order.SubTotal = order.SubTotal - retrunAmount
+			updateTotal := order.SubTotal + walletTransaction.Amount
+
+			if updateTotal <= 0 {
+				order.TotalAmount = 0
+				order.DiscountTotal = 0
+			}else{
+				order.TotalAmount = updateTotal
+				order.DiscountTotal = math.Abs(walletTransaction.Amount)
+			}
+
+			
+		}else{
+
+
+			order.SubTotal = order.SubTotal - retrunAmount
+			order.TotalAmount = order.SubTotal
+			order.DiscountTotal = 0.0
+		}
 		
+		if usedCouponId != 0 {
+		db.Db.Delete(&models.UsedCoupon{},usedCouponId)
+		}
+
+	}else if errVal != nil{
+		
+		log.Println(errVal)
 	}
+	
+
+	if checkRemaing == 0 {
+		
+		if order.PaymentMethod != "cod" || order.Status == "Delivered"{
+			order.PaymentStatus = "Refunded"
+		}else{
+			order.PaymentStatus = "Failed"
+		}
+		order.Status = "Returned"
+		order.Reason = orderItem.Reason
+	}
+
 
 	orderItem.Status = "Returned"
 	orderId := orderItem.OrderID
 	orderIdStr := strconv.Itoa(int(orderId))
+	db.Db.Save(&order)
 	db.Db.Save(&orderItem)
 	db.Db.Delete(&orderItem)
 
+	
 	c.Redirect(http.StatusSeeOther,"/admin/order/"+orderIdStr)
 }
 

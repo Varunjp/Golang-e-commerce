@@ -143,6 +143,7 @@ type WalletTransaction struct {
 	Description 	string 
 	RefundStatus	bool 		`gorm:"default:false"`
 	CreatedAt 		time.Time
+	DeletedAt 		gorm.DeletedAt
 }
 
 type Admin struct {

@@ -3,6 +3,8 @@ package helper
 import (
 	db "first-project/DB"
 	"first-project/models"
+	"fmt"
+	"math"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +14,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 	var orderItem models.OrderItem
 	var usedCoupon models.UsedCoupon
 	var Product models.Product_Variant
+	var WalletTransaction models.WalletTransaction
 
 	if err := db.Db.Preload("OrderItems").Where("id = ?",orderId).First(&order).Error; err != nil{
 		return err 
@@ -26,6 +29,12 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			return err
 		}
 		
+	}
+
+	if err := db.Db.Where("order_id = ? AND user_id = ? AND type = ?",orderId,order.UserID,"Debit").First(&WalletTransaction).Error; err != nil{
+		if err != gorm.ErrRecordNotFound{
+			return err 
+		}
 	}
 
 	if err := db.Db.Where("id = ?",orderItem.ProductID).First(&Product).Error; err != nil{
@@ -45,6 +54,12 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 		orignalTotal += item.Price * float64(item.Quantity) + tempTax
 	}
 
+	walletAmount := 0.0
+
+
+	if WalletTransaction.ID != 0 {
+		walletAmount = math.Abs(WalletTransaction.Amount)
+	}
 
 	if usedCoupon.ID != 0 {
 
@@ -53,8 +68,10 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 		adjustedTotal := order.TotalAmount - itemTotal
 
+
 		// less than minmum amount in coupon
 		if adjustedTotal < coupon.MinAmount{
+
 			newTotal := orignalTotal - itemTotal
 			refundAmount := order.TotalAmount - newTotal
 
@@ -63,11 +80,16 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: refundAmount,
+				Amount: refundAmount+walletAmount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: true,
 			}
+
+			if WalletTransaction.ID != 0 {
+				db.Db.Delete(&WalletTransaction)
+			}
+
 
 			err := db.Db.Create(&walletTranscation).Error
 			if err != nil{
@@ -76,13 +98,13 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 	
 
 		}else{
-			
+
 			// amount refund
 			walletTransaction := models.WalletTransaction{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: itemTotal,
+				Amount: itemTotal+walletAmount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: true,
@@ -92,7 +114,13 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				return err 
 			}
 
+			if WalletTransaction.ID != 0 {
+				db.Db.Delete(&WalletTransaction)
+			}
+
 		}
+
+		//db.Db.Delete(&usedCoupon)
 
 	}else{
 
@@ -100,13 +128,15 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			UserID: order.UserID,
 			OrderID: order.ID,
 			OrderItemID: orderItem.ID,
-			Amount: itemTotal,
+			Amount: itemTotal+walletAmount,
 			Type: "Credit",
 			Description: reason,
 			RefundStatus: true,
 		}
 
-
+		if WalletTransaction.ID != 0 {
+			db.Db.Delete(&WalletTransaction)
+		}
 
 		err := db.Db.Create(&walletTransaction).Error
 		if err != nil{
@@ -130,6 +160,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 	var orderItem models.OrderItem
 	var usedCoupon models.UsedCoupon
 	var Product models.Product_Variant
+	var WalletTransaction models.WalletTransaction
 
 	if err := db.Db.Preload("OrderItems").Where("id = ?",orderId).First(&order).Error; err != nil{
 		return err 
@@ -146,6 +177,17 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 		
 	}
 
+	if err := db.Db.Where("order_id = ? AND user_id = ? AND type = ?",orderId,order.UserID,"Debit").First(&WalletTransaction).Error; err != nil{
+		if err != gorm.ErrRecordNotFound {
+			return err 
+		}
+	}
+
+	walletAmount := 0.0
+
+	if WalletTransaction.ID != 0 {
+		walletAmount = math.Abs(WalletTransaction.Amount)
+	}
 
 	if err := db.Db.Where("id = ?",orderItem.ProductID).First(&Product).Error; err != nil{
 		return err 
@@ -181,10 +223,14 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					UserID: order.UserID,
 					OrderID: order.ID,
 					OrderItemID: orderItem.ID,
-					Amount: refundAmount,
+					Amount: refundAmount+walletAmount,
 					Type: "Credit",
 					Description: reason,
 					RefundStatus: true,
+				}
+
+				if WalletTransaction.ID != 0 {
+				db.Db.Delete(&WalletTransaction)
 				}
 
 				err := db.Db.Create(&walletTranscation).Error
@@ -192,14 +238,6 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					return err 
 				}
 	
-
-				// // update order status
-				// order.TotalAmount = newTotal
-				// order.DiscountTotal = 0.0
-
-				// // remove item from orderitem
-				// db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity))
-
 				orderItem.Status = "Return requested"
 				orderItem.Reason = reason
 
@@ -209,7 +247,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					UserID: order.UserID,
 					OrderID: order.ID,
 					OrderItemID: orderItem.ID,
-					Amount: itemTotal,
+					Amount: itemTotal+walletAmount,
 					Type: "Credit",
 					Description: reason,
 					RefundStatus: true,
@@ -219,14 +257,15 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					return err 
 				}
 
+				if WalletTransaction.ID != 0 {
+				db.Db.Delete(&WalletTransaction)
+				}
 
-				// update order amount
-				// order.TotalAmount = newTotal
-				// // remove item from orderitem
-				// db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity))
 				orderItem.Status = "Return requested"
 				orderItem.Reason = reason
 			}
+
+			//db.Db.Delete(&usedCoupon)
 
 		}else{
 
@@ -234,7 +273,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: itemTotal,
+				Amount: itemTotal+walletAmount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: true,
@@ -246,20 +285,22 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 			if err != nil{
 				return err 
 			}
-
-			// newTotal := order.TotalAmount - itemTotal
-
-			// // update order amount
-			// order.TotalAmount = newTotal
-			// // remove item from orderitem
-			// db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity))
-			// orderItem.Status = "Return requested"
-			// orderItem.Reason = reason
-
+			if WalletTransaction.ID != 0 {
+				db.Db.Delete(&WalletTransaction)
+			}
+			
 
 		}
 
 	}else{
+
+		ItemCheck := 0
+
+		for _, item := range order.OrderItems {
+			if item.Status == "Delivered" || item.Status == "Processing"{
+				ItemCheck ++
+			}
+		}
 
 		if usedCoupon.ID != 0 {
 
@@ -267,39 +308,67 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 			db.Db.Where("id = ?",usedCoupon.CouponID).First(&coupon)
 
 			adjustedTotal := order.TotalAmount - itemTotal
+
 			// less than minmum amount in coupon
 			if adjustedTotal < coupon.MinAmount{
-				newTotal := orignalTotal - itemTotal
-				// update order status
-				order.TotalAmount = newTotal
-				order.SubTotal = newTotal
-				order.DiscountTotal = 0.0
-
-				// remove item from orderitem
-				// db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity))
+				
 				orderItem.Status = "Return requested"
 				orderItem.Reason = reason
 
 			}else{
-				newTotal := order.TotalAmount - itemTotal
+				//newTotal := order.TotalAmount - itemTotal
 
 				// update order amount
-				order.TotalAmount = newTotal
-				order.SubTotal = newTotal
+				// order.TotalAmount = newTotal
+				// order.SubTotal = newTotal
 				// remove item from orderitem
 				// db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity))
 				orderItem.Status = "Return requested"
 				orderItem.Reason = reason
 			}
+
+			if (ItemCheck == 0 && len(order.OrderItems) > 1) || (ItemCheck == 1 && len(order.OrderItems) == 1){
+				if WalletTransaction.ID != 0{
+					newTransaction := models.WalletTransaction{
+						UserID: order.UserID,
+						OrderID: order.ID,
+						Amount: math.Abs(WalletTransaction.Amount),
+						OrderItemID: orderItem.ID,
+						Type: "Credit",
+						Description: fmt.Sprintf("Refund for order : %d",order.ID),
+						RefundStatus: true,
+					}
+
+					db.Db.Create(&newTransaction)
+					db.Db.Delete(&WalletTransaction)
+				}
+			}
+
+
+		}else if WalletTransaction.ID != 0{
+
+			if (ItemCheck == 0 && len(order.OrderItems) > 1) || (ItemCheck == 1 && len(order.OrderItems) == 1){
+				
+				newTransaction := models.WalletTransaction{
+					UserID: order.UserID,
+					OrderID: order.ID,
+					Amount: math.Abs(WalletTransaction.Amount),
+					OrderItemID: orderItem.ID,
+					Type: "Credit",
+					Description: fmt.Sprintf("Refund for order : %d",order.ID),
+					RefundStatus: true,
+				}
+
+				db.Db.Create(&newTransaction)
+				db.Db.Delete(&WalletTransaction)
+
+			}
+			orderItem.Status = "Return requested"
+			orderItem.Reason = reason
+
+			
 		}else{
-
-			newTotal := order.TotalAmount - itemTotal
-
-			// update order amount
-			order.TotalAmount = newTotal
-			order.SubTotal = newTotal
-			// remove item from orderitem
-			//db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity))
+			
 			orderItem.Status = "Return requested"
 			orderItem.Reason = reason
 
