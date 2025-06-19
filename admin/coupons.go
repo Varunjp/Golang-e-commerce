@@ -156,7 +156,7 @@ func AddCoupon(c *gin.Context){
 
 	type couponInput struct {
 		Code 			string 		`form:"code" binding:"required"`
-		Description 	string 		`form:"code" binding:"required"`
+		Description 	string 		`form:"description" binding:"required"`
 		Discount 		float64 	`form:"discount" binding:"required"`
 		MinAmount		float64		`form:"min_amount" binding:"required"`
 		MaxAmount 		float64 	`form:"max_amount" binding:"required"`
@@ -164,12 +164,19 @@ func AddCoupon(c *gin.Context){
 		Active 			string 		`form:"active" binding:"required"`
 	}
 
+	var Existcoupon models.Coupons
+
 	categoryID := c.PostForm("subcategory_id")
 	var input couponInput
 
 	if err := c.ShouldBind(&input); err != nil{
 		
 		c.HTML(http.StatusBadRequest,"coupons.html",gin.H{"error":"All fields are required"})
+		return 
+	}
+
+	if err := db.Db.Where("code ILIKE ?",input.Code).First(&Existcoupon).Error; err == nil{
+		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Coupon code already exist"})
 		return 
 	}
 
@@ -253,6 +260,98 @@ func DeleteCoupon(c *gin.Context){
 
 	if err := db.Db.Delete(&models.Coupons{},id).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Failed to delete coupon"})
+		return 
+	}
+
+	c.Redirect(http.StatusSeeOther,"/admin/coupons")
+}
+
+func EditCouponPage(c *gin.Context){
+
+	id := c.Param("id")
+	var coupon models.Coupons
+	if err := db.Db.Where("id = ?",id).First(&coupon).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Failed to load coupon details"})
+		return 
+	}
+
+	var subcat []models.SubCategory
+	
+	type Response struct {
+		SubCategoryID 		int
+		SubCategoryName		string 
+		CategoryName		string 
+	}
+
+
+	if err := db.Db.Where("is_blocked = ?",false).Find(&subcat).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_addProduct.html",gin.H{"error":"Failed to load subcategory,please try again later"})
+		return 
+	}
+
+	response := make([]Response,len(subcat))
+
+	for i,subitem := range subcat {
+
+		var Category models.Category
+
+		if err := db.Db.Where("category_id = ?",subitem.CategoryID).First(&Category).Error; err != nil{
+			log.Println("Failed to load category details")
+			c.Redirect(http.StatusTemporaryRedirect,"/admin")
+			return 
+		}
+
+		response[i] = Response{
+			SubCategoryID: int(subitem.SubCategoryID),
+			SubCategoryName: subitem.SubCategoryName,
+			CategoryName: Category.CategoryName,
+		}
+
+	}
+
+	c.HTML(http.StatusOK,"admin_editCoupon.html",gin.H{
+		"Coupon":coupon,
+		"Subcategories":response,
+	})
+}
+
+func EditCoupon(c *gin.Context){
+	idParam := c.Param("id")
+	id,err := strconv.Atoi(idParam)
+	if err != nil{
+		c.HTML(http.StatusInternalServerError,"coupon.html",gin.H{"error":"Invaild id"})
+		return 
+	}
+
+	var coupon models.Coupons
+
+	if err := db.Db.Where("id = ?",id).First(&coupon).Error; err != nil{
+		c.String(http.StatusInternalServerError,"Coupon not found")
+		return 
+	}
+
+	coupon.Code = c.PostForm("code")
+	coupon.Description = c.PostForm("description")
+
+	discount,_ := strconv.ParseFloat(c.PostForm("discount"),64)
+	minAmount,_ := strconv.ParseFloat(c.PostForm("min_amount"),64)
+	maxAmount,_ := strconv.ParseFloat(c.PostForm("max_amount"),64)
+
+	coupon.Discount = discount
+	coupon.MinAmount = minAmount
+	coupon.MaxAmount = maxAmount
+	coupon.Type = c.PostForm("type")
+
+	categoryIDstr := c.PostForm("category_id")
+	if categoryIDstr != ""{
+		categoryID,_ := strconv.Atoi(categoryIDstr)
+		coupon.CategoryID = uint(categoryID)
+	}else{
+		coupon.CategoryID = 0
+	}
+
+	if err := db.Db.Save(&coupon).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"coupon.html",gin.H{"error":"Could not update coupon"})
 		return 
 	}
 

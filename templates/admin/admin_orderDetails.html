@@ -114,7 +114,7 @@
                 <td>₹{{ .SubTotal}}</td>
                 <td>{{.Status}}</td>
                 {{ if eq .Status "Processing"}}
-                <td><a href="/admin/order/item/{{.ID}}" class="btn btn-outline-danger">Cancel</a></td>
+                <td><a href="/admin/order/item-admin-reject/{{.ID}}" class="btn btn-outline-danger">Cancel</a></td>
                 {{ else if eq .Status "Return requested"}}
                 <td><a href="/admin/order/item/{{.ID}}" class="btn btn-outline-warning">Approve</a>
                   <a href="/admin/order/item-reject/{{.ID}}" class="btn btn-outline-danger">Reject</a>
@@ -138,6 +138,8 @@
             <button name="status" value="Cancelled" class="btn btn-danger">Cancel Order</button>
           {{else if eq .Order.Status "Shipped"}}
             <button name="status" value="Delivered" class="btn btn-success">Mark as Delivered</button>
+          {{else if eq .Order.Status "Return requested"}}
+          <button name="status" value="Cancelled" class="btn btn-danger">Accept return</button>
           {{else}}
             <span class="text-light">No further actions</span>
           {{end}}

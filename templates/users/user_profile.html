@@ -78,13 +78,15 @@
         <div class="card mb-4">
           <div class="card-header">User Information</div>
           <div class="card-body">
-            <h6>Address:</h6>
+            <h6>Address</h6>
+            <hr>
             {{range .Addresses}}
               <div class="mb-2">
-                {{.AddressLine1}}<br>
-                {{.AddressLine2}}<br>
-                {{.City}}, {{.State}} - {{.PostalCode}}<br>
-                {{.Country}}
+                <strong>Line 1 : </strong> {{.AddressLine1}}<br>
+                <strong>Line 2 : </strong> {{.AddressLine2}}<br>
+                <strong>City : </strong>{{.City}}, <strong>State : </strong>{{.State}} <strong>PinCode : </strong> {{.PostalCode}}<br>
+                <strong>Contry : </strong>{{.Country}}
+                <hr>
               </div>
             {{else}}
               <p>No addresses available.</p>

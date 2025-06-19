@@ -139,7 +139,15 @@ func AddToWishlist(c *gin.Context){
 		return 
 	}
 
-	c.Redirect(http.StatusSeeOther,"/user/shop")
+	referer := c.Request.Referer()
+
+	if referer != ""{
+		c.Redirect(http.StatusSeeOther,referer)
+	}else{
+		c.Redirect(http.StatusSeeOther,"/user/shop")
+	}
+
+	
 }
 
 func RemoveWishlist(c *gin.Context){
@@ -162,6 +170,12 @@ func RemoveWishlist(c *gin.Context){
 		return 
 	}
 
-	c.Redirect(http.StatusSeeOther,"/user/shop")
+	referer := c.Request.Referer()
+
+	if referer != ""{
+		c.Redirect(http.StatusSeeOther,referer)
+	}else{
+		c.Redirect(http.StatusSeeOther,"/user/shop")
+	}
 
 }

@@ -133,6 +133,7 @@
                 {{ else }}
                 <a href="/admin/coupons/toggle/{{ .ID }}" class="btn btn-sm btn-outline-success" data-action="Activate">Activate</a>
                 {{ end }}
+                <a href="/admin/coupon/edit/{{ .ID }}" class="btn btn-sm btn-outline-secondary" >Edit</a>
                 <a href="/admin/coupons/delete/{{ .ID }}" class="btn btn-sm btn-outline-danger" data-action="Delete">Delete</a>
               </td>
             </tr>

@@ -2,6 +2,7 @@ package user
 
 import (
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/models"
 	"log"
 	"net/http"
@@ -12,6 +13,10 @@ import (
 func Product(c *gin.Context){
 
 	productID := c.Param("id")
+	
+	tokenStr,_ := c.Cookie("JWT-User")
+
+	_,userId,_ := helper.DecodeJWT(tokenStr)
 
 	var product models.Product
 	var product_variant models.Product_Variant
@@ -31,12 +36,30 @@ func Product(c *gin.Context){
 		log.Println("No images found :",err.Error())
 	}
 
-	c.HTML(http.StatusOK,"product.html",gin.H{
-		"user":"done",
-		"pagetitle":product_variant.Variant_name,
-		"Product": product,
-		"variant": product_variant,
-		"Images": images,
-	})
+	var wishlist models.WishList
+	isWishlist := false
+
+	if userId != 0 {
+		if err := db.Db.Where("user_id = ? AND product_id = ?",userId,product_variant.ID).First(&wishlist).Error; err == nil{
+			isWishlist = true
+		}
+
+		c.HTML(http.StatusOK,"product.html",gin.H{
+			"user":"done",
+			"pagetitle":product_variant.Variant_name,
+			"Product": product,
+			"variant": product_variant,
+			"Images": images,
+			"Wishlist":isWishlist,
+		})
+	}else{
+		c.HTML(http.StatusOK,"product.html",gin.H{
+			"pagetitle":product_variant.Variant_name,
+			"Product": product,
+			"variant": product_variant,
+			"Images": images,
+			"Wishlist":false,
+		})
+	}
 
 }

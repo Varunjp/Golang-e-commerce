@@ -384,13 +384,31 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 
 func AdminOrderCancel(orderId uint)error{
 	var order models.Order
+	var walletTransaction models.WalletTransaction
 
 	if err := db.Db.Preload("OrderItems").Where("id = ?",orderId).First(&order).Error; err != nil{
 		return err 
 	}
 
+	if err := db.Db.Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction).Error; err != nil{
+		if err != gorm.ErrRecordNotFound{
+			return err
+		}
+	}
+
+
 	if order.PaymentMethod != "cod" {
-		err := CreditWallet(order.UserID,order.TotalAmount,"Order canceled")
+		totalAmount := order.TotalAmount
+		if walletTransaction.ID != 0{
+			totalAmount += math.Abs(walletTransaction.Amount)
+		}
+		err := CreditWallet(order.UserID,order.TotalAmount,"Order cancelled")
+		if err != nil{
+			return err 
+		}
+	}else if walletTransaction.ID != 0 {
+		walletAmount := math.Abs(walletTransaction.Amount)
+		err := CreditWallet(order.UserID,walletAmount,"Order cancelled")
 		if err != nil{
 			return err 
 		}
@@ -398,8 +416,8 @@ func AdminOrderCancel(orderId uint)error{
 
 	for _, item := range order.OrderItems{
 
-		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stoke",gorm.Expr("stoke + ?",item.Quantity))
-		item.Status = "Canceled"
+		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+		item.Status = "Cancelled"
 		db.Db.Save(&item)
 	}
 

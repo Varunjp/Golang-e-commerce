@@ -277,6 +277,7 @@ func AdminOrderUpdate(c *gin.Context){
 			c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":err})
 			return 
 		}
+		order.PaymentStatus = "Not valid"
 	}else if status == "Delivered"{
 		for _,item := range order.OrderItems{
 
@@ -330,8 +331,6 @@ func AdminItemOrder(c *gin.Context){
 	retrunAmount := orderItem.Price * float64(orderItem.Quantity) + product.Tax * float64(orderItem.Quantity)
 	
 	newTotal := order.SubTotal - retrunAmount
-	
-	// issue with order having coupon with higher than minimum order amount
 
 	valueCheck,usedCouponId,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
 	var walletTransaction models.WalletTransaction
@@ -383,8 +382,8 @@ func AdminItemOrder(c *gin.Context){
 	
 
 	if checkRemaing == 0 {
-		
-		if order.PaymentMethod != "cod" || order.Status == "Delivered"{
+
+		if order.PaymentMethod != "cod" || order.Status == "Delivered" || order.PaymentStatus == "Refund is being processed" || order.Status == "Returned"{
 			order.PaymentStatus = "Refunded"
 		}else{
 			order.PaymentStatus = "Failed"

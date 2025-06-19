@@ -109,8 +109,8 @@ func ReturnOrder(c *gin.Context){
 		log.Println(err)
 	}
 
-	var walletTransaction models.WalletTransaction
-	if err := db.Db.Where("user_id = ? AND order_id = ? AND type = ?",order.UserID,orderId,"Debit").First(&walletTransaction).Error; err != nil{
+	var WalletTransaction models.WalletTransaction
+	if err := db.Db.Where("user_id = ? AND order_id = ? AND type = ?",order.UserID,orderId,"Debit").First(&WalletTransaction).Error; err != nil{
 		if err != gorm.ErrRecordNotFound {
 			log.Println(err)
 			c.HTML(http.StatusInternalServerError,"myOrders.html",gin.H{"error":"Failed to load wallet details"})
@@ -118,26 +118,32 @@ func ReturnOrder(c *gin.Context){
 		}
 	}
 
-	if order.PaymentMethod != "cod" && walletTransaction.ID != 0{
+	var walletAmount float64
+	if WalletTransaction.ID != 0{
+		walletAmount = math.Abs(WalletTransaction.Amount)
+	}
+
+	if order.PaymentMethod != "cod" || order.Status == "Delivered" {
 		
 		walletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
 			OrderID: order.ID,
-			Amount: order.TotalAmount,
+			Amount: order.TotalAmount+walletAmount,
 			Type: "Credit",
 			Description: "Refund",
 			RefundStatus: true,
 		}
 
 		db.Db.Create(&walletTransaction)
-	}else if order.PaymentMethod == "cod" && walletTransaction.ID != 0{
+		
+	}else if order.PaymentMethod == "cod" && WalletTransaction.ID != 0{
 		
 		newTransaction := models.WalletTransaction{
-			UserID: walletTransaction.UserID,
-			OrderID: walletTransaction.OrderID,
-			Amount: walletTransaction.Amount,
+			UserID: WalletTransaction.UserID,
+			OrderID: WalletTransaction.OrderID,
+			Amount: walletAmount,
 			Type: "Credit",
-			Description: "Refund request for order :"+strconv.Itoa(int(walletTransaction.OrderID)),
+			Description: "Refund request for order :"+strconv.Itoa(int(WalletTransaction.OrderID)),
 			RefundStatus: true,
 		}
 
@@ -145,7 +151,7 @@ func ReturnOrder(c *gin.Context){
 	}
 	
 	
-	if walletTransaction.ID != 0 || order.PaymentMethod != "cod" || order.Status == "Delivered"{
+	if WalletTransaction.ID != 0 || order.PaymentMethod != "cod" || order.Status == "Delivered"{
 		order.Status = "Return requested"
 		order.PaymentStatus = "Refund is being processed"
 		order.Reason = reason
@@ -164,7 +170,7 @@ func ReturnOrder(c *gin.Context){
 
 		//db.Db.Delete(&models.OrderItem{},item.ID)
 		if item.Status != "Returned"{
-			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+			//db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
 			item.Status = "Return requested"
 			item.Reason =  reason
 			db.Db.Save(&item)

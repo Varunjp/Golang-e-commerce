@@ -50,8 +50,8 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/referral",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.SubmitReferralPage)
 
 	// User product page
-	router.GET("/user/shop",user.ShowProductList)
-	router.GET("/user/product/:id",user.Product)
+	router.GET("/user/shop",middleware.NoCacheMiddleware(),user.ShowProductList)
+	router.GET("/user/product/:id",middleware.NoCacheMiddleware(),user.Product)
 
 	// User orders
 	router.POST("/cart/add",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddToCart)
@@ -134,6 +134,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/order/item/:id",middleware.AuthMiddlerware("admin"),admin.AdminItemOrder)
 	router.GET("/admin/order/item-reject/:id",middleware.AuthMiddlerware("admin"),admin.AdminItemCancel)
 	router.GET("/admin/order/return-request",middleware.AuthMiddlerware("admin"),admin.AdminOrderReturnRequests)
+	router.GET("/admin/order/item-admin-reject/:id",middleware.AuthMiddlerware("admin"),admin.AdminSideItemCancel)
 	
 	// Admin excel
 	router.POST("/admin/reports/excel",middleware.AuthMiddlerware("admin"),admin.DownloadExcel)
@@ -149,6 +150,8 @@ func GetUrl(router *gin.Engine){
 	router.POST("/admin/coupons/add",middleware.AuthMiddlerware("admin"),admin.AddCoupon)
 	router.GET("/admin/coupons/toggle/:id",middleware.AuthMiddlerware("admin"),admin.ToggleCoupon)
 	router.GET("admin/coupons/delete/:id",middleware.AuthMiddlerware("admin"),admin.DeleteCoupon)
+	router.POST("/admin/coupons/update/:id",middleware.AuthMiddlerware("admin"),admin.EditCoupon)
+	router.GET("/admin/coupon/edit/:id",middleware.AuthMiddlerware("admin"),admin.EditCouponPage)
 
 	// Admin wallet
 	router.GET("/admin/wallet-transactions",middleware.AuthMiddlerware("admin"),admin.WalletTransactions)
