@@ -3,6 +3,7 @@ package admin
 import (
 	db "first-project/DB"
 	"first-project/models"
+	"first-project/utils"
 	"fmt"
 	"log"
 	"math"
@@ -58,6 +59,9 @@ func WalletTransactions(c *gin.Context){
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
+	pageRange := utils.GetPaginationPages(page,totalPages)
+
+
 	for i, transaction := range WalletTransactions {
 		var user models.User
 		db.Db.Where("id = ?",transaction.UserID).First(&user)
@@ -75,6 +79,7 @@ func WalletTransactions(c *gin.Context){
 		"transactions":ResponseTransactions,
 		"page":page,
 		"totalPages":totalPages,
+		"PageRange":pageRange,
 		"limit":limit,
 		})
 
@@ -290,10 +295,13 @@ func WalletRefundDecline (c *gin.Context){
 	if transaction.OrderID != 0 {
 		var orderitem models.OrderItem
 		
-		if err := db.Db.Where("id = ?",transaction.OrderItemID).First(&orderitem).Error; err != nil{
-			c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to load order item details"})
-			return 
+		if transaction.OrderItemID != 0 {
+			if err := db.Db.Unscoped().Where("id = ?",transaction.OrderItemID).First(&orderitem).Error; err != nil{
+				c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to load order item details"})
+				return 
+			}
 		}
+		
 
 		orderitem.PaymentStatus = "Refund rejected"
 		db.Db.Save(&orderitem)

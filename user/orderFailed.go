@@ -67,6 +67,21 @@ func OrderFailed(c *gin.Context){
 		return 
 	}
 
+	// var address models.Address
+
+	// db.Db.Where("address_id  = ?",addressID).First(&address)
+
+	OrderAddress := models.OrderAddress{
+		OrderID: order.ID,
+		AddressLine1: address.AddressLine1,
+		AddressLine2: address.AddressLine2,
+		Country: address.Country,
+		City: address.City,
+		State: address.State,
+		PostalCode: address.PostalCode,
+	}
+
+	db.Db.Create(&OrderAddress)
 
 	for _, item := range cartItems{
 

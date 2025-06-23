@@ -48,7 +48,14 @@ func AdminItemCancel(c *gin.Context) {
 		order.TotalAmount = newTotal
 	}
 	
-	orderItem.Status = "Delivered non returnable"
+	if order.Status == "Delivered"{
+		orderItem.Status = "Delivered non returnable"
+		order.Status = "Delivered non returnable"
+	}else{
+		orderItem.Status = "Cancel rejected"
+	}
+	
+
 	orderId := orderItem.OrderID
 	orderIdStr := strconv.Itoa(int(orderId))
 	db.Db.Save(&orderItem)

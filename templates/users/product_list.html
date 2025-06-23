@@ -40,6 +40,9 @@
     <main class="col-md-9">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h5>Casual</h5>
+        {{if .error}}
+          <div class="alert alert-danger">{{.error}}</div>
+        {{end}}
         
         <form method="GET" action="/user/shop">
           <select class="form-select w-auto" name="sort" onchange="this.form.submit()">

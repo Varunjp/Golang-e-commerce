@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	db "first-project/DB"
+	"first-project/helper"
+	"first-project/models"
 	"fmt"
 	"net/http"
 	"time"
@@ -128,6 +131,34 @@ func AuthUserMiddlerware(requiredRole string) gin.HandlerFunc{
 			c.Set("claims",claims)
 		}else{
 			c.HTML(http.StatusUnauthorized,"userLogin.html", gin.H{"error":"Invalid token claims"})
+			c.Abort()
+			return 
+		}
+		c.Next()
+	}
+}
+
+func AuthVaildUser()gin.HandlerFunc{
+	return func(c *gin.Context){
+		tokenStr,err := c.Cookie("JWT-User")
+
+		if err != nil{
+			c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error":"Login required"})
+			c.Abort()
+			return 
+		}
+		_,userId,_ := helper.DecodeJWT(tokenStr)
+		var user models.User
+
+		if err := db.Db.Where("id = ?",userId).First(&user).Error; err != nil{
+			c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error":"Login required"})
+			c.Abort()
+			return 
+		}
+
+		if user.Status != "Active"{
+			c.SetCookie("JWT-User","",-1,"/","",false,true)
+			c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error":"Login required"})
 			c.Abort()
 			return 
 		}

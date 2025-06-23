@@ -119,12 +119,12 @@
           <div class="product-card">
             <img src="/{{ .ImageURL }}" alt="{{.Name}}">
             <div class="product-name">{{.Name}}</div>
-            <div class="d-flex justify-content-center gap-1 my-1">
+            <!-- <div class="d-flex justify-content-center gap-1 my-1">
               {{range $i := iter .Rating}}
                 <span>⭐</span>
               {{end}}
               <small class="text-muted">({{.Rating}}/5)</small>
-            </div>
+            </div> -->
             <div class="price">
               {{if .OldPrice}}<del>${{.OldPrice}}</del>{{end}} 
               <strong>₹{{.Price}}</strong>

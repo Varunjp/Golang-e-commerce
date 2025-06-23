@@ -34,6 +34,9 @@
         <div class="card-header">
           Order Summary
         </div>
+        {{if .error}}
+          <div class="alert alert-danger">{{.error}}</div>
+        {{end}}
         <div class="card-body">
           <p><strong>Order Date:</strong> {{.Order.OrderDate}}</p>
           <p><strong>Address:</strong>
@@ -58,6 +61,7 @@
                         <div class="fw-bold">{{.ProductName}}</div>
                         Qty: {{.Quantity}}<br>
                         Price: ₹{{printf "%.2f" .Price}}<br>
+                        Size: {{ .Size}}<br>
                         Tax: ₹{{printf "%.2f" .Tax}}<br>
                         {{if gtf .Discount 0.0 }}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
                     </div>

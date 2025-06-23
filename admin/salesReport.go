@@ -53,13 +53,13 @@ func SalesReportPage(c *gin.Context){
 		end = start.Add(24 *time.Hour)
 	case "weekly":
 		start = now.AddDate(0,0,-int(now.Weekday()))
-		end = start.AddDate(0,0,7)
+		end = now
 	case "monthly":
-		start = time.Date(now.Year(), now.Month(),1,0,0,0,0,now.Location())
-		end = start.AddDate(0,1,0)
+		start = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		end = now
 	case "yearly":
 		start = time.Date(now.Year(),1,1,0,0,0,0,now.Location())
-		end = start.AddDate(1,0,0)
+		end = now
 	case "custom":
 		var err error 
 		start, err = time.Parse("2006-01-02",startDate)
@@ -75,10 +75,27 @@ func SalesReportPage(c *gin.Context){
 
 	
 	var orders []models.Order
+	var totalorders []models.Order
 
 	dbFullordes := db.Db.Model(&models.Order{}).Where("create_at BETWEEN ? AND ?",start,end)
 
 	dbFullordes.Count(&total)
+	dbFullordes.Preload("OrderItems").Find(&totalorders)
+	totalSales := 0.0
+	totalDiscount := 0.0
+	totalProducts := 0
+	for _,item := range totalorders{
+		if item.Status == "Delivered"{
+			totalSales += item.TotalAmount
+			totalDiscount += item.DiscountTotal
+			for _, pitem := range item.OrderItems{
+				if pitem.Status == "Delivered"{
+					totalProducts += pitem.Quantity
+				}
+				
+			}
+		}
+	}
 
 	if err := db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ?",start,end).Order("id DESC").Limit(limit).Offset(offset).Find(&orders).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
@@ -100,25 +117,13 @@ func SalesReportPage(c *gin.Context){
 
 	ResponseOrders := make([]response,len(orders))
 
-	totalSales := 0.0
+	
 	totalOrders := int(total)
-	totalDiscount := 0.0
-	totalProducts := 0
+	
 
 	for i, order := range orders{
 		var user models.User
 		db.Db.Where("id = ?",order.UserID).First(&user)
-		if order.Status == "Delivered"{
-			totalSales += order.TotalAmount
-			totalDiscount += order.DiscountTotal
-
-			for _, item := range order.OrderItems{
-				if item.Status == "Delivered"{
-					totalProducts += item.Quantity
-				}
-				
-			}
-		}
 
 		ResponseOrders[i] = response{
 			OrderID: order.ID,

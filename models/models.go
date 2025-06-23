@@ -49,6 +49,16 @@ type Address struct {
 	DeletedAt		gorm.DeletedAt
 }
 
+type OrderAddress struct {
+	ID 				uint 						`gorm:"primarykey;autoIncrement"`
+	OrderID 		uint 						`gorm:"not null; index"`
+	AddressLine1 	string
+	AddressLine2 	string
+	Country 		string 
+	City 			string
+	State 			string  
+	PostalCode 		string
+}
 
 type CartItem struct {
 	ID 				uint		`gorm:"primarykey;autoIncrement"`
@@ -172,6 +182,7 @@ type SubCategory struct{
 	CategoryID 			uint  				`gorm:"not null;index"`
 	IsBlocked			bool				`gorm:"default:false"`
 	Category 			Category 			`gorm:"constraint:OnDelete:CASCADE;"`
+	CategoryDiscount 	uint 				
 	Products			[]Product 			`gorm:"foreignkey:SubCategoryID"`
 	Deleted_at 			gorm.DeletedAt 		`gorm:"index"`
 }

@@ -34,7 +34,7 @@ func CreditWallet(userId uint, amount float64, reason string) error {
 	transaction := models.WalletTransaction{
 		UserID: userId,
 		Amount: amount,
-		Type: "credit",
+		Type: "Credit",
 		Description: reason,
 	}
 

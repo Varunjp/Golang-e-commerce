@@ -28,6 +28,11 @@ func CheckOutPage(c *gin.Context) {
 		return 
 	}
 
+	if len(CartItems) < 1 {
+		c.HTML(http.StatusBadRequest,"cart.html",gin.H{"error":"Cart is empty"})
+		return 
+	}
+
 	if err := db.Db.Where("user_id = ?",userID).Find(&usedCoupon).Error; err != nil{
 		if err != gorm.ErrRecordNotFound {
 			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"failed to load coupon details"})
@@ -46,7 +51,7 @@ func CheckOutPage(c *gin.Context) {
 	if err := db.Db.Where("user_id = ?",userID).Find(&Addresses).Error; err != nil{
 
 		if err != gorm.ErrRecordNotFound {
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"Not able to fetch address from db"})
+			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Not able to fetch address from db"})
 			return
 		}
 	
@@ -181,7 +186,7 @@ func CheckOutOrder(c *gin.Context){
 		}
 
 		if err := db.Db.Create(&newAddress).Error; err != nil{
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to save address"})
+			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to save address"})
 			return 
 		}
 
@@ -197,12 +202,12 @@ func CheckOutOrder(c *gin.Context){
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
 		
-		c.JSON(http.StatusNotFound,gin.H{"error":"Not able to load cart items"})
+		c.HTML(http.StatusNotFound,"checkOut.html",gin.H{"error":"Not able to load cart items"})
 		return 
 	}
 
 	if len(CartItems) == 0 {
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Cart is empty"})
+		c.HTML(http.StatusNotFound,"checkOut.html",gin.H{"error":"Cart is empty"})
 		return 
 	}
 
@@ -233,7 +238,6 @@ func CheckOutOrder(c *gin.Context){
 		
 		if coupon.ID != 0 {
 			discount = (total * coupon.Discount)/100
-
 			if discount > coupon.MaxAmount {
 				discount = coupon.MaxAmount
 			}
@@ -280,6 +284,22 @@ func CheckOutOrder(c *gin.Context){
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create order"})
 		return 
 	}
+
+	var address models.Address
+
+	db.Db.Where("address_id  = ?",addressID).First(&address)
+
+	OrderAddress := models.OrderAddress{
+		OrderID: order.ID,
+		AddressLine1: address.AddressLine1,
+		AddressLine2: address.AddressLine2,
+		Country: address.Country,
+		City: address.City,
+		State: address.State,
+		PostalCode: address.PostalCode,
+	}
+
+	db.Db.Create(&OrderAddress)
 
 	if isWallet == "on" {
 		if err := helper.DebitWallet(uint(userID),walletUsed,order.ID,"Purchase order :"+strconv.Itoa(int(order.ID))); err != nil{

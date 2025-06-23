@@ -146,7 +146,7 @@
                 <td>{{ .ItemCount }}</td>
                 <td>{{ .CreatedAt.Format "01/02/06 at 3:04 PM" }}</td>
                 <td>
-                  {{ if eq .Status "Delivered" }}
+                  {{ if or (eq .Status "Delivered") (eq .Status "Delivered non returnable" ) }}
                     <span class="badge badge-delivered">Delivered</span>
                   {{ else if or (eq .Status "Cancelled") (eq .Status "Refund is being processed" ) }}
                     <span class="badge badge-cancelled">Cancelled</span>
@@ -184,10 +184,16 @@
               </li>
               {{ end }}
 
-              {{ range $i := iterate 1 .totalPages }}
+              <!-- {{ range $i := iterate 1 .totalPages }}
               <li class="page-item {{ if eq $i $.page }}active{{ end }}">
                 <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
               </li>
+              {{ end }} -->
+
+              {{ range $i := .PageRange }}
+                <li class="page-item {{ if eq $i $.page }}active{{ end }}">
+                  <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
+                </li>
               {{ end }}
 
               {{ if lt .page .totalPages }}

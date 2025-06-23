@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"first-project/utils"
 	"log"
 	"math"
 	"net/http"
@@ -129,11 +130,14 @@ func AdminOrdersPage(c *gin.Context){
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
+	pageRange := utils.GetPaginationPages(page,totalPages)
+
 	c.HTML(http.StatusOK,"admin_orders.html",gin.H{
 		"user":name,
 		"orders":responseOrder,
 		"page":page,
 		"totalPages":totalPages,
+		"PageRange":pageRange,
 		"limit":limit,
 		"Filters": gin.H{
 			"OrderID": orderId,
@@ -177,7 +181,7 @@ func AdminOrderCancel(c *gin.Context){
 func AdminOrderDetails(c *gin.Context){
 	var order models.Order
 	var user models.User 
-	var address models.Address
+	var address models.OrderAddress
 	orderId := c.Param("id")
 
 	if err := db.Db.Preload("OrderItems",func(db *gorm.DB)*gorm.DB{
@@ -192,7 +196,7 @@ func AdminOrderDetails(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Where("address_id = ?",order.AddressID).First(&address).Error; err != nil{
+	if err := db.Db.Where("order_id = ?",order.ID).First(&address).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":"Failed to retrieve address details."})
 		return 
 	}
@@ -320,7 +324,7 @@ func AdminItemOrder(c *gin.Context){
 	checkRemaing := 0
 
 	for _,item := range order.OrderItems{
-		if item.Status == "Pending" || item.Status == "Processing" || item.Status == "Delivered"{
+		if item.Status == "Pending" || item.Status == "Processing" || item.Status == "Delivered" || item.Status == "Delivered non returnable"{
 			checkRemaing ++
 		}
 	}
@@ -343,13 +347,6 @@ func AdminItemOrder(c *gin.Context){
 	}else if !valueCheck && errVal == nil{
 
 		if walletTransaction.ID != 0 {
-			// var updateTotal float64
-			// if order.PaymentMethod == "cod"{
-			// 	order.SubTotal = order.SubTotal - retrunAmount
-			// 	updateTotal = order.SubTotal + walletTransaction.Amount
-			// }else{
-			// 	order.SubTotal = order.SubTotal - retrunAmount
-			// }
 
 			order.SubTotal = order.SubTotal - retrunAmount
 			updateTotal := order.SubTotal + walletTransaction.Amount

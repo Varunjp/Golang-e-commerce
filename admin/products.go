@@ -223,10 +223,16 @@ func AddProduct(c *gin.Context){
 	ProductTax,_ := strconv.ParseFloat(c.PostForm("tax"),64)
 
 	var subCat models.SubCategory
+	var ProductCheck models.Product
 	
 	if ProductPrice <= 0 {
 		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Price cannot be 0 or less"})
 		return
+	}
+
+	if err := db.Db.Where("product_name ILIKE ?",ProductName).First(&ProductCheck).Error; err == nil{
+		c.HTML(http.StatusConflict,"admin_product_list.html",gin.H{"error":"Product already exist"})
+		return 
 	}
 
 	if ProductStock < 1 {
@@ -271,46 +277,6 @@ func AddProduct(c *gin.Context){
 		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":err.Error()})
 		return 
 	}
-
-	// for i := 0; i < 3;i++{
-
-	// 	base64Str := c.PostForm(fmt.Sprintf("cropped_image%d",i))
-
-	// 	if base64Str != ""{
-			
-	// 		data := strings.Split(base64Str,",")[1]
-	// 		decoded, err := base64.StdEncoding.DecodeString(data)
-			
-	// 		if err != nil{
-	// 			continue
-	// 		}
-
-	// 		filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
-
-	// 		if err := os.WriteFile(filename,decoded,0644); err != nil{
-	// 			continue
-	// 		}
-
-	// 		order,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
-	// 		isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i))=="true"
-
-	// 		image := models.Product_image{
-	// 			ProductVariantID: variant.ID,
-	// 			Image_url: filename,
-	// 			Order_no: order,
-	// 			Is_primary: isPrimary,
-	// 			CreatedAt: time.Now(),
-	// 		}
-
-	// 		if err := db.Db.Create(&image).Error; err != nil{
-	// 			c.String(http.StatusInternalServerError,"Error saving image to DB: %v", err)
-	// 			return
-	// 		}
-
-
-	// 	}
-
-	// }
 
 	imageCount := 0
 
@@ -385,6 +351,110 @@ func AddProduct(c *gin.Context){
 
 	c.Redirect(http.StatusSeeOther,"/admin/products")
 
+}
+
+func AddProductVariantPage(c *gin.Context){
+	var Products []models.Product
+	type response struct {
+		ProductID  		uint
+		ProductName 	string
+		Type 			string 
+	}
+
+	if err := db.Db.Find(&Products).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Could not load product details."})
+		return 
+	}
+
+	responseProduct := make([]response,len(Products))
+
+	for i, pro := range Products{
+		var subCategory models.SubCategory
+		db.Db.Where("sub_category_id = ?",pro.SubCategoryID).First(&subCategory)
+		if strings.Contains(subCategory.SubCategoryName,"shoe"){
+			responseProduct[i] = response{
+				ProductID: pro.ProductID,
+				ProductName: pro.ProductName,
+				Type: "shoes",
+			}
+		}else{
+			responseProduct[i] = response{
+				ProductID: pro.ProductID,
+				ProductName: pro.ProductName,
+				Type: "clothing",
+			}
+		}
+	}
+
+	c.HTML(http.StatusOK,"admin_addProductVariant.html",gin.H{"Products":responseProduct})
+
+}
+
+func AddProductVariant (c *gin.Context){
+	// form data
+	productID := c.PostForm("product_id")
+	variant_name := c.PostForm("variant_name")
+	size := c.PostForm("size")
+	ProductStock,_ := strconv.Atoi(c.PostForm("stock"))
+	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
+
+	if ProductStock < 1 || ProductPrice < 1 {
+		c.HTML(http.StatusBadRequest,"admin_addProductVariant.html",gin.H{"error":"Stock or price could not be less than 1"})
+		return 
+	}
+
+	var Product models.Product
+	var ProductImage []models.Product_image
+	var ProductVariant models.Product_Variant
+
+	if err := db.Db.Preload("Product_variants").Where("product_id = ?",productID).First(&Product).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Could not load product details"})
+		return 
+	}
+
+	productVariantID := Product.Product_variants[0].ID
+
+	if err := db.Db.Where("product_variant_id = ?",productVariantID).Find(&ProductImage).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Could not load product images."})
+		return 
+	}
+
+	if err := db.Db.Where("product_id = ? AND size ILIKE ?",productID,size).First(&ProductVariant).Error; err == nil{
+		ProductVariant.Stock = ProductVariant.Stock + ProductStock
+		ProductVariant.Price = ProductPrice
+
+		db.Db.Save(&ProductVariant)
+
+		c.Redirect(http.StatusSeeOther,"/admin/products")
+		return 
+	}
+
+	newProductVariant := models.Product_Variant{
+		Variant_name: variant_name,
+		ProductID: Product.ProductID,
+		Size: size,
+		Stock: ProductStock,
+		Price: ProductPrice,
+		Tax: Product.Product_variants[0].Tax,
+	}
+
+	if err := db.Db.Create(&newProductVariant).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Error while creating new variant, please try again later"})
+		return 
+	}
+
+	for _, image := range ProductImage{
+		newProductImage := models.Product_image{
+			ProductVariantID: newProductVariant.ID,
+			Image_url: image.Image_url,
+			Is_primary: image.Is_primary,
+			Order_no: image.Order_no,
+		}
+
+		db.Db.Create(&newProductImage)
+	}
+
+	c.Redirect(http.StatusSeeOther,"/admin/products")
 }
 
 func UpdateProductPage(c *gin.Context){

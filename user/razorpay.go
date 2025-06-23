@@ -195,15 +195,18 @@ func PaymentSuccess(c *gin.Context){
 
 	var discount float64
 	if coupon.ID != 0 {
-		if coupon.MaxAmount < total+totalTax {
-			discount = coupon.MaxAmount
-		}else{
-			discount = (total * coupon.Discount)/100
+		discount = (total * coupon.Discount)/100
+		if coupon.MaxAmount < discount {
+			discount = coupon.MaxAmount	
+		}
+
+		if payload.IsWallet {
+				wallet := (total+totalTax)-discount
+				discount += wallet
 		}
 	}else if payload.IsWallet {
 		discount = (total+totalTax) - payload.Amount
 	}
-
 	
 
 	order := models.Order{
@@ -226,16 +229,26 @@ func PaymentSuccess(c *gin.Context){
 		return 
 	}
 
+	var address models.Address
+
+	db.Db.Where("address_id  = ?",addressintId).First(&address)
+
+	OrderAddress := models.OrderAddress{
+		OrderID: order.ID,
+		AddressLine1: address.AddressLine1,
+		AddressLine2: address.AddressLine2,
+		Country: address.Country,
+		City: address.City,
+		State: address.State,
+		PostalCode: address.PostalCode,
+	}
+
+	db.Db.Create(&OrderAddress)
+
 	couponCode := payload.CouponCode
 
 	if couponCode != ""{
-		// var coupon models.Coupons
 
-		// if err := db.Db.Where("id = ?",couponCode).First(&coupon).Error; err != nil{
-		// 	log.Println(err)
-		// 	c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load coupon details"})
-		// 	return 
-		// }
 		
 		usedcoupon := models.UsedCoupon{
 			UserID: order.UserID,

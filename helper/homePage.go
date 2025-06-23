@@ -16,7 +16,9 @@ func GetHomePage() ([]responsemodels.HomePage, string, error){
 		Banner.ImageUrl = ""
 	}
 
-	if err := db.Db.Where("deleted_at IS NULL AND stock > 0 AND is_active = ?",true).Order("id DESC").Limit(10).Find(&Products).Error; err != nil{
+	subQuery := db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL", true).Group("product_id")
+
+	if err := db.Db.Joins("JOIN (?) AS selected ON selected.id = product_variants.id", subQuery).Order("id DESC").Limit(10).Find(&Products).Error; err != nil{
 		return []responsemodels.HomePage{},Banner.ImageUrl,fmt.Errorf("no products found")
 	}
 

@@ -186,7 +186,7 @@ func OrderItems(c *gin.Context){
 
 	orderID := c.Param("id")
 	var Order models.Order
-	var address models.Address
+	var address models.OrderAddress
 
 	type Response struct {
 		ID 				uint 
@@ -194,6 +194,7 @@ func OrderItems(c *gin.Context){
 		ProductName		string
 		Quantity		int
 		Status 			string 
+		Size 			string
 		Price 			float64
 		Discount		float64
 		Tax 			float64
@@ -207,7 +208,7 @@ func OrderItems(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Where("address_id = ?",Order.AddressID).First(&address).Error; err != nil{
+	if err := db.Db.Where("order_id = ?",Order.ID).First(&address).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
 		return 
 	}
@@ -225,17 +226,12 @@ func OrderItems(c *gin.Context){
 	}
 
 
-	// if err := db.Db.Where("order_id = ?",orderID).Order("id DESC").Find(&OrderItems).Error; err != nil{
-	// 	c.HTML(http.StatusBadRequest,"orderDetails.html",gin.H{"error":"Order items not found"})
-	// 	return 
-	// }
-
 	response := make([]Response,len(Order.OrderItems))
 
 	for i, item := range Order.OrderItems{
 		
 		var Product models.Product_Variant
-		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
+		err := db.Db.Unscoped().Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
 
 		if err != nil {
 			c.HTML(http.StatusNotFound,"orderDetails.html",gin.H{"error":"Product details not found"})
@@ -249,6 +245,7 @@ func OrderItems(c *gin.Context){
 				ImageURL: Product.Product_images[0].Image_url,
 				Quantity: item.Quantity,
 				Status: item.Status,
+				Size: Product.Size,
 				Price: item.Price,
 				Discount: 0.0,
 				Tax: Product.Tax,
@@ -260,6 +257,7 @@ func OrderItems(c *gin.Context){
 				ImageURL: "",
 				Quantity: item.Quantity,
 				Status: item.Status,
+				Size: Product.Size,
 				Price: item.Price,
 				Discount: 0.0,
 				Tax: Product.Tax,
@@ -297,6 +295,7 @@ func CancelItem (c *gin.Context){
 			return 
 		}
 	}else{
+
 		err := helper.ItemCancelCod(orderID,itemId,reason)
 		if err != nil{
 			c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
@@ -344,7 +343,8 @@ func DownloadPdf(c *gin.Context){
 	pdf.SetFont("Arial","B",12)
 	pdf.CellFormat(80, 10, "Product", "1", 0, "", false, 0, "")
 	pdf.CellFormat(30, 10, "Qty", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Price", "1", 1, "", false, 0, "")
+	pdf.CellFormat(40, 10, "Price", "1", 0, "", false, 0, "")
+	pdf.CellFormat(30, 10, "Tax", "1", 1, "", false, 0, "")
 
 	pdf.SetFont("Arial", "", 12)
 
@@ -359,11 +359,12 @@ func DownloadPdf(c *gin.Context){
 
 		pdf.CellFormat(80, 10, Product.Variant_name, "1", 0, "", false, 0, "")
 		pdf.CellFormat(30, 10, fmt.Sprintf("%d", item.Quantity), "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", item.Price), "1", 1, "", false, 0, "")
+		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", item.Price), "1", 0, "", false, 0, "")
+		pdf.CellFormat(30, 10, fmt.Sprintf("%.2f", Product.Tax), "1", 1, "", false, 0, "")
 	}
 
 	pdf.Ln(8)
-	pdf.CellFormat(110, 10, "Total:", "", 0, "R", false, 0, "")
+	pdf.CellFormat(140, 10, "Total:", "", 0, "R", false, 0, "")
 	pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", order.TotalAmount), "1", 1, "", false, 0, "")
 
 	c.Header("Content-Type", "application/pdf")

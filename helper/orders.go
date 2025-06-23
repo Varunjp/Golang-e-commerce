@@ -279,8 +279,6 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 				RefundStatus: true,
 			}
 
-
-
 			err := db.Db.Create(&walletTransaction).Error
 			if err != nil{
 				return err 
@@ -289,7 +287,8 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 				db.Db.Delete(&WalletTransaction)
 			}
 			
-
+			orderItem.Status = "Return requested"
+			orderItem.Reason = reason
 		}
 
 	}else{
@@ -309,20 +308,14 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 
 			adjustedTotal := order.TotalAmount - itemTotal
 
-			// less than minmum amount in coupon
+
 			if adjustedTotal < coupon.MinAmount{
 				
 				orderItem.Status = "Return requested"
 				orderItem.Reason = reason
 
 			}else{
-				//newTotal := order.TotalAmount - itemTotal
 
-				// update order amount
-				// order.TotalAmount = newTotal
-				// order.SubTotal = newTotal
-				// remove item from orderitem
-				// db.Db.Model(&models.Product_Variant{}).Where("id = ?",orderItem.ProductID).Update("stock",gorm.Expr("stock + ?",orderItem.Quantity))
 				orderItem.Status = "Return requested"
 				orderItem.Reason = reason
 			}

@@ -27,9 +27,23 @@ func Product(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Where("deleted_at IS NULL AND product_id = ?",product_variant.ProductID).First(&product).Error; err != nil{
+	if err := db.Db.Preload("Product_variants").Where("deleted_at IS NULL AND product_id = ?",product_variant.ProductID).First(&product).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Product not found"})
 		return 
+	}
+
+	type responseVariant struct {
+		ID		uint 
+		Size 	string 
+	}
+
+	availableVariants := make([]responseVariant,len(product.Product_variants))
+
+	for i, vari := range product.Product_variants {
+		availableVariants[i] = responseVariant{
+			ID: vari.ID,
+			Size: vari.Size,
+		}
 	}
 
 	if err := db.Db.Where("product_variant_id = ?",productID).Order("order_no ASC").Find(&images).Error; err != nil{
@@ -49,6 +63,7 @@ func Product(c *gin.Context){
 			"pagetitle":product_variant.Variant_name,
 			"Product": product,
 			"variant": product_variant,
+			"AllVariants":availableVariants,
 			"Images": images,
 			"Wishlist":isWishlist,
 		})
@@ -57,6 +72,7 @@ func Product(c *gin.Context){
 			"pagetitle":product_variant.Variant_name,
 			"Product": product,
 			"variant": product_variant,
+			"AllVariants":availableVariants,
 			"Images": images,
 			"Wishlist":false,
 		})

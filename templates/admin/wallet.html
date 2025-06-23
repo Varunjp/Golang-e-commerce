@@ -75,10 +75,15 @@
                 <a class="page-link" href="?page={{ sub .page 1 }}&search={{ .search }}">Previous</a>
               </li>
               {{ end }}
-              {{ range $i := iterate 1 .totalPages }}
+              <!-- {{ range $i := iterate 1 .totalPages }}
               <li class="page-item {{ if eq $i $.page }}active{{ end }}">
                 <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
               </li>
+              {{ end }} -->
+              {{ range $i := .PageRange }}
+                <li class="page-item {{ if eq $i $.page }}active{{ end }}">
+                  <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
+                </li>
               {{ end }}
               {{ if lt .page .totalPages }}
               <li class="page-item">

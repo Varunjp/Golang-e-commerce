@@ -56,10 +56,19 @@ func ShowProductList(c *gin.Context){
 	maxPrice,_ := strconv.ParseFloat(c.DefaultQuery("max_price","10000"),64)
 	sortBy := c.DefaultQuery("sort","")
 
+	
+	if minPrice > maxPrice {
+		c.HTML(http.StatusBadRequest, "product_list.html", gin.H{"error": "Min price could not be more than max price"})
+        return
+	}
+
+	subQuery := db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL", true).Group("product_id")
+
 	query := db.Db.
     Preload("Product_images", func(db *gorm.DB) *gorm.DB {
         return db.Order("order_no ASC")
-    }).Where("is_active = ? AND product_variants.deleted_at IS NULL",true).Model(&models.Product_Variant{})
+    }).Joins("JOIN (?) AS selected ON selected.id = product_variants.id", subQuery).Model(&models.Product_Variant{})
+	
 	
 	if search != ""{
 		searchPattern := "%"+search+"%"
@@ -76,9 +85,10 @@ func ShowProductList(c *gin.Context){
 
 	query = query.Where("price BETWEEN ? AND ?",minPrice,maxPrice)
 
-	if sortBy == "price_asc"{
+	switch sortBy {
+	case "price_asc":
 		query = query.Order("price ASC")
-	}else if sortBy == "price_desc"{
+	case "price_desc":
 		query = query.Order("price DESC")
 	}
 
@@ -91,19 +101,6 @@ func ShowProductList(c *gin.Context){
 
 	query.Count(&total)
 	query.Where("stock > 0").Offset(offset).Limit(limit).Find(&products)
-	
-
-	// db.Db.Model(&models.Product_Variant{}).Count(&total)
-
-	// err := db.Db.
-    // Preload("Product").
-    // Preload("Product.SubCategory").
-    // Preload("Product_images", func(db *gorm.DB) *gorm.DB {
-    //     return db.Order("order_no ASC")
-    // }).
-    // Offset(offset).
-    // Limit(limit).
-    // Find(&products).Error
 
 	
 	if query.Error != nil{
