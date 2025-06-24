@@ -1,0 +1,16 @@
+# Go binary
+main
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Env
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
