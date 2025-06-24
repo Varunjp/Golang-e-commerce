@@ -34,7 +34,7 @@
     {{range .Orders}}
     <li class="list-group-item d-flex justify-content-between align-items-start">
       <div class="ms-2 me-auto">
-        <div class="fw-bold">Order #{{.ID}}</div>
+        <div class="fw-bold">Order #{{.OrderID}}</div>
         <small class="text-muted">Date: {{.OrderDate}}</small><br>
         {{if eq .Status "Returned"}}
         <small class="text-muted">Reason: {{.Reason}}</small><br>

@@ -49,8 +49,11 @@ func OrderFailed(c *gin.Context){
 		total +=tax
 	}
 
+	neOrderId := helper.GenerateOrderID()
+
 	order := models.Order{
 		UserID: uint(userID),
+		OrderID: neOrderId,
 		AddressID: address.AddressID,
 		TotalAmount: total,
 		SubTotal: total,
@@ -107,9 +110,12 @@ func OrderFailed(c *gin.Context){
 
 func OrderFailedPage(c *gin.Context){
 	orderId := c.Param("id")
+	var order models.Order
+
+	db.Db.Where("id = ?",orderId).First(&order)
 
 	c.HTML(http.StatusOK,"orderFailed.html",gin.H{
-		"OrderID":orderId,
+		"OrderID":order.OrderID,
 		"user":"done",
 	})
 }

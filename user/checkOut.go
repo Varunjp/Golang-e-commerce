@@ -291,8 +291,11 @@ func CheckOutOrder(c *gin.Context){
 		finalAmount = total - discount
 	}
 
+	orderId := helper.GenerateOrderID()
+
 	order := models.Order{
 		UserID: uint(userID),
+		OrderID: orderId,
 		AddressID: addressID,
 		TotalAmount: finalAmount,
 		SubTotal: total,
@@ -408,7 +411,7 @@ func CheckOutOrder(c *gin.Context){
 	}
 	
 
-	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.ID,"user":"done"})
+	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":orderId,"odId":order.ID,"user":"done"})
 
 }
 

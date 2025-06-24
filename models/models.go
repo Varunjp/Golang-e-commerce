@@ -73,6 +73,7 @@ type CartItem struct {
 
 type Order struct{
 	ID 						uint		`gorm:"primarykey;autoIncrement"`
+	OrderID					string 		`gorm:"unique"`
 	UserID					uint		`gorm:"not null; index"`
 	AddressID				uint		`gorm:"not null"`
 	PaymentID				string

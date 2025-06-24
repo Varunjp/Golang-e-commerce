@@ -208,9 +208,11 @@ func PaymentSuccess(c *gin.Context){
 		discount = (total+totalTax) - payload.Amount
 	}
 	
+	neOrderId := helper.GenerateOrderID()
 
 	order := models.Order{
 		UserID: uint(userID),
+		OrderID: neOrderId,
 		AddressID: uint(addressintId),
 		DiscountTotal: discount,
 		SubTotal: total+totalTax,
