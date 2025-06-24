@@ -6,6 +6,9 @@
     {{if .error}}
       <div class="alert alert-danger">{{.error}}</div>
     {{end}}
+    {{if .message}}
+      <div class="alert alert-warning">{{.message}}</div>
+    {{end}}
     <form method="POST" action="/place-order">
       <div class="row g-4">
 
@@ -71,6 +74,8 @@
                   <div>
                     <h6 class="my-0">{{.Name}}</h6>
                     <small class="text-muted">Qty: {{.Quantity}}</small>
+                    <small class="text-muted">Size: {{.Size}}</small>
+                    <small class="text-muted">Tax: ₹{{.TotalTax}}</small>
                   </div>
                   <span class="text-muted">₹{{printf "%.2f" .Price}}</span>
                 </li>

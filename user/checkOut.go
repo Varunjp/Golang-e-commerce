@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -63,6 +64,7 @@ func CheckOutPage(c *gin.Context) {
 		ID 				uint 
 		Name 			string
 		Quantity 		int
+		Size 			string
 		Price  			float64 
 		TotalSum		float64
 		TotalTax		float64
@@ -77,14 +79,16 @@ func CheckOutPage(c *gin.Context) {
 		res := helper.ValidateProduct(item.ProductID,item.Quantity)
 
 		if res {
-
-			Response = append(Response, struct{ID uint; Name string; Quantity int;Price float64; TotalSum float64; TotalTax float64; TotalDiscount float64; GrandTotal float64}{
+			var pv models.Product_Variant
+			db.Db.Where("id = ?",item.ProductID).First(&pv)
+			Response = append(Response, struct{ID uint; Name string; Quantity int; Size string; Price float64; TotalSum float64; TotalTax float64; TotalDiscount float64; GrandTotal float64}{
 				ID: item.ProductID,
 				Name: item.Product.Variant_name,
 				Quantity: item.Quantity,
 				Price: item.Price,
+				Size: item.Product.Size,
 				TotalSum: (item.Price * float64(item.Quantity)),
-				TotalTax: (item.Product.Tax*float64(item.Quantity)),
+				TotalTax: (pv.Tax*float64(item.Quantity)),
 				TotalDiscount: 0.0,
 				GrandTotal: (item.Price * float64(item.Quantity))+(item.Product.Tax*float64(item.Quantity)),
 			})
@@ -133,6 +137,17 @@ func CheckOutPage(c *gin.Context) {
 			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load wallet details, please try again later"})
 			return 
 		}
+	}
+
+	session := sessions.Default(c)
+	flash := session.Get("flash")
+
+	if flash != nil{
+		session.Delete("flash")
+		session.Save()
+
+		c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance,"message":flash})
+		return 
 	}
 
 	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance})
@@ -219,6 +234,14 @@ func CheckOutOrder(c *gin.Context){
 		db.Db.Where("id = ?",item.ProductID).First(&product)
 		tax := product.Tax * float64(item.Quantity)
 		total +=tax
+	}
+
+	if total > 1000 {
+		session := sessions.Default(c)
+		session.Set("flash","Order above 1000 cannot be ordered as cod, please choose online payment.")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/checkout")
+		return 
 	}
 
 	var coupon models.Coupons

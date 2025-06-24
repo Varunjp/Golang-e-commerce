@@ -54,6 +54,7 @@
               {{end}}
               <div>
                 <h6 class="mb-1">{{.Product.Variant_name}}</h6>
+                <P class="text-muted mb-1">Size {{ .Product.Size}}</P>
                 <p class="text-muted mb-1">₹{{printf "%.2f" .Price}} × {{.Quantity}}</p>
                 <form action="/cart/remove" method="POST" class="d-inline">
                   <input type="hidden" name="item_id" value="{{.ID}}">
