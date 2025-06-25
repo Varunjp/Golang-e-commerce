@@ -54,11 +54,11 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/product/:id",middleware.NoCacheMiddleware(),user.Product)
 
 	// User orders
-	router.POST("/cart/add",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.AddToCart)
+	router.POST("/cart/add",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddToCart)
 	router.GET("/user/cart",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.ListCart)
 	router.POST("/cart/update-quantity",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.UpdateCartItem)
-	router.POST("/cart/remove",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.RemoveItem)
-	router.GET("/user/orders",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.ListOrders)
+	router.POST("/cart/remove",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.RemoveItem)
+	router.GET("/user/orders",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ListOrders)
 	router.POST("/user/cancel-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ReturnOrder)
 	router.GET("/user/order/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.OrderItems)
 	router.POST("/user/cancel-item",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.CancelItem)
@@ -67,8 +67,8 @@ func GetUrl(router *gin.Engine){
 
 
 	// User checkout
-	router.GET("/user/checkout",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.CheckOutPage)
-	router.POST("/place-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.CheckOutOrder)
+	router.GET("/user/checkout",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.CheckOutPage)
+	router.POST("/place-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.CheckOutOrder)
 	router.GET("/user/add-address",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddNewAddressPage)
 	router.POST("/user/save-address",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddNewAddress)
 	router.GET("/user/invoice/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.DownloadPdf)
