@@ -54,11 +54,11 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/product/:id",middleware.NoCacheMiddleware(),user.Product)
 
 	// User orders
-	router.POST("/cart/add",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddToCart)
-	router.GET("/user/cart",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ListCart)
-	router.POST("/cart/update-quantity",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.UpdateCartItem)
-	router.POST("/cart/remove",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.RemoveItem)
-	router.GET("/user/orders",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ListOrders)
+	router.POST("/cart/add",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.AddToCart)
+	router.GET("/user/cart",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.ListCart)
+	router.POST("/cart/update-quantity",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.UpdateCartItem)
+	router.POST("/cart/remove",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.RemoveItem)
+	router.GET("/user/orders",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.ListOrders)
 	router.POST("/user/cancel-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ReturnOrder)
 	router.GET("/user/order/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.OrderItems)
 	router.POST("/user/cancel-item",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.CancelItem)
@@ -78,7 +78,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/wallet-transactions",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.WalletTransaction)
 
 	// User payment online
-	router.POST("/create-razorpay-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.CreateRazorpayOrder)
+	router.POST("/create-razorpay-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.CreateRazorpayOrder)
 	router.POST("/payment/success",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.PaymentSuccess)
 
 	// User wishlist
@@ -124,7 +124,7 @@ func GetUrl(router *gin.Engine){
 	router.POST("/admin/products/create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddProduct)
 	router.GET("/admin/products/edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.UpdateProductPage)
 	router.POST("/admin/products/edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.UpdateProduct)
-	router.POST("/admin/products/delete/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.DeleteProduct)
+	router.GET("/admin/products/delete/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.DeleteProduct)
 	router.POST("/admin/products/images/delete/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.DeleteImage)
 	router.GET("/admin/product/variant",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddProductVariantPage)
 	router.POST("/admin/variants/create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddProductVariant)
