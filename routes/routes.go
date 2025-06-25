@@ -98,6 +98,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/login",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.LoginPage)
 	router.POST("/admin/login",middleware.NoCacheMiddleware(),admin.Login)
 	router.GET("/admin/logout",middleware.NoCacheMiddleware(),admin.Logout)
+	router.GET("/admin/sales-data",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.GetSalesData)
 	
 	// Admin users
 	router.GET("/admin/users-list",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.ListUsers)

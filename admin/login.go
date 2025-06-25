@@ -2,6 +2,7 @@ package admin
 
 import (
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/middleware"
 	"first-project/models"
 	"net/http"
@@ -21,14 +22,18 @@ func LoginPage(c *gin.Context){
 	db.Db.Model(&models.User{}).Count(&totalUser)
 	db.Db.Model(&models.Product_Variant{}).Count(&totalProducts)
 
+	products,categories := helper.TopProductCategory()
+	totalSales := helper.SalesReport()
+
 	c.HTML(http.StatusOK,"admin_dashboard.html",gin.H{
 		"username" : username.(string),
 		"totalUsers": totalUser,
 		"totalProducts": totalProducts,
-		"totalSales": 10000,
+		"totalSales": totalSales,
+		"topProducts":   products,
+    	"topCategories": categories,
 	})
 
-	//c.HTML(http.StatusOK,"admin_login.html",nil)
 }
 
 func Login(c *gin.Context){
