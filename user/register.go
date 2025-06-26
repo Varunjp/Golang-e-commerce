@@ -30,6 +30,7 @@ func RegisterUser(c *gin.Context){
 
 	referralCode := c.PostForm("referral_code")
 
+	newreferralCode := helper.GenerateUniqueReferralCode()
 
 	if err:= c.ShouldBind(&input); err != nil{
 		c.HTML(http.StatusBadRequest,"register.html",gin.H{
@@ -75,6 +76,7 @@ func RegisterUser(c *gin.Context){
 		Password: hashedPassword,
 		Phone: input.Phone,
 		Status: "inactive",
+		ReferralCode: newreferralCode,
 		Created_at: time.Now(),
 	}
 
@@ -139,10 +141,6 @@ func VerfiyOTP (c *gin.Context){
 	var user models.User
 	db.Db.Model(&models.User{}).Where("email = ?",input.Email).Update("status","Active")
 	db.Db.Model(&models.User{}).Where("email = ?",input.Email).First(&user)
-
-	referralCode := helper.GenerateUniqueReferralCode()
-
-	db.Db.Model(&models.User{}).Where("email = ?",input.Email).Update("referral_code",referralCode)
 
 	Couperr := helper.CreateCoupon(user.ID)
 
