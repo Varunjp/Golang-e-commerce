@@ -172,23 +172,23 @@ func CheckOutOrder(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Where("user_id = ? AND coupon_id = ?",userID,couponCode).First(&usedcouponcheck).Error; err == nil{
 
-		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Coupon already used"})
-		return 
+	if couponCode != ""{
+		if err := db.Db.Where("user_id = ? AND coupon_id = ?",userID,couponCode).First(&usedcouponcheck).Error; err == nil{
+
+			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Coupon already used"})
+			return 
+		}
 	}
 
-	// if paymentOption != "cod"{
-	// 	c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Online option not available yet please change payment method to cod"})
-	// 	return
-	// }
-
-	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
+	
+	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Order("id desc").Limit(10).Find(&orderitems).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
 			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load user details please try again later"})
 			return 
 		}
 	}
+
 
 	if addressOption == "new" {
 		newAddress := models.Address{
@@ -418,7 +418,9 @@ func CheckOutOrder(c *gin.Context){
 func OrderConfirmation(c *gin.Context){
 
 	id := c.Param("id")
-	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":id,"user":"done"})
+	var order models.Order
+	db.Db.Where("id = ?",id).First(&order)
+	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.OrderID,"odId":order.ID,"user":"done"})
 }
 
 

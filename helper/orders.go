@@ -230,7 +230,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 				}
 
 				if WalletTransaction.ID != 0 {
-				db.Db.Delete(&WalletTransaction)
+					db.Db.Delete(&WalletTransaction)
 				}
 
 				err := db.Db.Create(&walletTranscation).Error
@@ -361,7 +361,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 
 			
 		}else{
-			
+
 			orderItem.Status = "Return requested"
 			orderItem.Reason = reason
 

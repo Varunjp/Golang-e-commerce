@@ -7,6 +7,7 @@ import (
 	"first-project/utils"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ func RegisterUser(c *gin.Context){
 		Username string		`form:"username" binding:"required"`
 		Email	 string		`form:"email" binding:"required"`
 		Password string		`form:"password" binding:"required"`
+		Confirmpass string 	`form:"confirm_password" binding:"required"`
 		Phone	 string		`form:"phone" binding:"required"`
 	}
 
@@ -34,6 +36,36 @@ func RegisterUser(c *gin.Context){
 			"error":"Invalid data",
 		})
 		return 
+	}
+
+	phonePattern := regexp.MustCompile(`^[0-9]{10}$`)
+
+	if !phonePattern.MatchString(input.Phone){
+		c.HTML(http.StatusBadRequest,"register.html",gin.H{
+			"error":"Phone number must be exactly 10 digits",
+		})
+		return
+	}
+
+	if helper.IsSameDigitPhone(input.Phone){
+		c.HTML(http.StatusBadRequest,"register.html",gin.H{
+			"error":"Phone number cannot contain all same digits",
+		})
+		return
+	}
+
+	if !helper.IsValidPassword(input.Password){
+		c.HTML(http.StatusBadRequest,"register.html",gin.H{
+			"error":"Password must be at least 8 characters with uppercase, lowercase, number, and special character",
+		})
+		return
+	}
+
+	if input.Password != input.Confirmpass{
+		c.HTML(http.StatusBadRequest,"register.html",gin.H{
+			"error":"Passwords do not match",
+		})
+		return
 	}
 
 	hashedPassword,_ := utils.HashPassword(input.Password)

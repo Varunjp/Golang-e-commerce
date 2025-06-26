@@ -28,7 +28,7 @@
         {{if .error}}
         <div class="alert alert-danger">{{.error}}</div>
         {{end}}
-        <form method="POST" action="/user/register">
+        <form method="POST" id="registerForm" action="/user/register">
           <div class="mb-3">
             <label class="form-label">Username</label>
             <input type="text" class="form-control" name="username" required />
@@ -39,11 +39,18 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Phone</label>
-            <input type="text" class="form-control" name="phone" required />
+            <input type="text" id="phone" class="form-control" name="phone" required />
+            <div class="form-text text-danger" id="phoneError"></div>
           </div>
           <div class="mb-3">
             <label class="form-label">Password</label>
-            <input type="password" class="form-control" name="password" required />
+            <input type="password" class="form-control" id="password" name="password" required />
+            <div class="form-text text-danger" id="passwordError"></div>
+          </div>
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirmPassword" name="confirm_password" required>
+            <div class="form-text text-danger" id="confirmPasswordError"></div>
           </div>
           <div class="mb-3">
             <label class="form-label">Referral</label>
@@ -67,6 +74,55 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.getElementById("registerForm").addEventListener("submit", function (e) {
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+
+    let valid = true;
+
+    const phoneError = document.getElementById("phoneError");
+    const passwordError = document.getElementById("passwordError");
+    const confirmPasswordError = document.getElementById("confirmPasswordError");
+
+    // Clear previous errors
+    phoneError.innerText = "";
+    passwordError.innerText = "";
+    confirmPasswordError.innerText = "";
+
+    // Patterns
+    const phonePattern = /^[0-9]{10}$/;
+    const sameDigitPattern = /^(\d)\1{9}$/;
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    // Phone validation
+    if (!phonePattern.test(phone)) {
+      phoneError.innerText = "Phone number must be 10 digits.";
+      valid = false;
+    } else if (sameDigitPattern.test(phone)) {
+      phoneError.innerText = "Phone number cannot contain the same digit repeated.";
+      valid = false;
+    }
+
+    // Password validation
+    if (!passwordPattern.test(password)) {
+      passwordError.innerText = "Password must be 8+ characters with uppercase, lowercase, number, and special character.";
+      valid = false;
+    }
+
+    // Confirm password
+    if (password !== confirmPassword) {
+      confirmPasswordError.innerText = "Passwords do not match.";
+      valid = false;
+    }
+
+    if (!valid) {
+      e.preventDefault(); // ❗ prevent form submission
+    }
+  });
+</script>
 
 </body>
 </html>

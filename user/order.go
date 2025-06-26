@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/jung-kurt/gofpdf"
 	"gorm.io/gorm"
@@ -18,7 +19,6 @@ import (
 func ListOrders(c *gin.Context){
 
 	tokenStr,_ := c.Cookie("JWT-User")
-
 	_,userId,_ := helper.DecodeJWT(tokenStr)
 
 	page,_ := strconv.Atoi(c.DefaultQuery("page","1"))
@@ -266,6 +266,22 @@ func OrderItems(c *gin.Context){
 
 	}
 
+	session := sessions.Default(c)
+	flash := session.Get("flash")
+
+	if flash != nil{
+		session.Delete("flash")
+		session.Save()
+		c.HTML(http.StatusOK,"orderDetails.html",gin.H{
+			"OrderItems":response,
+			"address":address,
+			"Order": Order,
+			"user": "done",
+			"error":flash,
+		})
+		return 
+	}
+
 	c.HTML(http.StatusOK,"orderDetails.html",gin.H{
 		"OrderItems":response,
 		"address":address,
@@ -276,7 +292,7 @@ func OrderItems(c *gin.Context){
 
 }
 
-func CancelItem (c *gin.Context){
+func ReturnItem (c *gin.Context){
 	orderID := c.PostForm("order_id")
 	itemId := c.PostForm("item_id")
 	reason := c.PostForm("reason")

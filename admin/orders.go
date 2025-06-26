@@ -275,14 +275,15 @@ func AdminOrderUpdate(c *gin.Context){
 		return 
 	}
 
-	if status == "Cancelled"{
+	switch status {
+	case "Cancelled":
 		err := helper.AdminOrderCancel(order.ID)
 		if err != nil{
 			c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":err})
 			return 
 		}
 		order.PaymentStatus = "Not valid"
-	}else if status == "Delivered"{
+	case "Delivered":
 		for _,item := range order.OrderItems{
 
 			if item.Status != "Returned"{

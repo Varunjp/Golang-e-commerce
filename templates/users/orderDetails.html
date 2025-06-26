@@ -79,7 +79,7 @@
                       </form>
                       {{else if eq .Status "Delivered"}}
                       <span class="badge bg-success mt-2">{{.Status}}</span>
-                      <form method="POST" action="/user/cancel-item" class="mt-2">
+                      <form method="POST" action="/user/return-item" class="mt-2">
                         <input type="hidden" name="order_id" value="{{$.Order.ID}}">
                         <input type="hidden" name="item_id" value="{{.ID}}">
                         <input type="text" name="reason" placeholder="Reason for return" required>

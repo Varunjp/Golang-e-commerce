@@ -56,7 +56,7 @@
         </form>
         {{ else if eq .Status "Delivered" }}
 
-        <form method="POST" action="/user/cancel-order" onsubmit="return confirm('Are you sure you want to return this order?')">
+        <form method="POST" action="/user/return-order" onsubmit="return confirm('Are you sure you want to return this order?')">
           <input type="hidden" name="order_id" value="{{.ID}}">
           <textarea class="form-control form-control-sm mt-1 mb-2" name="reason" rows="2" placeholder="Reason for return" required></textarea>
           <button type="submit" class="btn btn-sm btn-outline-warning w-100">Return</button>

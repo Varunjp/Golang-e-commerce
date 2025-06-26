@@ -8,13 +8,14 @@ import (
 	"time"
 )
 
+
 func getOrderID() string {
 	now := time.Now()
 	year := now.Year() % 100
 	dayOfYear := now.YearDay()
-	random := rand.Intn(100)
+	random := rand.Intn(10000)
 
-	return fmt.Sprintf("ORD%02d%03d%02d",year,dayOfYear,random)[0:9]
+	return fmt.Sprintf("ORD%02d%03d%04d",year,dayOfYear,random)
 }
 
 func GenerateOrderID() string {
