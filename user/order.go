@@ -168,9 +168,7 @@ func ReturnOrder(c *gin.Context){
 
 	for _,item := range order.OrderItems {
 
-		//db.Db.Delete(&models.OrderItem{},item.ID)
 		if item.Status != "Returned"{
-			//db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
 			item.Status = "Return requested"
 			item.Reason =  reason
 			db.Db.Save(&item)
