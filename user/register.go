@@ -100,8 +100,6 @@ func RegisterUser(c *gin.Context){
 		return 
 	}
 
-	
-
 	c.HTML(http.StatusOK,"verifyOtp.html",gin.H{
 		"email":user.Email,
 	})
