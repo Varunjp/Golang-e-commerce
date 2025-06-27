@@ -191,6 +191,7 @@ func OrderItems(c *gin.Context){
 	type Response struct {
 		ID 				uint 
 		ImageURL		string
+		ProductID 		uint 
 		ProductName		string
 		Quantity		int
 		Status 			string 
@@ -241,6 +242,7 @@ func OrderItems(c *gin.Context){
 		if len(Product.Product_images) != 0{
 			response[i] = Response{
 				ID: item.ID,
+				ProductID: Product.ID,
 				ProductName: Product.Variant_name,
 				ImageURL: Product.Product_images[0].Image_url,
 				Quantity: item.Quantity,
@@ -253,6 +255,7 @@ func OrderItems(c *gin.Context){
 		}else{
 			response[i] = Response{
 				ID: item.ID,
+				ProductID: Product.ID,
 				ProductName: Product.Variant_name,
 				ImageURL: "",
 				Quantity: item.Quantity,

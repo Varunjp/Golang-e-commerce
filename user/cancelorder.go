@@ -210,7 +210,9 @@ func CancelOrder(c *gin.Context){
 			item.Reason =  reason
 			db.Db.Save(&item)
 		}
-		
+
+		db.Db.Model(&models.Product_Variant{}).Where("id = ?", item.ProductID).Update("stock", gorm.Expr("stock + ?", item.Quantity))
 	}
+
 	c.Redirect(http.StatusSeeOther,"/user/order/"+OrderIDStr)
 }

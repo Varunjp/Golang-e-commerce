@@ -58,7 +58,7 @@
                         <img src="/{{.ImageURL}}" class="img-fluid rounded" alt="{{.ProductName}}">
                     </div>
                     <div class="col-6 col-md-7">
-                        <div class="fw-bold">{{.ProductName}}</div>
+                        <div class="fw-bold"> <a href="/user/product/{{.ProductID}}" class="text-decoration-none text-dark">{{.ProductName}}</a></div>
                         Qty: {{.Quantity}}<br>
                         Price: ₹{{printf "%.2f" .Price}}<br>
                         Size: {{ .Size}}<br>
