@@ -66,13 +66,13 @@
         <a href="/admin/products" class="btn btn-outline-light">Back to Products</a>
       </div>
 
-      <form action="/admin/products/create" method="POST" enctype="multipart/form-data">
+      <form action="/admin/products/create" id="productForm" method="POST" enctype="multipart/form-data">
         <div class="card card-dark p-4 mb-4">
           <h5>Product Info</h5>
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Name</label>
-              <input type="text" name="name" class="form-control" required>
+              <input type="text" name="name" id="name" class="form-control" required>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Subcategory</label>
@@ -85,7 +85,7 @@
             </div>
             <div class="col-12 mb-3">
               <label class="form-label">Description</label>
-              <textarea name="description" class="form-control" rows="3" required></textarea>
+              <textarea name="description" id="description" class="form-control" rows="3" required></textarea>
             </div>
           </div>
         </div>
@@ -95,7 +95,7 @@
           <div class="row">
             <div class="col-md-4 mb-3">
               <label class="form-label">Variant Name</label>
-              <input type="text" name="variant_name" class="form-control" required>
+              <input type="text" name="variant_name" id="variant_name" class="form-control" required>
             </div>
             <div class="col-md-2 mb-3">
               <label class="form-label">Size</label>
@@ -163,7 +163,20 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="/static/js.js"></script>
-  
+<script>
+
+document.getElementById('productForm').addEventListener('submit', function(e) {
+  const name = document.getElementById('name').value.trim();
+  const description = document.getElementById('description').value;
+  const variant_name = document.getElementById('variant_name').value.trim();
+
+  if (name === '' || description === '' || variant_name === '') {
+    e.preventDefault(); // ⛔ Prevent form submission
+    alert('Please enter valid name');
+  }
+});
+
+</script>  
 
 
 </body>

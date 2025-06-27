@@ -162,12 +162,13 @@ func UpdateCartItem(c *gin.Context){
 		return 
 	}
 
-	if action == "inc"{
+	switch action {
+	case "inc":
 		if cart.Quantity + 1 <= product.Stock && cart.Quantity + 1 <= Limit {
 			cart.Quantity++
 			db.Db.Save(&cart)
 		}
-	}else if action == "dec" {
+	case "dec":
 		if cart.Quantity == 1 {
 			db.Db.Delete(&cart)
 			c.Redirect(http.StatusFound,"/user/cart")

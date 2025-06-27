@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -26,6 +27,8 @@ func ListCoupons(c *gin.Context){
 		return 
 	}
 
+	session := sessions.Default(c)
+	flash := session.Get("flash")
 	name := AdminUser.Username
 
 	var coupons []models.Coupons
@@ -106,6 +109,21 @@ func ListCoupons(c *gin.Context){
 
 		totaPage := int(math.Ceil(float64(total)/float64(limit)))
 
+		if flash != nil{
+			session.Delete("flash")
+			session.Save()
+			c.HTML(http.StatusOK,"coupons.html",gin.H{
+				"user":name,
+				"couponsList": coupons,
+				"page":page,
+				"limit":limit,
+				"totalPages":totaPage,
+				"Subcategories":response,
+				"error":flash,
+			})
+			return
+		}
+
 		c.HTML(http.StatusOK,"coupons.html",gin.H{
 			"user":name,
 			"couponsList": coupons,
@@ -134,6 +152,21 @@ func ListCoupons(c *gin.Context){
 		}
 
 		totalPages := int(math.Ceil(float64(total)/float64(limit)))
+
+		if flash != nil{
+			session.Delete("flash")
+			session.Save()
+			c.HTML(http.StatusOK,"coupons.html",gin.H{
+				"user":name,
+				"couponsList": coupons,
+				"page":page,
+				"limit":limit,
+				"totalPages":totalPages,
+				"Subcategories":response,
+				"error":flash,
+			})
+			return 
+		}
 
 		c.HTML(http.StatusOK,"coupons.html",gin.H{
 			"user":name,
@@ -172,6 +205,13 @@ func AddCoupon(c *gin.Context){
 	if err := c.ShouldBind(&input); err != nil{
 		
 		c.HTML(http.StatusBadRequest,"coupons.html",gin.H{"error":"All fields are required"})
+		return 
+	}
+	session := sessions.Default(c)
+	if strings.TrimSpace(input.Code) == "" || strings.TrimSpace(input.Description) == "" || input.MinAmount == 0 || input.Discount == 100{
+		session.Set("flash","Coupon doesn't meet requirment")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/admin/coupons")
 		return 
 	}
 
@@ -330,8 +370,11 @@ func EditCoupon(c *gin.Context){
 		return 
 	}
 
-	coupon.Code = c.PostForm("code")
-	coupon.Description = c.PostForm("description")
+	newCode := c.PostForm("code")
+	newDescription := c.PostForm("description")
+
+	coupon.Code = newCode
+	coupon.Description = newDescription
 
 	discount,_ := strconv.ParseFloat(c.PostForm("discount"),64)
 	minAmount,_ := strconv.ParseFloat(c.PostForm("min_amount"),64)
@@ -341,6 +384,14 @@ func EditCoupon(c *gin.Context){
 	coupon.MinAmount = minAmount
 	coupon.MaxAmount = maxAmount
 	coupon.Type = c.PostForm("type")
+
+	session := sessions.Default(c)
+	if strings.TrimSpace(newCode) == "" || strings.TrimSpace(newDescription) == "" || minAmount == 0 || discount == 100{
+		session.Set("flash","Coupon doesn't meet requirment")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/admin/coupons")
+		return 
+	}
 
 	categoryIDstr := c.PostForm("category_id")
 	if categoryIDstr != ""{

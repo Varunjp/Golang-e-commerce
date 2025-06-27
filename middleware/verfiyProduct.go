@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func VerifyProduct() gin.HandlerFunc{
@@ -24,19 +25,23 @@ func VerifyProduct() gin.HandlerFunc{
 		referer := c.Request.Referer()
 
 		if err := db.Db.Where("user_id = ?",userId).Find(&CartItems).Error; err != nil {
-			if referer != ""{
-				c.Redirect(http.StatusSeeOther,referer)
-			}else{
-				c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Not able to load cart items"})
+			if err != gorm.ErrRecordNotFound{
+				if referer != ""{
+					c.Redirect(http.StatusSeeOther,referer)
+				}else{
+					c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Not able to load cart items"})
+				}
+				c.Abort()
+				return 
 			}
-			c.Abort()
-			return 
+			
 		}
 
 		for _,item := range CartItems{
 			var product models.Product_Variant
 			if err := db.Db.Where("id = ?",item.ProductID).First(&product).Error; err != nil{
 				if referer != ""{
+					db.Db.Delete(&item)
 					c.Redirect(http.StatusSeeOther,referer)
 				}else{
 					c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Product has been removed."})

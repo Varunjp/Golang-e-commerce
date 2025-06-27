@@ -213,14 +213,23 @@ func AddProduct(c *gin.Context){
 	ProductName := c.PostForm("name")
 	ProductSubCat := c.PostForm("subcategory_id")
 	ProductDescription := c.PostForm("description")
-
-
+	
+	ProductName = strings.TrimLeft(ProductName," ")
+	ProductDescription = strings.TrimLeft(ProductDescription," ")
 	// product variant details
 	ProductVariantName := c.PostForm("variant_name")
 	ProductSize := c.PostForm("size")
 	ProductStock,_ := strconv.Atoi(c.PostForm("stock"))
 	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
 	ProductTax,_ := strconv.ParseFloat(c.PostForm("tax"),64)
+
+	ProductVariantName = strings.TrimLeft(ProductVariantName," ")
+	ProductSize = strings.TrimSpace(ProductSize)
+
+	if strings.TrimSpace(ProductName) == "" || strings.TrimSpace(ProductVariantName) == "" || strings.TrimSpace(ProductDescription) == "" || ProductSize == ""{
+		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Provided empty name for product name or description or size"})
+		return 
+	}
 
 	var subCat models.SubCategory
 	var ProductCheck models.Product
@@ -397,6 +406,11 @@ func AddProductVariant (c *gin.Context){
 	size := c.PostForm("size")
 	ProductStock,_ := strconv.Atoi(c.PostForm("stock"))
 	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
+
+	if strings.TrimSpace(variant_name) == "" || strings.TrimSpace(size) == ""{
+		c.HTML(http.StatusBadRequest,"admin_addProductVariant.html",gin.H{"error":"Invalid entry on name or size"})
+		return 
+	}
 
 	if ProductStock < 1 || ProductPrice < 1 {
 		c.HTML(http.StatusBadRequest,"admin_addProductVariant.html",gin.H{"error":"Stock or price could not be less than 1"})

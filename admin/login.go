@@ -78,8 +78,5 @@ func Login(c *gin.Context){
 	// Prevent caching
 	c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
 
-
-	//c.JSON(http.StatusOK, gin.H{"message":"Login successfull", "token":token})
-
 	c.Redirect(http.StatusTemporaryRedirect,"/admin")
 }

@@ -116,10 +116,10 @@ func ViewCategory (c *gin.Context){
 func AddCategory (c *gin.Context){
 	
 	categoryName := c.PostForm("name")
-
-	if categoryName == ""{
+	categoryName = strings.TrimLeft(categoryName," ")
+	if categoryName == "" || strings.TrimSpace(categoryName) == ""{
 		// check status code
-		c.Redirect(http.StatusNotFound,"/admin/categories")
+		c.Redirect(http.StatusSeeOther,"/admin/categories")
 		return
 	}
 
@@ -171,6 +171,11 @@ func AddSubCategory(c *gin.Context){
 	
 	newName := c.PostForm("name")
 
+	if strings.TrimSpace(newName) == ""{
+		c.Redirect(http.StatusSeeOther,"/admin/categories")
+		return 
+	}
+
 	var category models.Category
 	var subCategory models.SubCategory
 
@@ -205,6 +210,11 @@ func EditCategory(c *gin.Context){
 	categoryID := c.Param("id")
 	newName := c.PostForm("name")
 	var category models.Category
+
+	if strings.TrimSpace(newName) == ""{
+		c.Redirect(http.StatusSeeOther,"/admin/categories")
+		return 
+	}
 
 	if err := db.Db.First(&category, categoryID).Error;err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Category not found"})
@@ -241,6 +251,11 @@ func UpdateSubCategory(c *gin.Context){
 
 	subCategoryID := c.Param("id")
 	newName := c.PostForm("name")
+
+	if strings.TrimSpace(newName) == ""{
+		c.Redirect(http.StatusSeeOther,"/admin/categories")
+		return 
+	}
 
 	var subCategory models.SubCategory
 
