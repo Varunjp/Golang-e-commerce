@@ -216,7 +216,6 @@ func CheckOutOrder(c *gin.Context){
 	var CartItems []models.CartItem
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
-		
 		c.HTML(http.StatusNotFound,"checkOut.html",gin.H{"error":"Not able to load cart items"})
 		return 
 	}
@@ -259,7 +258,7 @@ func CheckOutOrder(c *gin.Context){
 		}
 
 		
-		if coupon.ID != 0 {
+		if coupon.ID != 0 && total > coupon.MinAmount{
 			discount = (total * coupon.Discount)/100
 			if discount > coupon.MaxAmount {
 				discount = coupon.MaxAmount

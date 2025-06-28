@@ -124,7 +124,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 	}else{
 
-		walletTransaction := models.WalletTransaction{
+		newalletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
 			OrderID: order.ID,
 			OrderItemID: orderItem.ID,
@@ -138,7 +138,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			db.Db.Delete(&WalletTransaction)
 		}
 
-		err := db.Db.Create(&walletTransaction).Error
+		err := db.Db.Create(&newalletTransaction).Error
 		if err != nil{
 			return err 
 		}

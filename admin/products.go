@@ -3,6 +3,7 @@ package admin
 import (
 	"encoding/base64"
 	db "first-project/DB"
+	"first-project/helper"
 	"first-project/models"
 	"first-project/models/responsemodels"
 	"fmt"
@@ -25,15 +26,6 @@ func ViewProducts(c *gin.Context){
 
 	session := sessions.Default(c)
 	name := session.Get("name").(string)
-	// var dbProducts []struct {
-	// 	ProductID int `gorm:"column:id"`
-	// 	ProductName string `gorm:"column:variant_name"`
-	// 	ProductSize string `gorm:"column:size"`
-	// 	ProductImage string	`gorm:"column:image_url"`
-	// 	ProductPrice float64 `gorm:"column:price"`
-	// 	ProductStock int	`gorm:"column:stock"`
-	// 	CreatedAt	time.Time	`gorm:"column:created_at"`
-	// }
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
@@ -57,8 +49,6 @@ func ViewProducts(c *gin.Context){
 	keyword := c.Query("search")
 
 	if keyword == ""{
-			
-		// err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.deleted_at IS NULL").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
 
 		db.Db.Model(&models.Product_Variant{}).Count(&total)
 
@@ -113,9 +103,6 @@ func ViewProducts(c *gin.Context){
 		"totalPages":totalPages,"user":name})
 
 	}else{
-
-
-		// err := db.Db.Table("product_variants").Select("product_variants.id,product_variants.variant_name,product_variants.size,product_images.image_url,product_variants.price,product_variants.stock").Joins("LEFT JOIN product_images ON product_images.product_variant_id = product_variants.id").Where("product_variants.variant_name ILIKE ?","%"+keyword+"%").Group("product_variants.id,product_variants.variant_name,product_images.image_url").Order("product_variants.id Desc").Offset(offset).Find(&dbProducts).Error
 
 		db.Db.Model(&models.Product_Variant{}).Where("product_variants.variant_name ILIKE ?","%"+keyword+"%").Count(&total)
 
@@ -589,49 +576,6 @@ func UpdateProduct(c *gin.Context){
         return
 	}
 
-	// for i := 0;i < 3;i++{
-		
-		
-	// 	base64Str := c.PostForm(fmt.Sprintf("cropped_image%d",i))
-
-	// 	if base64Str != ""{
-			
-	// 		data := strings.Split(base64Str,",")[1]
-	// 		decoded, err := base64.StdEncoding.DecodeString(data)
-			
-	// 		if err != nil{
-	// 			continue
-	// 		}
-
-	// 		filename := fmt.Sprintf("uploads/cropped_%d_%d.jpg",time.Now().UnixNano(),i)
-
-	// 		if err := os.WriteFile(filename,decoded,0644); err != nil{
-	// 			continue
-	// 		}
-
-	// 		order,_ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d",i)))
-	// 		isPrimary := c.PostForm(fmt.Sprintf("is_primary%d",i))=="true"
-
-	// 		image := models.Product_image{
-	// 			ProductVariantID: uint(productID),
-	// 			Image_url: filename,
-	// 			Order_no: order,
-	// 			Is_primary: isPrimary,
-	// 			CreatedAt: time.Now(),
-	// 		}
-
-
-	// 		if err := db.Db.Create(&image).Error; err != nil{
-	// 			c.String(http.StatusInternalServerError,"Error saving image to DB: %v", err)
-	// 			return
-	// 		}
-
-			
-
-	// 	} 
-	// }
-
-
 	for i := 0; i < 3; i++ {
 		
 		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
@@ -715,10 +659,17 @@ func DeleteProduct(c *gin.Context){
 	
 	id := c.Param("id")
 	var Product_variant models.Product_Variant
-	
+
 	if err := db.Db.First(&Product_variant,id).Error; err!=nil{
 		c.String(http.StatusNotFound, "Product not found")
         return
+	}
+
+	err := helper.CancelOrderForProduct(id)
+
+	if err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Failed to remove product from orders"})
+		return 
 	}
 
 	if err := db.Db.Delete(&Product_variant).Error; err != nil{

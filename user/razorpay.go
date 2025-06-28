@@ -42,11 +42,11 @@ func CreateRazorpayOrder(c *gin.Context){
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 	var usedcouponcheck models.UsedCoupon
+	var totalAmount float64
 
 	couponCode := req.CouponCode
 
 	if couponCode != ""{
-		
 		if err := db.Db.Where("user_id = ? AND coupon_id = ?",userID,couponCode).First(&usedcouponcheck).Error; err == nil{
 			c.JSON(http.StatusBadRequest,gin.H{"success":false})
 			return 
@@ -68,19 +68,22 @@ func CreateRazorpayOrder(c *gin.Context){
 	var CartItems []models.CartItem
 
 	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
-		
-		c.JSON(http.StatusNotFound,gin.H{"error":"Not able to load cart items"})
+		c.JSON(http.StatusNotFound,gin.H{"success":false})
 		return 
 	}
-
+	
+	if len(CartItems) < 1 {
+		c.JSON(http.StatusNotFound,gin.H{"success":false})
+		return
+	}
+	
 	for _,item := range CartItems{
 
+		var Product models.Product_Variant
+		db.Db.Where("id = ?",item.ProductID).First(&Product)
 		itemCount := 0
-
-		// if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
-		// 	c.JSON(http.StatusBadRequest,gin.H{"success":false})
-		// 	return 
-		// }
+		totalAmount += item.Price * float64(item.Quantity)
+		totalAmount += Product.Tax * float64(item.Quantity)
 
 		for _, oritems := range orderitems{
 			if item.ProductID == oritems.ProductID{
@@ -99,10 +102,21 @@ func CreateRazorpayOrder(c *gin.Context){
 	}
 
 
+	if couponCode != "" {
+		var Coupon models.Coupons
+		db.Db.Where("code = ?",couponCode).First(&Coupon)
+		if totalAmount > Coupon.MinAmount {
+			discount := (totalAmount * Coupon.Discount)/100
+			totalAmount = totalAmount - discount
+		}
+	}
+
+	totalAmount = totalAmount *100
+
 	client := razorpay.NewClient(os.Getenv("RAZORPAY_KEY_ID"), os.Getenv("RAZORPAY_KEY_SECRET"))
 
 	data := map[string]interface{}{
-		"amount": int(req.Amount),
+		"amount": int(totalAmount),
 		"currency": "INR",
 		"receipt":fmt.Sprintf("order_rcptid_%d",time.Now().Unix()),
 	}
@@ -117,7 +131,7 @@ func CreateRazorpayOrder(c *gin.Context){
 
 	c.JSON(http.StatusOK,gin.H{
 		"key":	os.Getenv("RAZORPAY_KEY_ID"),
-		"amount": req.Amount,
+		"amount": totalAmount,
 		"currency": "INR",
 		"order_id": body["id"],
 	})
@@ -173,11 +187,13 @@ func PaymentSuccess(c *gin.Context){
 
 	var total float64
 	var totalTax float64
+	var totalAmount float64
 	for _,item := range CartItems{
 		var product models.Product_Variant
 		db.Db.Where("id = ?",item.ProductID).First(&product)
 		total += item.Price * float64(item.Quantity)
 		totalTax += product.Tax * float64(item.Quantity)
+		totalAmount+= item.Price * float64(item.Quantity) + totalTax
 	}
 
 	addressintId,_ := strconv.Atoi(payload.AddressID)
@@ -195,7 +211,11 @@ func PaymentSuccess(c *gin.Context){
 
 	var discount float64
 	if coupon.ID != 0 {
-		discount = (total * coupon.Discount)/100
+
+		if totalAmount > coupon.MinAmount {
+			discount = (total * coupon.Discount)/100
+		}
+		
 		if coupon.MaxAmount < discount {
 			discount = coupon.MaxAmount	
 		}
@@ -209,6 +229,7 @@ func PaymentSuccess(c *gin.Context){
 	}
 	
 	neOrderId := helper.GenerateOrderID()
+	totalAmount = totalAmount - discount
 
 	order := models.Order{
 		UserID: uint(userID),
@@ -217,7 +238,7 @@ func PaymentSuccess(c *gin.Context){
 		DiscountTotal: discount,
 		SubTotal: total+totalTax,
 		TotalTax: totalTax,
-		TotalAmount: payload.Amount,
+		TotalAmount: totalAmount,
 		Status: "Processing",
 		PaymentStatus: "Successful",
 		PaymentMethod: "Razorpay",

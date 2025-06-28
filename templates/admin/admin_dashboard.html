@@ -101,8 +101,9 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h4>Sales Report</h4>
           <div>
-            <button class="btn btn-sm btn-outline-light me-2" id="monthlyBtn">Daily</button>
-            <button class="btn btn-sm btn-outline-light" id="yearlyBtn">Monthly</button>
+            <button class="btn btn-sm btn-outline-light me-2" id="dailyBtn">Daily</button>
+            <button class="btn btn-sm btn-outline-light me-2" id="monthlyBtn">Monthly</button>
+            <button class="btn btn-sm btn-outline-light" id="yearlyBtn">Yearly</button>
           </div>
         </div>
         <canvas id="salesChart" height="100"></canvas>
@@ -219,9 +220,10 @@
 
   document.getElementById('monthlyBtn').addEventListener('click', () => fetchSalesData('monthly'));
   document.getElementById('yearlyBtn').addEventListener('click', () => fetchSalesData('yearly'));
+  document.getElementById('dailyBtn').addEventListener('click', () => fetchSalesData('daily'));
 
   // Load monthly chart by default
-  fetchSalesData('monthly');
+  fetchSalesData('daily');
 </script>
 
 
