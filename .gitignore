@@ -15,3 +15,5 @@ main
 .DS_Store
 Thumbs.db
 ".env" 
+
+tmp/main.exe
