@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -108,6 +109,12 @@ func UpdateProfile(c *gin.Context){
 	var User models.User
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,id,_ := helper.DecodeJWT(tokenStr)
+
+	if strings.TrimSpace(NewName) == "" || strings.TrimSpace(NewPhone) == "" || strings.TrimSpace(email) == ""{
+		c.HTML(http.StatusBadRequest,"edit_profile.html",gin.H{"error":"Invalid content passed"})
+		return 
+	}
+
 
 	if err := db.Db.Where("id = ?",id).First(&User).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"edit_profile.html",gin.H{"error":"Failed to retrive user details"})
@@ -303,6 +310,12 @@ func EditAddress(c *gin.Context){
 		c.JSON(http.StatusNotFound,gin.H{"error":"Address not found"})
 		return 
 	}
+
+	if strings.TrimSpace(line1) == "" || strings.TrimSpace(line2) == "" || strings.TrimSpace(country) == "" || strings.TrimSpace(state) == "" || strings.TrimSpace(city) == "" || strings.TrimSpace(postalCode) == ""{
+		c.HTML(http.StatusBadRequest,"edit_profile.html",gin.H{"error":"Invalid content passed"})
+		return 
+	}
+	
 
 	address.AddressLine1 = line1
 	address.AddressLine2 = line2

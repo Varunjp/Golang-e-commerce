@@ -538,6 +538,11 @@ func UpdateProduct(c *gin.Context){
 	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
 	ProductTax,_ := strconv.ParseFloat(c.PostForm("tax"),64)
 
+	if strings.TrimSpace(ProductName) == "" || strings.TrimSpace(ProductVariantName) == "" || strings.TrimSpace(ProductDescription) == "" || ProductSize == ""{
+		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Provided empty name for product name or description or size"})
+		return 
+	}
+
 	var Product models.Product
 	var Product_variant models.Product_Variant
 
