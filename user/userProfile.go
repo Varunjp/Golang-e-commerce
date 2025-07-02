@@ -88,15 +88,24 @@ func EditProfilePage(c *gin.Context){
 	var User models.User
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,id,_ := helper.DecodeJWT(tokenStr)
+	session := sessions.Default(c)
+	errmsg := session.Get("flash")
 
 	if err := db.Db.Preload("Addresses").Where("id = ?",id).First(&User).Error; err != nil{
 		c.HTML(http.StatusNotFound,"user_profile.html",gin.H{"error":"User not found"})
 		return 
 	}
 
+	if errmsg != nil{
+		c.HTML(http.StatusOK,"edit_profile.html",gin.H{
+			"user":User,
+			"error":errmsg,
+		})
+		return 
+	}
+
 	c.HTML(http.StatusOK,"edit_profile.html",gin.H{
 		"user":User,
-
 	})
 
 }
@@ -109,9 +118,12 @@ func UpdateProfile(c *gin.Context){
 	var User models.User
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,id,_ := helper.DecodeJWT(tokenStr)
+	session := sessions.Default(c)
 
 	if strings.TrimSpace(NewName) == "" || strings.TrimSpace(NewPhone) == "" || strings.TrimSpace(email) == ""{
-		c.HTML(http.StatusBadRequest,"edit_profile.html",gin.H{"error":"Invalid content passed"})
+		session.Set("flash","Invalid content passed")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
 		return 
 	}
 
@@ -169,6 +181,15 @@ func UpdateEmail(c *gin.Context){
 	var User models.User
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,id,_ := helper.DecodeJWT(tokenStr)
+
+	session := sessions.Default(c)
+
+	if strings.TrimSpace(NewName) == "" || strings.TrimSpace(NewPhone) == "" || strings.TrimSpace(email) == ""{
+		session.Set("flash","Invalid content passed")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
+		return 
+	}
 
 	if err := db.Db.Where("id = ?",id).First(&User).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"changeEmail.html",gin.H{"error":"Failed to retrive user details"})
@@ -274,6 +295,14 @@ func AddAddress(c *gin.Context){
 	state := c.PostForm("state")
 	city := c.PostForm("city")
 	postalCode := c.PostForm("postal_code")
+	session := sessions.Default(c)
+
+	if strings.TrimSpace(line1) == "" || strings.TrimSpace(line2) == "" || strings.TrimSpace(country) == "" || strings.TrimSpace(state) == "" || strings.TrimSpace(city) == "" || strings.TrimSpace(postalCode) == ""{	
+		session.Set("flash","Invalid content passed")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
+		return 
+	}
 
 	address := models.Address{
 		UserID: uint(userID),
@@ -306,13 +335,17 @@ func EditAddress(c *gin.Context){
 	city := c.PostForm("city")
 	postalCode := c.PostForm("postal_code")
 
+	session := sessions.Default(c)
+
 	if err := db.Db.Where("address_id = ?",AddressID).First(&address).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Address not found"})
 		return 
 	}
 
-	if strings.TrimSpace(line1) == "" || strings.TrimSpace(line2) == "" || strings.TrimSpace(country) == "" || strings.TrimSpace(state) == "" || strings.TrimSpace(city) == "" || strings.TrimSpace(postalCode) == ""{
-		c.HTML(http.StatusBadRequest,"edit_profile.html",gin.H{"error":"Invalid content passed"})
+	if strings.TrimSpace(line1) == "" || strings.TrimSpace(line2) == "" || strings.TrimSpace(country) == "" || strings.TrimSpace(state) == "" || strings.TrimSpace(city) == "" || strings.TrimSpace(postalCode) == ""{	
+		session.Set("flash","Invalid content passed")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
 		return 
 	}
 	

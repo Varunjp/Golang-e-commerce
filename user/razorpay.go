@@ -38,7 +38,6 @@ func CreateRazorpayOrder(c *gin.Context){
 		return 
 	}
 
-
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 	var usedcouponcheck models.UsedCoupon
@@ -54,7 +53,6 @@ func CreateRazorpayOrder(c *gin.Context){
 
 	}
 	
-
 	var orderitems []models.OrderItem
 	
 	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
@@ -101,10 +99,9 @@ func CreateRazorpayOrder(c *gin.Context){
 
 	}
 
-
 	if couponCode != "" {
 		var Coupon models.Coupons
-		db.Db.Where("code = ?",couponCode).First(&Coupon)
+		db.Db.Where("id = ?",couponCode).First(&Coupon)
 		if totalAmount > Coupon.MinAmount {
 			discount := (totalAmount * Coupon.Discount)/100
 			totalAmount = totalAmount - discount
@@ -134,6 +131,7 @@ func CreateRazorpayOrder(c *gin.Context){
 		"amount": totalAmount,
 		"currency": "INR",
 		"order_id": body["id"],
+		"success":true,
 	})
 
 }

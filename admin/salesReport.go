@@ -194,11 +194,24 @@ func DownloadSalesReport(c *gin.Context){
 	pdf.SetX((pageWidth - stringWidth)/2)
 	pdf.CellFormat(stringWidth,10,title,"",1,"C",false,0,"")
 
-	pdf.SetFont("Arial","",12)
 	pdf.Ln(10)
-	pdf.Cell(60,10,"From: "+from)
-	pdf.Cell(60,10,"To: "+to)
-	pdf.Ln(12)
+	pdf.SetFont("Arial","B",12)
+	pdf.CellFormat(25,10,"Company","1",0,"C",false,0,"")
+	pdf.SetFont("Arial","",12)
+	pdf.CellFormat(35,10,"FashionArt","1",0,"C",false,0,"")
+	pdf.SetFont("Arial","B",12)
+	pdf.CellFormat(20,10,"Email ID:","1",0,"C",false,0,"")
+	pdf.SetFont("Arial","",12)
+	pdf.CellFormat(55,10,"fashionartify@gmail.com","1",1,"C",false,0,"")
+	pdf.SetFont("Arial","B",12)
+	pdf.CellFormat(30,10,"From","1",0,"C",false,0,"")
+	pdf.SetFont("Arial","",12)
+	pdf.CellFormat(30,10,from,"1",0,"C",false,0,"")
+	pdf.SetFont("Arial","B",12)
+	pdf.CellFormat(30,10,"To","1",0,"C",false,0,"")
+	pdf.SetFont("Arial","",12)
+	pdf.CellFormat(45,10,to,"1",1,"C",false,0,"")
+	pdf.Ln(10)
 
 	pdf.SetFont("Arial", "B", 12)
 	pdf.CellFormat(30, 10, "Order ID", "1", 0, "C", false, 0, "")
@@ -217,6 +230,8 @@ func DownloadSalesReport(c *gin.Context){
 		pdf.CellFormat(30, 10, "---------", "1", 1, "C", false, 0, "")
 	}
 
+	var totalAmount float64
+
 	for _, order := range orders {
 		var user models.User
 		db.Db.Where("id = ?",order.UserID).First(&user)
@@ -227,7 +242,15 @@ func DownloadSalesReport(c *gin.Context){
 		pdf.CellFormat(40, 10, user.Username, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.TotalAmount), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.DiscountTotal), "1", 1, "C", false, 0, "")
+		totalAmount += order.TotalAmount
 	}
+
+	pdf.Ln(10) // some space before total
+
+	pdf.SetFont("Arial", "B", 12)
+	pdf.CellFormat(105, 10, "Grand Total", "1", 0, "R", false, 0, "")
+	pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", totalAmount), "1", 0, "C", false, 0, "")
+	pdf.CellFormat(30, 10, "", "1", 1, "C", false, 0, "")
 
 	var buf bytes.Buffer
 	err := pdf.Output(&buf)
@@ -251,56 +274,171 @@ func DownloadExcel(c *gin.Context){
 	var orders []models.Order
 	db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ? AND status = ?",start,end,"Delivered").Find(&orders)
 
+	// f := excelize.NewFile()
+	// sheet := "SalesReport"
+	// f.NewSheet(sheet)
+	// f.DeleteSheet("Sheet1")
+
+	// headers := []string{"Order ID","Date","Customer","Amount","Discount"}
+	
+	// for i, h := range headers {
+	// 	cell,_ := excelize.CoordinatesToCellName(i+1,1)
+	// 	f.SetCellValue(sheet,cell,h)
+	// }
+
+	// if len(orders) < 1{
+
+	// 	values := []interface{}{
+	// 		"------",
+	// 		"------",
+	// 		"No sales",
+	// 		"------",
+	// 		"------",
+	// 	}
+
+	// 	for col, v := range values{
+	// 		cell,_ := excelize.CoordinatesToCellName(col+1,2)
+	// 		f.SetCellValue(sheet,cell,v)
+	// 	}
+
+	// }
+
+	// for row, order := range orders{
+	// 	var user models.User
+	// 	db.Db.First(&user,order.UserID)
+
+	// 	values := []interface{}{
+	// 		order.ID,
+	// 		order.CreateAt.Format("02-01-2006"),
+	// 		user.Username,
+	// 		order.TotalAmount,
+	// 		order.DiscountTotal,
+	// 	}
+
+	// 	for col, v := range values{
+	// 		cell,_ := excelize.CoordinatesToCellName(col+1,row+2)
+	// 		f.SetCellValue(sheet,cell,v)
+	// 	}
+	// }
+
+	// for i := 1; i<= len(headers); i++{
+	// 	col,_ := excelize.ColumnNumberToName(i)
+	// 	f.SetColWidth(sheet,col,col,20)
+	// }
+
 	f := excelize.NewFile()
 	sheet := "SalesReport"
 	f.NewSheet(sheet)
 	f.DeleteSheet("Sheet1")
 
-	headers := []string{"Order ID","Date","Customer","Amount","Discount"}
-	
+	// --- Title ---
+	title := "Sales Report"
+	f.SetCellValue(sheet, "A1", title)
+	styleTitle, _ := f.NewStyle(&excelize.Style{
+		Font:      &excelize.Font{Bold: true, Size: 16},
+		Alignment: &excelize.Alignment{Horizontal: "center"},
+	})
+	f.MergeCell(sheet, "A1", "E1")
+	f.SetCellStyle(sheet, "A1", "E1", styleTitle)
+
+	// --- Company Info ---
+	info := [][]string{
+		{"Company", "FashionArt", "Email ID:", "fashionartify@gmail.com"},
+		{"From", from, "To", to},
+	}
+
+	borderStyle, _ := f.NewStyle(&excelize.Style{
+	Border: []excelize.Border{
+		{Type: "left", Color: "000000", Style: 1},
+		{Type: "top", Color: "000000", Style: 1},
+		{Type: "right", Color: "000000", Style: 1},
+		{Type: "bottom", Color: "000000", Style: 1},
+	},
+	Alignment: &excelize.Alignment{Horizontal: "center"},})
+
+	styleInfoBold, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{Bold: true},
+		Alignment: &excelize.Alignment{Horizontal: "center"},
+		Border:    []excelize.Border{{Type: "left", Color: "000000", Style: 1}, {Type: "top", Color: "000000", Style: 1}, {Type: "right", Color: "000000", Style: 1}, {Type: "bottom", Color: "000000", Style: 1}},
+	})
+	rowIdx := 3
+	for _, row := range info {
+		for colIdx, val := range row {
+			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx)
+			f.SetCellValue(sheet, cell, val)
+			f.SetCellStyle(sheet,cell,cell,borderStyle)
+			if colIdx%2 == 0 {
+				f.SetCellStyle(sheet, cell, cell, styleInfoBold)
+			}
+		}
+		rowIdx++
+	}
+
+	// --- Header Row (start from row 6) ---
+	headers := []string{"Order ID", "Date", "Customer", "Amount", "Discount"}
+	styleHeader, _ := f.NewStyle(&excelize.Style{
+		Font:      &excelize.Font{Bold: true},
+		Alignment: &excelize.Alignment{Horizontal: "center"},
+		Border:    []excelize.Border{{Type: "left", Color: "000000", Style: 1}, {Type: "top", Color: "000000", Style: 1}, {Type: "right", Color: "000000", Style: 1}, {Type: "bottom", Color: "000000", Style: 1}},
+	})
+	startRow := 6
 	for i, h := range headers {
-		cell,_ := excelize.CoordinatesToCellName(i+1,1)
-		f.SetCellValue(sheet,cell,h)
+		cell, _ := excelize.CoordinatesToCellName(i+1, startRow)
+		f.SetCellValue(sheet, cell, h)
+		f.SetCellStyle(sheet, cell, cell, styleHeader)
 	}
 
-	if len(orders) < 1{
-
-		values := []interface{}{
-			"------",
-			"------",
-			"No sales",
-			"------",
-			"------",
+	// --- Orders ---
+	var totalAmount float64
+	if len(orders) < 1 {
+		values := []interface{}{"------", "------", "No Sales", "------", "------"}
+		for col, v := range values {
+			cell, _ := excelize.CoordinatesToCellName(col+1, startRow+1)
+			f.SetCellValue(sheet, cell, v)
 		}
+	} else {
+		for row, order := range orders {
+			var user models.User
+			db.Db.First(&user, order.UserID)
 
-		for col, v := range values{
-			cell,_ := excelize.CoordinatesToCellName(col+1,2)
-			f.SetCellValue(sheet,cell,v)
-		}
+			values := []interface{}{
+				order.ID,
+				order.CreateAt.Format("02-01-2006"),
+				user.Username,
+				fmt.Sprintf("Rs. %.2f", order.TotalAmount),
+				fmt.Sprintf("Rs. %.2f", order.DiscountTotal),
+			}
 
-	}
-
-	for row, order := range orders{
-		var user models.User
-		db.Db.First(&user,order.UserID)
-
-		values := []interface{}{
-			order.ID,
-			order.CreateAt.Format("02-01-2006"),
-			user.Username,
-			order.TotalAmount,
-			order.DiscountTotal,
-		}
-
-		for col, v := range values{
-			cell,_ := excelize.CoordinatesToCellName(col+1,row+2)
-			f.SetCellValue(sheet,cell,v)
+			for col, v := range values {
+				cell, _ := excelize.CoordinatesToCellName(col+1, startRow+1+row)
+				f.SetCellValue(sheet, cell, v)
+				f.SetCellStyle(sheet,cell,cell,borderStyle)
+			}
+			totalAmount += order.TotalAmount
 		}
 	}
 
-	for i := 1; i<= len(headers); i++{
-		col,_ := excelize.ColumnNumberToName(i)
-		f.SetColWidth(sheet,col,col,20)
+	// --- Grand Total ---
+	if len(orders) > 0 {
+		totalRow := startRow + len(orders) + 2
+		f.SetCellValue(sheet, fmt.Sprintf("A%d", totalRow), "Grand Total")
+		f.MergeCell(sheet, fmt.Sprintf("A%d", totalRow), fmt.Sprintf("C%d", totalRow))
+
+		styleTotal, _ := f.NewStyle(&excelize.Style{
+			Font:      &excelize.Font{Bold: true},
+			Alignment: &excelize.Alignment{Horizontal: "right"},
+		})
+		f.SetCellStyle(sheet, fmt.Sprintf("A%d", totalRow), fmt.Sprintf("C%d", totalRow), styleTotal)
+
+		amountCell := fmt.Sprintf("D%d", totalRow)
+		f.SetCellValue(sheet, amountCell, fmt.Sprintf("Rs. %.2f", totalAmount))
+		f.SetCellStyle(sheet, amountCell, amountCell, styleTotal)
+	}
+
+	// --- Adjust Column Width ---
+	for i := 1; i <= len(headers); i++ {
+		col, _ := excelize.ColumnNumberToName(i)
+		f.SetColWidth(sheet, col, col, 20)
 	}
 
 	c.Header("Content-Disposition","attachment; filename=sales_report.xlsx")

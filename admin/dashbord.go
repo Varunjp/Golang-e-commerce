@@ -62,14 +62,29 @@ func GetSalesData(c *gin.Context){
 		return 
 
 	case "yearly":
-		for i := 5; i >= 0; i--{
+		for i := 0; i < 5; i++{
 			yearTime := now.AddDate(-i,0,0)
-			start := time.Date(yearTime.Year(),yearTime.Month(),1,0,0,0,0,time.UTC)
-			end := start.AddDate(1,0,0)
+			// start := time.Date(yearTime.Year(),yearTime.Month(),1,0,0,0,0,time.UTC)
+			// end := start.AddDate(1,0,0)
+
+			year := now.Year() - i
+
+			
+			start := time.Date(year, time.January, 1, 0, 0, 0, 0, now.Location())
+
+			
+			var end time.Time
+			if i == 0 {
+				
+				end = now
+			} else {
+				
+				end = time.Date(year+1, time.January, 1, 0, 0, 0, 0, now.Location())
+			}
 
 			labels = append(labels, yearTime.Format("2006"))
 			var total float64
-			db.Db.Model(&models.Order{}).Where("create_at >= ? AND create_at < ? AND status = ?", start, end, "Delivered").Select("COALESCE(SUM(total_amount),0)").Scan(&total)
+			db.Db.Model(&models.Order{}).Where("create_at >= ? AND create_at <= ? AND status = ?", start, end, "Delivered").Select("COALESCE(SUM(total_amount),0)").Scan(&total)
 			sales = append(sales, total)
 		}
 		c.JSON(http.StatusOK,gin.H{
