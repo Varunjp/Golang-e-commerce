@@ -97,6 +97,8 @@ func EditProfilePage(c *gin.Context){
 	}
 
 	if errmsg != nil{
+		session.Delete("flash")
+		session.Save()
 		c.HTML(http.StatusOK,"edit_profile.html",gin.H{
 			"user":User,
 			"error":errmsg,
