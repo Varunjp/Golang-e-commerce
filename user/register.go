@@ -48,6 +48,13 @@ func RegisterUser(c *gin.Context){
 		return
 	}
 
+	if helper.IsName(input.Username){
+		c.HTML(http.StatusBadRequest,"register.html",gin.H{
+			"error":"Name cannot contain special characters",
+		})
+		return
+	}
+
 	if helper.IsSameDigitPhone(input.Phone){
 		c.HTML(http.StatusBadRequest,"register.html",gin.H{
 			"error":"Phone number cannot contain all same digits",

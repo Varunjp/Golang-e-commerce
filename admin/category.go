@@ -19,23 +19,8 @@ func ViewCategory (c *gin.Context){
 	var category []models.Category
 
 	session := sessions.Default(c)
-	name := session.Get("name").(string)
+	name := session.Get("admin-name").(string)
 	
-	// result := db.Db.Raw(
-	// 	`SELECT category_id,category_name
-	// 	FROM categories
-	// 	WHERE deleted_at IS NULL
-	// 	ORDER BY category_id DESC`).Scan(&category)
-	
-	// if result.Error != nil{
-	// 	c.JSON(http.StatusInternalServerError,gin.H{"error": result.Error.Error()})
-	// 	return 
-	// }
-
-	// if len(category) == 0{
-	// 	c.JSON(http.StatusOK,gin.H{"message":"No categories listed"})
-	// 	return
-	// }
 
 	if err := db.Db.Find(&models.Category{}).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to retrieve categories"})

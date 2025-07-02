@@ -43,3 +43,22 @@ func IsSameDigitPhone(phone string)bool{
 	}
 	return true
 }
+
+func IsName(name string)bool{
+
+	var (
+		hasNumber = false
+		hasSpecial = false 
+	)
+
+	for _, ch := range name{
+		switch  {
+		case unicode.IsDigit(ch):
+			hasNumber = true
+		case unicode.IsPunct(ch) || unicode.IsSymbol(ch):
+			hasSpecial = true
+		}
+	}
+
+	return hasNumber || hasSpecial
+}

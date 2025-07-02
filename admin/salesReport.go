@@ -274,58 +274,6 @@ func DownloadExcel(c *gin.Context){
 	var orders []models.Order
 	db.Db.Preload("OrderItems").Where("create_at BETWEEN ? AND ? AND status = ?",start,end,"Delivered").Find(&orders)
 
-	// f := excelize.NewFile()
-	// sheet := "SalesReport"
-	// f.NewSheet(sheet)
-	// f.DeleteSheet("Sheet1")
-
-	// headers := []string{"Order ID","Date","Customer","Amount","Discount"}
-	
-	// for i, h := range headers {
-	// 	cell,_ := excelize.CoordinatesToCellName(i+1,1)
-	// 	f.SetCellValue(sheet,cell,h)
-	// }
-
-	// if len(orders) < 1{
-
-	// 	values := []interface{}{
-	// 		"------",
-	// 		"------",
-	// 		"No sales",
-	// 		"------",
-	// 		"------",
-	// 	}
-
-	// 	for col, v := range values{
-	// 		cell,_ := excelize.CoordinatesToCellName(col+1,2)
-	// 		f.SetCellValue(sheet,cell,v)
-	// 	}
-
-	// }
-
-	// for row, order := range orders{
-	// 	var user models.User
-	// 	db.Db.First(&user,order.UserID)
-
-	// 	values := []interface{}{
-	// 		order.ID,
-	// 		order.CreateAt.Format("02-01-2006"),
-	// 		user.Username,
-	// 		order.TotalAmount,
-	// 		order.DiscountTotal,
-	// 	}
-
-	// 	for col, v := range values{
-	// 		cell,_ := excelize.CoordinatesToCellName(col+1,row+2)
-	// 		f.SetCellValue(sheet,cell,v)
-	// 	}
-	// }
-
-	// for i := 1; i<= len(headers); i++{
-	// 	col,_ := excelize.ColumnNumberToName(i)
-	// 	f.SetColWidth(sheet,col,col,20)
-	// }
-
 	f := excelize.NewFile()
 	sheet := "SalesReport"
 	f.NewSheet(sheet)

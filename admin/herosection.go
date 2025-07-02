@@ -18,7 +18,7 @@ import (
 func BannerPage(c *gin.Context){
 
 	session := sessions.Default(c)
-	name,_ := session.Get("name").(string)
+	name,_ := session.Get("admin-name").(string)
 	var Banners []models.Banner
 
 	if err := db.Db.Order("created_at DESC").Find(&Banners).Error; err != nil && err != gorm.ErrRecordNotFound{

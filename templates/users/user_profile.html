@@ -42,6 +42,9 @@
 </nav>
 
   <div class="container mt-5">
+    {{if .error}}
+    <div class="alert alert-danger">{{.error}}</div>
+    {{end}}
     <div class="row g-4">
       <!-- Profile Card -->
       <div class="col-md-4">

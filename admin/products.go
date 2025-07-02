@@ -25,7 +25,7 @@ func ViewProducts(c *gin.Context){
 	var Products []models.Product_Variant
 
 	session := sessions.Default(c)
-	name := session.Get("name").(string)
+	name := session.Get("admin-name").(string)
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -24,24 +25,35 @@ func AddToCart(c *gin.Context){
 	_,id,_ := helper.DecodeJWT(tokenStr)
 	quantity,_ := strconv.Atoi(c.PostForm("quantity"))
 	productID,_ := strconv.Atoi(c.PostForm("product_id"))
+	productIDStr:= c.PostForm("product_id")
+	session := sessions.Default(c)
 
 	if err := db.Db.Preload("Product").First(&product,productID).Error; err != nil{
-		c.JSON(http.StatusNotFound,gin.H{"error":"Could not fetch details from db"})
+		session.Set("error","Could not fetch details from db")
+		session.Save()
+		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 		return 
 	}
 
 
 	if product.Product.SubCategory.IsBlocked || product.Product.SubCategory.Category.IsBlocked || product.Stock < 1 {
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Product or category not meets requirement"})
+		session.Set("error","Product or category not meets requirement")
+		session.Save()
+		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 		return 
 	}
 
 	if quantity > product.Stock {
-		c.JSON(http.StatusNotFound,gin.H{"error":"Item out of stock"})
+		session.Set("error","Item out of stock")
+		session.Save()
+		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
+		return 
 	}
 
 	if quantity > Limit {
-		c.JSON(http.StatusConflict,gin.H{"error":"User exceeded buying limit"})
+		session.Set("error","User exceeded buying limit")
+		session.Save()
+		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 		return 
 	}
 
@@ -65,7 +77,9 @@ func AddToCart(c *gin.Context){
 			return 
 		}
 
-		productIDStr:= c.PostForm("product_id")
+		session.Set("flash","Added to cart")
+		session.Save()
+
 		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 
 	}else if err == gorm.ErrRecordNotFound{
@@ -92,9 +106,9 @@ func AddToCart(c *gin.Context){
 			db.Db.Delete(&models.WishList{},wishlist.ID)
 		}
 
-		productIDstr := c.PostForm("product_id")
-
-		c.Redirect(http.StatusFound,"/user/product/"+productIDstr)
+		session.Set("flash","Added to cart")
+		session.Save()
+		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 
 	}else {
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Issue with database"})

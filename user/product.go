@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,9 +16,11 @@ func Product(c *gin.Context){
 	productID := c.Param("id")
 	
 	tokenStr,_ := c.Cookie("JWT-User")
-
 	_,userId,_ := helper.DecodeJWT(tokenStr)
 
+	session := sessions.Default(c)
+	flash := session.Get("flash")
+	errmsg := session.Get("error")
 	var product models.Product
 	var product_variant models.Product_Variant
 	var images []models.Product_image
@@ -57,7 +60,35 @@ func Product(c *gin.Context){
 		if err := db.Db.Where("user_id = ? AND product_id = ?",userId,product_variant.ID).First(&wishlist).Error; err == nil{
 			isWishlist = true
 		}
-
+		if flash != nil{
+			session.Delete("flash")
+			session.Save()
+			c.HTML(http.StatusOK,"product.html",gin.H{
+				"user":"done",
+				"pagetitle":product_variant.Variant_name,
+				"Product": product,
+				"variant": product_variant,
+				"AllVariants":availableVariants,
+				"Images": images,
+				"Wishlist":isWishlist,
+				"message":flash,
+			})
+			return 
+		}else if errmsg != nil{
+			session.Delete("error")
+			session.Save()
+			c.HTML(http.StatusOK,"product.html",gin.H{
+				"user":"done",
+				"pagetitle":product_variant.Variant_name,
+				"Product": product,
+				"variant": product_variant,
+				"AllVariants":availableVariants,
+				"Images": images,
+				"Wishlist":isWishlist,
+				"error":errmsg,
+			})
+			return 
+		}
 		c.HTML(http.StatusOK,"product.html",gin.H{
 			"user":"done",
 			"pagetitle":product_variant.Variant_name,
@@ -68,6 +99,34 @@ func Product(c *gin.Context){
 			"Wishlist":isWishlist,
 		})
 	}else{
+
+		if flash != nil{
+			session.Delete("flash")
+			session.Save()
+			c.HTML(http.StatusOK,"product.html",gin.H{
+				"pagetitle":product_variant.Variant_name,
+				"Product": product,
+				"variant": product_variant,
+				"AllVariants":availableVariants,
+				"Images": images,
+				"Wishlist":false,
+				"message":flash,
+			})
+			return 
+		}else if errmsg != nil{
+			session.Delete("error")
+			session.Save()
+			c.HTML(http.StatusOK,"product.html",gin.H{
+				"pagetitle":product_variant.Variant_name,
+				"Product": product,
+				"variant": product_variant,
+				"AllVariants":availableVariants,
+				"Images": images,
+				"Wishlist":false,
+				"error":errmsg,
+			})
+			return
+		}
 		c.HTML(http.StatusOK,"product.html",gin.H{
 			"pagetitle":product_variant.Variant_name,
 			"Product": product,

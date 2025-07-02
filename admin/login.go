@@ -13,8 +13,16 @@ import (
 
 func LoginPage(c *gin.Context){
 
-	session := sessions.Default(c)
-	username := session.Get("name")
+	tokenStr,_ := c.Cookie("JWT-Admin")
+	_,userId,_ := helper.DecodeJWT(tokenStr)
+	var AdminUser models.Admin
+
+	if err := db.Db.Where("id = ?",userId).First(&AdminUser).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Please login again"})
+		return 
+	}
+
+	name := AdminUser.Username
 
 	var totalUser int64
 	var totalProducts int64
@@ -26,7 +34,7 @@ func LoginPage(c *gin.Context){
 	totalSales := helper.SalesReport()
 
 	c.HTML(http.StatusOK,"admin_dashboard.html",gin.H{
-		"username" : username.(string),
+		"username" : name,
 		"totalUsers": totalUser,
 		"totalProducts": totalProducts,
 		"totalSales": totalSales,
@@ -65,12 +73,12 @@ func Login(c *gin.Context){
 	}
 
 	session := sessions.Default(c)
-	session.Set("name",admin.Username)
+	session.Set("admin-name",admin.Username)
 	session.Save()
 
 	token, err := middleware.CreateToken("admin",admin.Email,admin.ID)
 	if err != nil{
-		c.HTML(http.StatusOK,"admin_login.html",gin.H{"error": "Error Generating JWT"})
+		c.HTML(http.StatusInternalServerError,"admin_login.html",gin.H{"error": "Error Generating JWT"})
 	}
 	
 	c.SetCookie("JWT-Admin",token,3600,"/","",false,true)

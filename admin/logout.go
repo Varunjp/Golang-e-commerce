@@ -10,7 +10,7 @@ import (
 func Logout(c *gin.Context) {
 
 	session := sessions.Default(c)
-	session.Delete("name")
+	session.Delete("admin-name")
 	session.Save()
 
 	c.SetCookie("JWT-Admin","",-1,"/","",false,true)

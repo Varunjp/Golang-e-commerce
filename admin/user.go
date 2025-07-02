@@ -17,7 +17,7 @@ func ListUsers(c *gin.Context){
 	var users [] responsemodels.User
 
 	session := sessions.Default(c)
-	name := session.Get("name").(string)
+	name := session.Get("admin-name").(string)
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
@@ -73,7 +73,7 @@ func FindUser (c *gin.Context){
 	var users [] responsemodels.User
 
 	session := sessions.Default(c)
-	name := session.Get("name").(string)
+	name := session.Get("admin-name").(string)
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")

@@ -62,7 +62,7 @@ func ShowProductList(c *gin.Context){
         return
 	}
 
-	subQuery := db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL", true).Group("product_id")
+	subQuery := db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL AND stock > ?", true,0).Group("product_id")
 
 	query := db.Db.
     Preload("Product_images", func(db *gorm.DB) *gorm.DB {

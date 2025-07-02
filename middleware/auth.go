@@ -41,7 +41,7 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 	return func(c *gin.Context){
 		//authHeader := c.GetHeader("Authorization")
 		session := sessions.Default(c)
-		username := session.Get("name")
+		username := session.Get("admin-name")
 
 		token, err := c.Cookie("JWT-Admin")
 

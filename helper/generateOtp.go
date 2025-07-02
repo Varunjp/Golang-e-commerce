@@ -22,7 +22,7 @@ func GenerateAndSaveOtp(email string) (string, error) {
 	}
 
 	otp := fmt.Sprintf("%06d", rand.Intn(1000000))
-	expiresAt := time.Now().Add(5 * time.Minute)
+	expiresAt := time.Now().Add(1 * time.Minute)
 
 	record := models.OTPVerification{
 		Email: email,

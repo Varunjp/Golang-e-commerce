@@ -72,6 +72,22 @@ func UserProfilePage(c *gin.Context) {
 		}
 	}
 
+	session := sessions.Default(c)
+	flash := session.Get("flash")
+
+	if flash != nil{
+		session.Delete("flash")
+		session.Save()
+		c.HTML(http.StatusOK,"user_profile.html",gin.H{
+			"user": User,
+			"Image" : image.ImageUrl,
+			"Addresses": User.Addresses,
+			"Orders": User.Orders,
+			"Balance":wallet.Balance,
+			"error":flash,
+		})
+		return 
+	}
 
 	c.HTML(http.StatusOK,"user_profile.html",gin.H{
 		"user": User,
@@ -255,12 +271,45 @@ func UploadProfileImage(c *gin.Context){
 	
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,id,_ := helper.DecodeJWT(tokenStr)
-
 	file, err := c.FormFile("profile_image")
-	
+	session := sessions.Default(c)
+
 	if err != nil{
-		c.HTML(http.StatusBadRequest,"user_profile.html",gin.H{"error":"No file uploaded"})
-		return 
+		session.Set("flash","No file uploaded")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/profile")
+		return
+	}
+
+	// Open the uploaded file
+	openedFile, err := file.Open()
+	if err != nil {
+		session.Set("flash","Unable to open file")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/profile")
+		return
+	}
+	defer openedFile.Close()
+
+	// Read the first 512 bytes to detect the content type
+	buffer := make([]byte, 512)
+	_, err = openedFile.Read(buffer)
+	if err != nil {
+		session.Set("flash","Unable to read file")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/profile")
+		return
+	}
+
+	// Detect content type (MIME type)
+	contentType := http.DetectContentType(buffer)
+
+	// Check if it's an image
+	if !strings.HasPrefix(contentType, "image/") {
+		session.Set("flash","Only image files are allowed")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/profile")
+		return
 	}
 
 	uploadPath := "./static/images/profiles"
