@@ -208,7 +208,7 @@ func AddCoupon(c *gin.Context){
 		return 
 	}
 	session := sessions.Default(c)
-	if strings.TrimSpace(input.Code) == "" || strings.TrimSpace(input.Description) == "" || input.MinAmount == 0 || input.Discount == 100{
+	if strings.TrimSpace(input.Code) == "" || strings.TrimSpace(input.Description) == "" || input.MinAmount == 0 || input.Discount > 50{
 		session.Set("flash","Coupon doesn't meet requirment")
 		session.Save()
 		c.Redirect(http.StatusSeeOther,"/admin/coupons")

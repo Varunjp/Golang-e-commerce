@@ -355,6 +355,13 @@ func AddAddress(c *gin.Context){
 		return 
 	}
 
+	if len(postalCode) != 6{
+		session.Set("flash","Invalid postal code")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
+		return
+	}
+
 	address := models.Address{
 		UserID: uint(userID),
 		AddressLine1: line1,
@@ -398,6 +405,13 @@ func EditAddress(c *gin.Context){
 		session.Save()
 		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
 		return 
+	}
+
+	if len(postalCode) != 6{
+		session.Set("flash","Invalid postal code")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
+		return
 	}
 	
 
@@ -472,8 +486,6 @@ func ChangePassword(c *gin.Context){
 		}
 
 	}
-
-	
 
 	hashedPass, hasherr := utils.HashPassword(newPassword)
 

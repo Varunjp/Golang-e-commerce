@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -439,13 +440,15 @@ func AddNewAddress(c *gin.Context){
 	PostalCode:= c.PostForm("postalcode")
 	City := c.PostForm("city")
 
-	// address.AddressLine1 = AddressLine1
-	// address.AddressLine2 = AddressLine2
-	// address.Country = Country
-	// address.State = State
-	// address.PostalCode = PostalCode
-	// address.City = City
-	// address.UserID = uint(userID)
+	if strings.TrimSpace(AddressLine1) == "" || strings.TrimSpace(AddressLine2) == "" || strings.TrimSpace(Country) == "" || strings.TrimSpace(State) == "" || strings.TrimSpace(City) == "" {
+		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Invaild address passed"})
+		return 
+	}
+
+	if len(PostalCode) != 6 {
+		c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Invaild postal code"})
+		return 
+	}
 
 	address := models.Address{
 		UserID: uint(userID),
