@@ -51,12 +51,7 @@ func VerifyProduct() gin.HandlerFunc{
 			}
 
 			if product.Stock < item.Quantity{
-				if referer != ""{
-					db.Db.Delete(&item)
-					c.Redirect(http.StatusSeeOther,referer)
-				}else{
-					c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Product has been removed."})
-				}
+				c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Product has been removed."})
 				c.Abort()
 				return 
 			}

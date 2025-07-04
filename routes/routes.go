@@ -55,13 +55,13 @@ func GetUrl(router *gin.Engine){
 
 	// User orders
 	router.POST("/cart/add",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddToCart)
-	router.GET("/user/cart",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.ListCart)
+	router.GET("/user/cart",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ListCart)
 	router.POST("/cart/update-quantity",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.UpdateCartItem)
 	router.POST("/cart/remove",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.RemoveItem)
-	router.GET("/user/orders",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ListOrders)
+	router.GET("/user/orders",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.OrderUpdate(),user.ListOrders)
 	router.POST("/user/return-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ReturnOrder)
 	router.POST("/user/cancel-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.CancelOrder)
-	router.GET("/user/order/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.OrderItems)
+	router.GET("/user/order/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.OrderUpdate(),user.OrderItems)
 	router.POST("/user/return-item",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ReturnItem)
 	
 	router.POST("/user/cancel-item",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.CancelOrderItem)

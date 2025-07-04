@@ -174,7 +174,7 @@
                   key: data.key, // Your Razorpay key_id
                   amount: data.amount, // in paisa
                   currency: data.currency,
-                  name: "My Shop",
+                  name: "Fashion Art",
                   description: "Order Payment",
                   order_id: data.order_id,
                   handler: function (response) {
@@ -201,7 +201,11 @@
                           if (resData.success) {
                               window.location.href = resData.redirect;
                           } else {
-                              alert("Payment failed verification.");
+                              if (resData.redirect != ""){
+                                window.location.href = resData.redirect;
+                              }else{
+                                alert("Payment failed verification.");
+                              }
                           }
                       });
                   },

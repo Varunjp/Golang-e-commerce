@@ -155,6 +155,7 @@ func PaymentSuccess(c *gin.Context){
 		return 
 	}
 
+
 	secret := os.Getenv("RAZORPAY_KEY_SECRET")
 	data := payload.RazorpayOrderID + "|" + payload.RazorpayPaymentID
 
@@ -171,15 +172,21 @@ func PaymentSuccess(c *gin.Context){
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 
 	var CartItems []models.CartItem
-
 	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
-		
-		c.JSON(http.StatusNotFound,gin.H{"error":"Not able to load cart items"})
+		erram := helper.CreditWallet(uint(userID),payload.Amount,"Product removed from cart")
+		if erram != nil{
+			log.Println(erram)
+		}
+		c.JSON(http.StatusNotFound,gin.H{"success":false,"redirect":"/user/cart" ,"error":"Not able to load cart items"})
 		return 
 	}
 
 	if len(CartItems) == 0 {
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Cart is empty"})
+		erram := helper.CreditWallet(uint(userID),payload.Amount,"Product removed from cart")
+		if erram != nil{
+			log.Println(erram)
+		}
+		c.JSON(http.StatusBadRequest,gin.H{"success":false,"redirect":"/user/cart","error":"Cart is empty"})
 		return 
 	}
 
@@ -315,11 +322,13 @@ func PaymentSuccess(c *gin.Context){
 	for _,item := range CartItems{
 
 		itemCount := 0
+		var product models.Product_Variant
 
 		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"Insufficient stock"})
 			return 
 		}
+		db.Db.Where("id = ?",item.ProductID).First(&product)
 
 		for _, oritems := range orderitems{
 			if item.ProductID == oritems.ProductID{
@@ -329,30 +338,53 @@ func PaymentSuccess(c *gin.Context){
 
 		if itemCount >= 5 {
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
-			db.Db.Delete(&models.Order{},order.ID)
-			c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"user":"done","error":"User exceeded product purchase limit"})
-			return 
+			amount := item.Price * float64(item.Quantity) + product.Tax * float64(item.Quantity)
+			order.TotalAmount = order.TotalAmount - amount
+			db.Db.Save(&order)
+			err := helper.CreditWallet(order.UserID,amount,"Limit exceeded in the product")
+			if err != nil{
+				log.Println(err)
+			}
 		}
 
-		orderItem := models.OrderItem{
-			UserID: uint(userID),
-			OrderID: order.ID,
-			ProductID: item.ProductID,
-			Quantity: item.Quantity,
-			Status: "Processing",
-			Price: item.Price,
-		}
+		if product.Stock < item.Quantity{
+			orderItem := models.OrderItem{
+				UserID: uint(userID),
+				OrderID: order.ID,
+				ProductID: item.ProductID,
+				Quantity: item.Quantity,
+				Status: "Cancelled ",
+				Price: item.Price,
+			}
 
-		if err := db.Db.Create(&orderItem).Error; err != nil{
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to add order items"})
-			return 
-		}
+			if err := db.Db.Create(&orderItem).Error; err != nil{
+				log.Println(err)
+			}
+			amount := item.Price * float64(item.Quantity)
+			err := helper.CreditWallet(uint(userID),amount,"Product out of stock")
+			if err!= nil{
+				log.Println(err)
+			}
+		}else{
+			orderItem := models.OrderItem{
+				UserID: uint(userID),
+				OrderID: order.ID,
+				ProductID: item.ProductID,
+				Quantity: item.Quantity,
+				Status: "Processing",
+				Price: item.Price,
+			}
 
-		// delete from wishlist
-		var wishlist models.WishList
+			if err := db.Db.Create(&orderItem).Error; err != nil{
+				log.Println(err)
+			}
 
-		if err := db.Db.Where("user_id = ? AND product_id = ?",userID,item.ProductID).First(&wishlist).Error; err == nil{
-			db.Db.Delete(&wishlist)
+			// delete from wishlist
+			var wishlist models.WishList
+
+			if err := db.Db.Where("user_id = ? AND product_id = ?",userID,item.ProductID).First(&wishlist).Error; err == nil{
+				db.Db.Delete(&wishlist)
+			}
 		}
 
 	}
