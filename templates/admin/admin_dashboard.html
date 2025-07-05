@@ -149,7 +149,7 @@
                 {{ range $index, $c := .topCategories }}
                 <tr>
                   <td>{{ add $index 1 }}</td>
-                  <td>{{ $c.Name }}</td>
+                  <td>{{ $c.Name }} ({{$c.CategoryName}})</td>
                   <td>{{ $c.TotalSold }}</td>
                 </tr>
                 {{ end }}

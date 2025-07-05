@@ -11,8 +11,9 @@ type Product struct {
 }
 
 type Category struct {
-	Name      string
-	TotalSold int
+	CategoryName 	string 
+	Name      		string
+	TotalSold 		int
 }
 
 func TopProductCategory() ([]Product, []Category) {
@@ -30,12 +31,13 @@ func TopProductCategory() ([]Product, []Category) {
 		Scan(&products)
 	
 	db.Db.Table("order_items").
-    Select("sub_categories.sub_category_name as name, SUM(order_items.quantity) as total_sold").
+    Select("categories.category_name, sub_categories.sub_category_name as name, SUM(order_items.quantity) as total_sold").
     Joins("JOIN product_variants ON product_variants.id = order_items.product_id").
 	Joins("JOIN products ON products.product_id = product_variants.product_id").
     Joins("JOIN sub_categories ON sub_categories.sub_category_id = products.sub_category_id").
+	Joins("JOIN categories ON sub_categories.category_id = categories.category_id").
     Where("order_items.status = ?", "Delivered").
-    Group("sub_categories.sub_category_id").
+    Group("sub_categories.sub_category_id,categories.category_name").
     Order("total_sold DESC").
     Limit(10).
     Scan(&categories)

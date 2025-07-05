@@ -28,7 +28,7 @@ func LoginPage(c *gin.Context){
 	var totalProducts int64
 
 	db.Db.Model(&models.User{}).Count(&totalUser)
-	db.Db.Model(&models.Product_Variant{}).Count(&totalProducts)
+	db.Db.Model(&models.Product{}).Count(&totalProducts)
 
 	products,categories := helper.TopProductCategory()
 	totalSales := helper.SalesReport()
