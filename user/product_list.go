@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -166,13 +167,21 @@ func ShowProductList(c *gin.Context){
 
 		
 	}
+	var totalPage int
 
-	totalPage := int((total + int64(limit) -1 )/ int64(limit))
-
+	if limit > 0 {
+		totalPage = int((total + int64(limit) -1 )/ int64(limit))
+	}else{
+		totalPage = 1
+	}
+	
 	session := sessions.Default(c)
 	Name,_ := session.Get("name").(string)
 
 	queryString := "&"+c.Request.URL.Query().Encode()
+
+	//delete
+	fmt.Println(queryString)
 
 	if Name != ""{
 		c.HTML(http.StatusOK,"product_list.html",gin.H{

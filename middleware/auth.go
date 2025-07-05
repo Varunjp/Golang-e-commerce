@@ -17,7 +17,7 @@ var Secret = []byte("your_secret_key")
 
 type Claims struct {
 	Email string
-	Role string `json:"role"`
+	Role string 
 	ID uint 
 	jwt.StandardClaims
 }
