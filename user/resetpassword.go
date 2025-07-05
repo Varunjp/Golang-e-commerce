@@ -5,6 +5,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"first-project/utils"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -65,8 +66,14 @@ func ResetPasswordOTPVerify(c * gin.Context){
 	otpcheck,err := helper.VerfiyOTP(email,enteredOTP)
 
 	if err != nil || !otpcheck{
+		
+		otp, _ := helper.GenerateAndSaveOtp(email)
+		err := helper.SendOTPEmail(email,otp)
+		if err != nil{
+			log.Println(err)
+		}
 		c.HTML(http.StatusBadRequest,"resetpassword_verifyOtp.html",gin.H{
-			"error":"Invalid otp",
+			"error":"Invalid otp","email":email,
 		})
 		return 
 	}
