@@ -29,23 +29,37 @@ func ResetPasswordOTPSend(c *gin.Context){
 		return 
 	}
 
-	otp,err := helper.GenerateAndSaveOtp(email)
+	go func(){
+		otp,err := helper.GenerateAndSaveOtp(email)
 
-	if err != nil{
-		c.HTML(http.StatusBadRequest,"resetPassword.html",gin.H{
-			"error": "Failed to create OTP",
-		})
-		return 
-	}
+		if err != nil{
+			log.Println(err)
+		}
 
-	err = helper.SendOTPEmail(email,otp)
+		err = helper.SendOTPEmail(email,otp)
 
-	if err != nil{
-		c.HTML(http.StatusBadRequest,"resetPassword.html",gin.H{
-			"error": "Failed to send otp",
-		})
-		return
-	}
+		if err != nil{
+			log.Println(err)
+		}
+	}()
+
+	// otp,err := helper.GenerateAndSaveOtp(email)
+
+	// if err != nil{
+	// 	c.HTML(http.StatusBadRequest,"resetPassword.html",gin.H{
+	// 		"error": "Failed to create OTP",
+	// 	})
+	// 	return 
+	// }
+
+	// err = helper.SendOTPEmail(email,otp)
+
+	// if err != nil{
+	// 	c.HTML(http.StatusBadRequest,"resetPassword.html",gin.H{
+	// 		"error": "Failed to send otp",
+	// 	})
+	// 	return
+	// }
 
 	c.Redirect(http.StatusFound,"/reset-password/verify-otp?email="+email)
 }
@@ -67,11 +81,14 @@ func ResetPasswordOTPVerify(c * gin.Context){
 
 	if err != nil || !otpcheck{
 		
-		otp, _ := helper.GenerateAndSaveOtp(email)
-		err := helper.SendOTPEmail(email,otp)
-		if err != nil{
-			log.Println(err)
-		}
+		go func(){
+			otp, _ := helper.GenerateAndSaveOtp(email)
+			err := helper.SendOTPEmail(email,otp)
+			if err != nil{
+				log.Println(err)
+			}
+		}()
+
 		c.HTML(http.StatusBadRequest,"resetpassword_verifyOtp.html",gin.H{
 			"error":"Invalid otp","email":email,
 		})
@@ -92,14 +109,24 @@ func Resetpassword_ResendOTP(c *gin.Context){
 		return 
 	}
 
-	otp, _ := helper.GenerateAndSaveOtp(email)
+	go func(){
 
-	err := helper.SendOTPEmail(email,otp)
+		otp, _ := helper.GenerateAndSaveOtp(email)
 
-	if err != nil{
-		c.HTML(http.StatusConflict,"resetpassword_verifyOtp.html",gin.H{"error":"Failed to send OTP"})
-		return 
-	}
+		err := helper.SendOTPEmail(email,otp)
+
+		if err != nil{
+			log.Println(err)
+		}
+	}()
+	// otp, _ := helper.GenerateAndSaveOtp(email)
+
+	// err := helper.SendOTPEmail(email,otp)
+
+	// if err != nil{
+	// 	c.HTML(http.StatusConflict,"resetpassword_verifyOtp.html",gin.H{"error":"Failed to send OTP"})
+	// 	return 
+	// }
 
 	c.HTML(http.StatusOK,"resetpassword_verifyOtp.html",gin.H{"message":"OTP resend to mail","email":email})
 
