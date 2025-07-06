@@ -4,7 +4,6 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -17,6 +16,7 @@ func ShowProductList(c *gin.Context){
 
 	pageStr := c.DefaultQuery("page", "1")
 	limitStr := c.DefaultQuery("limit","9")
+
 
 	var subcat []models.SubCategory
 	type responsecat struct{
@@ -178,10 +178,7 @@ func ShowProductList(c *gin.Context){
 	session := sessions.Default(c)
 	Name,_ := session.Get("name").(string)
 
-	queryString := "&"+c.Request.URL.Query().Encode()
-
-	//delete
-	fmt.Println(queryString)
+	queryString := c.Request.URL.Query().Encode()
 
 	if Name != ""{
 		c.HTML(http.StatusOK,"product_list.html",gin.H{
