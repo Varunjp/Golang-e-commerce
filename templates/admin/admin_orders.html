@@ -108,6 +108,7 @@
               <option value="Processing" {{if eq .Filters.Status "Processing"}}selected{{end}}>Processing</option>
               <option value="Delivered" {{if eq .Filters.Status "Delivered"}}selected{{end}}>Delivered</option>
               <option value="Returned" {{if eq .Filters.Status "Returned"}}selected{{end}}>Returned</option>
+              <option value="Cancelled" {{if eq .Filters.Status "Cancelled"}}selected{{end}}>Cancelled</option>
             </select>
           </div>
           <div class="col-md-3">
@@ -140,7 +141,7 @@
             <tbody>
               {{ range .orders }}
               <tr>
-                <td># <a href="/admin/order/{{ .ID }}">{{ .ID }}</a> </td>
+                <td># <a href="/admin/order/{{ .ID }}">{{ .OrderID }}</a> </td>
                 <td>{{ .UserName }}</td>
                 <td>₹.{{ .TotalPrice }}</td>
                 <td>{{ .ItemCount }}</td>

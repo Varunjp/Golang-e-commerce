@@ -20,6 +20,7 @@ func AdminOrdersPage(c *gin.Context){
 	var Orders []models.Order
 	type Response struct {
 		ID				uint
+		OrderID			string
 		UserName		string
 		TotalPrice		float64
 		ItemCount		int
@@ -108,6 +109,7 @@ func AdminOrdersPage(c *gin.Context){
 
 		responseOrder[i] = Response{
 			ID: order.ID,
+			OrderID: order.OrderID,
 			UserName: User.Username,
 			TotalPrice: order.TotalAmount,
 			ItemCount: itemcount,
