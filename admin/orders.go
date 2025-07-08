@@ -220,7 +220,7 @@ func AdminOrderDetails(c *gin.Context){
 	for i,item := range order.OrderItems {
 
 		var Product models.Product_Variant
-		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
+		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).Unscoped().First(&Product).Error
 
 		if err != nil {
 			c.HTML(http.StatusNotFound,"admin_orderDetails.html",gin.H{"error":"Product details not found"})
@@ -438,7 +438,7 @@ func AdminOrderReturnRequests(c *gin.Context){
 	for i,item := range orderItems {
 
 		var Product models.Product_Variant
-		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
+		err := db.Db.Preload("Product_images").Where("id = ?",item.ProductID).Unscoped().First(&Product).Error
 
 		if err != nil {
 			c.HTML(http.StatusNotFound,"admin_orderDetails.html",gin.H{"error":"Product details not found"})

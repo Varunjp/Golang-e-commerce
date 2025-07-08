@@ -230,7 +230,7 @@ func OrderItems(c *gin.Context){
 	for i, item := range Order.OrderItems{
 		
 		var Product models.Product_Variant
-		err := db.Db.Unscoped().Preload("Product_images").Where("id = ?",item.ProductID).First(&Product).Error
+		err := db.Db.Unscoped().Preload("Product_images").Where("id = ?",item.ProductID).Unscoped().First(&Product).Error
 
 		if err != nil {
 			c.HTML(http.StatusNotFound,"orderDetails.html",gin.H{"error":"Product details not found"})
@@ -354,7 +354,7 @@ func DownloadPdf(c *gin.Context){
 	pdf.Ln(8)
 	pdf.Cell(40,10,fmt.Sprintf("Customer: %s",User.Username))
 	pdf.Ln(8)
-	pdf.Cell(40,10,fmt.Sprintf("Date: %s",order.OrderDate))
+	pdf.Cell(40,10,fmt.Sprintf("Date: %v",order.OrderDate.Format("2006-01-02")))
 
 	pdf.Ln(12)
 	pdf.SetFont("Arial","B",12)
@@ -369,7 +369,7 @@ func DownloadPdf(c *gin.Context){
 
 		var Product models.Product_Variant
 
-		if err := db.Db.Where("id = ?",item.ProductID).First(&Product).Error; err != nil{
+		if err := db.Db.Where("id = ?",item.ProductID).Unscoped().First(&Product).Error; err != nil{
 			c.HTML(http.StatusInternalServerError,"myOrder.html",gin.H{"error":"Failed to retrive product details"})
 			return 
 		}
