@@ -356,6 +356,7 @@ func EditCouponPage(c *gin.Context){
 }
 
 func EditCoupon(c *gin.Context){
+	var couponExist models.Coupons
 	idParam := c.Param("id")
 	id,err := strconv.Atoi(idParam)
 	if err != nil{
@@ -386,6 +387,15 @@ func EditCoupon(c *gin.Context){
 	coupon.Type = c.PostForm("type")
 
 	session := sessions.Default(c)
+
+	if err := db.Db.Where("code ILIKE ?",newCode).First(&couponExist).Error; err == nil{
+		session.Set("flash","Coupon code already exist")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/admin/coupons")
+		return
+	}
+
+
 	if strings.TrimSpace(newCode) == "" || strings.TrimSpace(newDescription) == "" || minAmount == 0 || discount == 100{
 		session.Set("flash","Coupon doesn't meet requirment")
 		session.Save()
