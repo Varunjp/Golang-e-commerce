@@ -60,7 +60,7 @@ func AdminOrdersPage(c *gin.Context){
 	
 
 	if orderId != ""{
-		dbQuery =dbQuery.Where("id = ?",orderId)
+		dbQuery =dbQuery.Where("order_id ILIKE ?",orderId)
 	}
 
 	if username != ""{
