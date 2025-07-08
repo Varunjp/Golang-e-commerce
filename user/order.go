@@ -350,7 +350,9 @@ func DownloadPdf(c *gin.Context){
 
 	pdf.Ln(12)
 	pdf.SetFont("Arial","",12)
-	pdf.Cell(40,10,fmt.Sprintf("Order ID: %d",order.ID))
+	pdf.Cell(40,10,"Company : Fashion Art")
+	pdf.Ln(8)
+	pdf.Cell(40,10,fmt.Sprintf("Order ID: %v",order.OrderID))
 	pdf.Ln(8)
 	pdf.Cell(40,10,fmt.Sprintf("Customer: %s",User.Username))
 	pdf.Ln(8)
