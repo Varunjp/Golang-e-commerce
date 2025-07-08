@@ -73,11 +73,17 @@
       </li>
       {{end}}
 
-      {{range .Pages}}
+      <!-- {{range .Pages}}
       <li class="page-item {{if eq .Number $.CurrentPage}}active{{end}}">
         <a class="page-link" href="/user/wallet-transactions?page={{.Number}}">{{.Number}}</a>
       </li>
-      {{end}}
+      {{end}} -->
+
+      {{ range $i := .PageRange }}
+      <li class="page-item {{ if eq $i $.page }}active{{ end }}">
+        <a class="page-link" href="/user/wallet-transactions?page={{ $i }}">{{ $i }}</a>
+      </li>
+      {{ end }}
 
       {{if .HasNext}}
       <li class="page-item">

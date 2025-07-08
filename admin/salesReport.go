@@ -5,6 +5,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"first-project/utils"
 	"fmt"
 	"math"
 	"net/http"
@@ -69,7 +70,9 @@ func SalesReportPage(c *gin.Context){
 			return 
 		}
 	default:
-		start = time.Time{}
+		var firstOrder models.Order
+		db.Db.Order("id asc").Limit(1).First(&firstOrder)
+		start = firstOrder.CreateAt
 		end = now
 	}
 
@@ -147,6 +150,8 @@ func SalesReportPage(c *gin.Context){
 		return 
 	}
 
+	pageRange := utils.GetPaginationPages(page,totalPages)
+
 	name := AdminUser.Username
 
 	c.HTML(http.StatusOK,"sales_report.html",gin.H{
@@ -160,6 +165,7 @@ func SalesReportPage(c *gin.Context){
 		"endDate":end.Format("2006-01-02"),
 		"page": page,
 		"totalPages":totalPages,
+		"PageRange": pageRange,
 		"limit":limit,
 		"start":start.Format("2006-01-02"),
 		"end":end.Format("2006-01-02"),

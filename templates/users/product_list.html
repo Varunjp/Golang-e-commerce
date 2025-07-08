@@ -45,6 +45,16 @@
         {{end}}
         
         <form method="GET" action="/user/shop">
+
+          <!-- Preserve current filters -->
+          {{ range .savedcategory }}
+            <input type="hidden" name="category" value="{{ .}}">
+          {{ end }}
+          <input type="hidden" name="min_price" value="{{ .MinPrice }}">
+          <input type="hidden" name="max_price" value="{{ .MaxPrice }}">
+          <input type="hidden" name="size" value="{{ .Size }}">
+
+
           <select class="form-select w-auto" name="sort" onchange="this.form.submit()">
             <option value="" {{ if eq .Sort "" }}selected{{ end }}>Sort by: Most Popular</option>
             <option value="price_asc" {{ if eq .Sort "price_asc" }}selected{{ end }}>Price: Low to High</option>

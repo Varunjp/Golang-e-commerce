@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"first-project/utils"
 	"log"
 	"math"
 	"net/http"
@@ -107,11 +108,14 @@ func WalletTransaction(c *gin.Context){
 		pages = append(pages, map[string]int{"Number":i})
 	}
 
+	pageRange := utils.GetPaginationPages(page,totalPages)
+
 	c.HTML(http.StatusOK,"walletTransaction.html",gin.H{
 		"user":"done",
 		"Transactions":transactions,
 		"CurrentPage": page,
 		"Pages": pages,
+		"PageRange":pageRange,
 		"HasPrev": page > 1,
 		"HasNext": page < totalPages,
 		"PrevPage": page - 1,
