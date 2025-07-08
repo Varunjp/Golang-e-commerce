@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,18 +16,21 @@ func ResendOTP(c *gin.Context) {
 	var user models.User
 
 	if err := db.Db.Where("email = ?",email).First(&user).Error;err != nil{
-		c.HTML(http.StatusBadRequest,"userLogin.html",gin.H{"error":"User not found"})
+		c.HTML(http.StatusBadRequest,"userLogin.html",gin.H{"error":"User not found","email":email})
 		return 
 	}
+	
+	go func(){
+		otp, _ := helper.GenerateAndSaveOtp(email)
 
-	otp, _ := helper.GenerateAndSaveOtp(email)
-
-	err := helper.SendOTPEmail(email,otp)
-
-	if err != nil{
-		c.HTML(http.StatusConflict,"verifyOtp.html",gin.H{"error":"Failed to send OTP"})
-		return 
-	}
+		err := helper.SendOTPEmail(email,otp)
+		
+		if err != nil{
+			log.Println(err)
+		}
+		
+	}()
+	
 
 	c.HTML(http.StatusOK,"verifyOtp.html",gin.H{"message":"OTP resend to mail","email":email})
 }
