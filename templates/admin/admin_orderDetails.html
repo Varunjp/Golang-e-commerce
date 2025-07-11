@@ -81,7 +81,7 @@
         <hr>
 
         <h5>Order Summary</h5>
-        <p><strong>Order Date:</strong> {{.Order.CreateAt}}</p>
+        <p><strong>Order Date:</strong> {{.Order.CreateAt | formatDate }}</p>
         <p><strong>Payment:</strong> {{.Order.PaymentMethod}}</p>
         <p><strong>Status:</strong> {{.Order.Status}}</p>
         <p><strong>Total:</strong> ₹{{.Order.TotalAmount}}</p>

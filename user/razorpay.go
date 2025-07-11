@@ -198,8 +198,10 @@ func PaymentSuccess(c *gin.Context){
 		db.Db.Where("id = ?",item.ProductID).First(&product)
 		total += item.Price * float64(item.Quantity)
 		totalTax += product.Tax * float64(item.Quantity)
-		totalAmount+= item.Price * float64(item.Quantity) + totalTax
+		totalAmount+= item.Price * float64(item.Quantity)
 	}
+
+	totalAmount += totalTax
 
 	addressintId,_ := strconv.Atoi(payload.AddressID)
 	var coupon models.Coupons
@@ -218,7 +220,7 @@ func PaymentSuccess(c *gin.Context){
 	if coupon.ID != 0 {
 
 		if totalAmount > coupon.MinAmount {
-			discount = (total * coupon.Discount)/100
+			discount = (totalAmount * coupon.Discount)/100
 		}
 		
 		if coupon.MaxAmount < discount {
@@ -232,7 +234,8 @@ func PaymentSuccess(c *gin.Context){
 	}else if payload.IsWallet {
 		discount = (total+totalTax) - payload.Amount
 	}
-	
+
+
 	neOrderId := helper.GenerateOrderID()
 	totalAmount = totalAmount - discount
 

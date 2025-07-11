@@ -1,6 +1,9 @@
 package utils
 
-import "html/template"
+import (
+	"html/template"
+	"time"
+)
 
 // TemplateFuncs returns reusable helper functions for templates
 func TemplateFuncs() template.FuncMap {
@@ -22,6 +25,7 @@ func TemplateFuncs() template.FuncMap {
 		"itere":itere,
 		"mulFloat":mulFloat,
 		"addFloat":addFloat,
+		"formatDate":formatDate,
 	}
 }
 
@@ -56,4 +60,8 @@ func mulFloat(a float64, b int) float64 {
 
 func addFloat(a,b float64) float64{
 	return a + b
+}
+
+func formatDate(t time.Time)string{
+	return t.Format("01-02-2006")
 }
