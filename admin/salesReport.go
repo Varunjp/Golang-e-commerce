@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"bytes"
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
@@ -258,16 +257,22 @@ func DownloadSalesReport(c *gin.Context){
 	pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", totalAmount), "1", 0, "C", false, 0, "")
 	pdf.CellFormat(30, 10, "", "1", 1, "C", false, 0, "")
 
-	var buf bytes.Buffer
-	err := pdf.Output(&buf)
+	// var buf bytes.Buffer
+	// err := pdf.Output(&buf)
+
+	// if err != nil{
+		// c.HTML(http.StatusInternalServerError,"sales_report.html",gin.H{"error":"Failed to generate PDF"})
+		// return 
+	// }
+
+	c.Header("Content-Type","application/pdf")
+	c.Header("Content-Disposition","attachment; filename=sales_report.pdf")
+	err := pdf.Output(c.Writer)
 
 	if err != nil{
 		c.HTML(http.StatusInternalServerError,"sales_report.html",gin.H{"error":"Failed to generate PDF"})
 		return 
 	}
-
-	c.Header("Content-Disposition","attachment; filename=sales_report.pdf")
-	c.Data(http.StatusOK,"application/pdf",buf.Bytes())
 }
 
 func DownloadExcel(c *gin.Context){
