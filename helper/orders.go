@@ -54,6 +54,9 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 		orignalTotal += item.Price * float64(item.Quantity) + tempTax
 	}
 
+	//delete
+	fmt.Println("Checking original amount :",orignalTotal)
+
 	walletAmount := 0.0
 
 
@@ -68,13 +71,13 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 		adjustedTotal := order.TotalAmount - itemTotal
 
-
+	
 		// less than minmum amount in coupon
-		if adjustedTotal < coupon.MinAmount{
+		if adjustedTotal < coupon.MinAmount && adjustedTotal > 0{
 
 			newTotal := orignalTotal - itemTotal
 			refundAmount := order.TotalAmount - newTotal
-
+			
 			// amount refunded
 			walletTranscation := models.WalletTransaction{
 				UserID: order.UserID,
@@ -96,6 +99,27 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				return err 
 			}
 	
+
+		}else if adjustedTotal < coupon.MinAmount && adjustedTotal < 0{
+
+			// amount refund
+			walletTransaction := models.WalletTransaction{
+				UserID: order.UserID,
+				OrderID: order.ID,
+				OrderItemID: orderItem.ID,
+				Amount: order.TotalAmount,
+				Type: "Credit",
+				Description: reason,
+				RefundStatus: true,
+			}
+			err := db.Db.Create(&walletTransaction).Error
+			if err != nil{
+				return err 
+			}
+
+			if WalletTransaction.ID != 0 {
+				db.Db.Delete(&WalletTransaction)
+			}
 
 		}else{
 

@@ -74,7 +74,7 @@
                       <form method="POST" action="/user/cancel-item">
                         <input type="hidden" name="order_id" value="{{$.Order.ID}}">
                         <input type="hidden" name="item_id" value="{{.ID}}">
-                        <input type="text" name="reason" placeholder="Reason for return" required>
+                        <input type="text" name="reason" placeholder="Reason for cancel" required>
                         <button type="submit" class="btn btn-sm btn-danger mt-2">Cancel</button>
                       </form>
                       {{else if eq .Status "Delivered"}}
