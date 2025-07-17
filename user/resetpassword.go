@@ -105,7 +105,7 @@ func Resetpassword_ResendOTP(c *gin.Context){
 	var user models.User
 
 	if err := db.Db.Where("email = ?",email).First(&user).Error;err != nil{
-		c.HTML(http.StatusBadRequest,"resetpassword_verifyOtp.html",gin.H{"error":"User not found"})
+		c.HTML(http.StatusBadRequest,"resetpassword_verifyOtp.html",gin.H{"error":"User not found","email":email})
 		return 
 	}
 

@@ -14,7 +14,7 @@ func SendOTPEmail(email, otp string) error {
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", myMail)
 	msg.SetHeader("To", email)
-	msg.SetHeader("Subject", "Your OTP Code")
+	msg.SetHeader("Subject", "Fashion Art OTP Code")
 	msg.SetBody("text/plain", "Your OTP code is: "+otp)
 
 	d := gomail.NewDialer("smtp.gmail.com", 587, myMail, Password)
