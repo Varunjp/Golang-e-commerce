@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+
 	"log"
 	"math"
 	"net/http"
@@ -100,23 +101,40 @@ func AdminSideItemCancel(c *gin.Context){
 	retrunAmount := orderItem.Price * float64(orderItem.Quantity) + product.Tax * float64(orderItem.Quantity)
 	
 	newTotal := order.SubTotal - retrunAmount
+	ogbalance := order.TotalAmount
+	
 
-	valueCheck,_,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
+	if newTotal < 0 {
+		newTotal = 0
+	}
+
+	valueCheck,usedCouponId,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
 	var walletTransaction models.WalletTransaction
 	db.Db.Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction)
 
 	if valueCheck && errVal == nil{
 
-		order.SubTotal = order.SubTotal - retrunAmount
-		order.TotalAmount = order.TotalAmount - retrunAmount
-		
+		if newTotal == 0{
+			order.SubTotal = 0
+			order.TotalAmount = 0
+		}else{
+			order.SubTotal = order.SubTotal - retrunAmount
+			order.TotalAmount = order.TotalAmount - retrunAmount
+		}
+
 	}else if !valueCheck && errVal == nil{
 
 		if walletTransaction.ID != 0 {
 
-			order.SubTotal = order.SubTotal - retrunAmount
-			updateTotal := order.SubTotal + walletTransaction.Amount
-
+			var updateTotal float64
+			if newTotal == 0{
+				order.SubTotal = 0
+				updateTotal = order.SubTotal + walletTransaction.Amount
+			}else{
+				order.SubTotal = order.SubTotal - retrunAmount
+				updateTotal = order.SubTotal + walletTransaction.Amount
+			}
+			
 			if updateTotal <= 0 {
 				order.TotalAmount = 0
 				order.DiscountTotal = 0
@@ -128,28 +146,40 @@ func AdminSideItemCancel(c *gin.Context){
 			
 		}else{
 
-			order.TotalAmount = order.TotalAmount - retrunAmount
-			order.SubTotal = order.TotalAmount
+			if newTotal == 0 {
+				order.TotalAmount = 0
+				order.SubTotal = 0
+				order.DiscountTotal = 0.0
+			}else{
+				order.TotalAmount = order.TotalAmount - retrunAmount
+				order.SubTotal = order.TotalAmount
+			}
+			
 			// order.DiscountTotal = 0.0
 		}
 		
-		// if usedCouponId != 0 {
-		// db.Db.Delete(&models.UsedCoupon{},usedCouponId)
-		// }
+		if usedCouponId != 0 && newTotal == 0{
+			db.Db.Delete(&models.UsedCoupon{},usedCouponId)
+		}
 
 	}else if errVal != nil{
 		
 		log.Println(errVal)
 	}
 
-	if order.PaymentMethod != "cod"{
+	if order.PaymentMethod != "cod" && order.TotalAmount !=0{
 		err := helper.CreditWallet(order.UserID,retrunAmount,"admin forwarded")
+		if err != nil{
+			log.Println(err)
+		}
+	}else if order.PaymentMethod != "cod" && order.TotalAmount == 0{
+		err := helper.CreditWallet(order.UserID,ogbalance,"admin forwarded")
 		if err != nil{
 			log.Println(err)
 		}
 	}
 	
-	if checkRemaing == 0 || len(order.OrderItems) == 1{
+	if checkRemaing == 0 || len(order.OrderItems) == 1 || newTotal == 0{
 
 		if order.PaymentMethod != "cod"{
 			order.PaymentStatus = "Refunded"

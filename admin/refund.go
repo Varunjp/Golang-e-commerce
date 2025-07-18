@@ -91,6 +91,7 @@ func WalletRefunds(c *gin.Context){
 	type response struct{
 		ID 			uint
 		UserName 	string
+		OrderStrID  string 
 		OrderID 	uint
 		Amount 		float64
 		Description string 
@@ -113,10 +114,13 @@ func WalletRefunds(c *gin.Context){
 
 		for i, transaction := range walletTransactions {
 			var user models.User
+			var order models.Order
 			db.Db.Where("id = ?",transaction.UserID).First(&user)
+			db.Db.Where("id = ?",transaction.OrderID).First(&order)
 			ResponseTransactions[i] = response{
 				ID: transaction.ID,
 				UserName: user.Username,
+				OrderStrID: order.OrderID,
 				OrderID: transaction.OrderID,
 				Amount: math.Abs(transaction.Amount),
 				Description: transaction.Description,

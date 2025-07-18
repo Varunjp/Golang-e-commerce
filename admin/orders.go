@@ -278,6 +278,20 @@ func AdminOrderUpdate(c *gin.Context){
 		return 
 	}
 
+	totalItem := len(order.OrderItems)
+	checkCount := 0
+
+	for _,item := range order.OrderItems{
+		if item.Status != "Delivered" && item.Status != "Processing"{
+			checkCount++
+		}
+	}
+
+	if totalItem == checkCount {
+		c.Redirect(http.StatusSeeOther,"/admin/order/"+orderId)
+		return 
+	}
+
 	switch status {
 	case "Cancelled":
 		err := helper.AdminOrderCancel(order.ID)
