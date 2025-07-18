@@ -104,7 +104,11 @@ func CreateRazorpayOrder(c *gin.Context){
 		db.Db.Where("id = ?",couponCode).First(&Coupon)
 		if totalAmount > Coupon.MinAmount {
 			discount := (totalAmount * Coupon.Discount)/100
-			totalAmount = totalAmount - discount
+			if discount > Coupon.MaxAmount {
+				totalAmount = totalAmount - Coupon.MaxAmount
+			}else{
+				totalAmount = totalAmount - discount
+			}
 		}
 	}
 
