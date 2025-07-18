@@ -5,6 +5,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"first-project/utils"
+	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -339,20 +340,45 @@ func AdminItemOrder(c *gin.Context){
 	
 	newTotal := order.SubTotal - retrunAmount
 
+	//delete
+	fmt.Println("Checking new total :",newTotal)
+
+	if newTotal < 0 {
+		newTotal = 0
+	}
+
 	valueCheck,usedCouponId,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
 	var walletTransaction models.WalletTransaction
 	db.Db.Unscoped().Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction)
 
-	if valueCheck && errVal == nil{
+	//delete
+	fmt.Println("Checking status of values after cancel")
+	fmt.Println("Amount accept for coupon min amount :",valueCheck)
+	fmt.Println("Checking used coupon :",usedCouponId)
+	fmt.Println("Checking any err :",errVal)
 
-		order.SubTotal = order.SubTotal - retrunAmount
-		order.TotalAmount = order.TotalAmount - retrunAmount
+	if valueCheck && errVal == nil{
+		if newTotal == 0 {
+			order.SubTotal = 0
+			order.TotalAmount = 0
+		}else{
+			order.SubTotal = order.SubTotal - retrunAmount
+			order.TotalAmount = order.TotalAmount - retrunAmount
+		}
+		
 	}else if !valueCheck && errVal == nil{
 
 		if walletTransaction.ID != 0 {
 
-			order.SubTotal = order.SubTotal - retrunAmount
-			updateTotal := order.SubTotal + walletTransaction.Amount
+			var updateTotal float64
+			if newTotal == 0{
+				order.SubTotal = 0
+				updateTotal = order.SubTotal + walletTransaction.Amount
+			}else{
+				order.SubTotal = order.SubTotal - retrunAmount
+				updateTotal = order.SubTotal + walletTransaction.Amount
+			}
+
 
 			if updateTotal <= 0 {
 				order.TotalAmount = 0
@@ -365,10 +391,15 @@ func AdminItemOrder(c *gin.Context){
 			
 		}else{
 
-
-			order.SubTotal = order.SubTotal - retrunAmount
-			order.TotalAmount = order.SubTotal
-			order.DiscountTotal = 0.0
+			if newTotal == 0{
+				order.SubTotal = 0
+				order.TotalAmount = 0
+				order.DiscountTotal = 0.0
+			}else{
+				order.SubTotal = order.SubTotal - retrunAmount
+				order.TotalAmount = order.SubTotal
+				order.DiscountTotal = 0.0
+			}
 		}
 		
 		if usedCouponId != 0 {

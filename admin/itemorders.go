@@ -101,7 +101,7 @@ func AdminSideItemCancel(c *gin.Context){
 	
 	newTotal := order.SubTotal - retrunAmount
 
-	valueCheck,usedCouponId,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
+	valueCheck,_,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
 	var walletTransaction models.WalletTransaction
 	db.Db.Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction)
 
@@ -128,14 +128,14 @@ func AdminSideItemCancel(c *gin.Context){
 			
 		}else{
 
-			order.SubTotal = order.SubTotal - retrunAmount
-			order.TotalAmount = order.SubTotal
-			order.DiscountTotal = 0.0
+			order.TotalAmount = order.TotalAmount - retrunAmount
+			order.SubTotal = order.TotalAmount
+			// order.DiscountTotal = 0.0
 		}
 		
-		if usedCouponId != 0 {
-		db.Db.Delete(&models.UsedCoupon{},usedCouponId)
-		}
+		// if usedCouponId != 0 {
+		// db.Db.Delete(&models.UsedCoupon{},usedCouponId)
+		// }
 
 	}else if errVal != nil{
 		

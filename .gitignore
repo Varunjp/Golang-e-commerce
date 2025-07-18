@@ -16,4 +16,7 @@ main
 Thumbs.db
 ".env" 
 
+tmp/
+
 tmp/main.exe
+tmp/main.exe~

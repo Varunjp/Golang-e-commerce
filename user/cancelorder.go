@@ -4,7 +4,6 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
-	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -47,8 +46,10 @@ func CancelOrderItem(c *gin.Context){
 		return 
 	}
 
-	//delete
-	fmt.Println("Checking payment :",order.PaymentMethod)
+	if order.Status == "Delivered" || orderItem.Status == "Delivered"{
+		c.Redirect(http.StatusSeeOther,"/user/orders")
+		return 
+	}
 
 	if order.PaymentMethod != "cod"{
 		err := helper.ItemCancelOnline(OrderId,ItemId,reason)
@@ -105,7 +106,7 @@ func CancelOrderItem(c *gin.Context){
 		order.PaymentStatus = "Not Valid"
 	}else if cancelCount == 0 && order.PaymentMethod != "cod"{
 		order.Status = "Cancelled"
-		order.PaymentStatus = "Refunded"
+		order.PaymentStatus = "Refund intiated"
 	}
 
 	orderItem.Status = "Cancelled"

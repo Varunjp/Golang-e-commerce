@@ -102,6 +102,8 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 		}else if adjustedTotal < coupon.MinAmount && adjustedTotal < 0{
 
+			//delete
+			fmt.Println("Checking order hitting")
 			// amount refund
 			walletTransaction := models.WalletTransaction{
 				UserID: order.UserID,

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"html/template"
+	"math"
 	"time"
 )
 
@@ -26,6 +27,7 @@ func TemplateFuncs() template.FuncMap {
 		"mulFloat":mulFloat,
 		"addFloat":addFloat,
 		"formatDate":formatDate,
+		"round2":round2,
 	}
 }
 
@@ -64,4 +66,8 @@ func addFloat(a,b float64) float64{
 
 func formatDate(t time.Time)string{
 	return t.Format("01-02-2006")
+}
+
+func round2(f float64)float64{
+	return math.Round(f*100)/100
 }

@@ -41,20 +41,36 @@ func UserOrderCancelItem(itemId string) error {
 
 	newTotal := order.SubTotal - retrunAmount
 
+	if newTotal < 0 {
+		newTotal = 0
+	}
+
 	valueCheck, usedCouponId, errVal := GetOrderValue(order.ID, order.UserID, newTotal)
 	var walletTransaction models.WalletTransaction
 	db.Db.Unscoped().Where("order_id = ? AND user_id = ? AND type = ?", order.ID, order.UserID, "Debit").First(&walletTransaction)
 
 	if valueCheck && errVal == nil {
-
-		order.SubTotal = order.SubTotal - retrunAmount
-		order.TotalAmount = order.TotalAmount - retrunAmount
+		if newTotal == 0 {
+			order.SubTotal = 0
+			order.TotalAmount = 0
+		}else{
+			order.SubTotal = order.SubTotal - retrunAmount
+			order.TotalAmount = order.TotalAmount - retrunAmount
+		}
+		
 	} else if !valueCheck && errVal == nil {
 
 		if walletTransaction.ID != 0 {
 
-			order.SubTotal = order.SubTotal - retrunAmount
-			updateTotal := order.SubTotal + walletTransaction.Amount
+			var updateTotal float64
+			if newTotal == 0 {
+				order.SubTotal = 0
+				updateTotal = order.SubTotal + walletTransaction.Amount
+			}else{
+				order.SubTotal = order.SubTotal - retrunAmount
+				updateTotal = order.SubTotal + walletTransaction.Amount
+			}
+			
 
 			if updateTotal <= 0 {
 				order.TotalAmount = 0
@@ -66,9 +82,17 @@ func UserOrderCancelItem(itemId string) error {
 
 		} else {
 
-			order.SubTotal = order.SubTotal - retrunAmount
-			order.TotalAmount = order.SubTotal
-			order.DiscountTotal = 0.0
+			if newTotal == 0 {
+				order.SubTotal = 0
+				order.TotalAmount = 0
+				order.DiscountTotal = 0.0
+			}else{
+				order.SubTotal = order.SubTotal - retrunAmount
+				order.TotalAmount = order.SubTotal
+				order.DiscountTotal = 0.0
+			}
+
+			
 		}
 
 		if usedCouponId != 0 {
@@ -83,7 +107,7 @@ func UserOrderCancelItem(itemId string) error {
 	if checkRemaing == 0 {
 
 		if order.PaymentMethod != "cod" || order.Status == "Delivered" || order.PaymentStatus == "Refund is being processed" || order.Status == "Returned" {
-			order.PaymentStatus = "Refunded"
+			order.PaymentStatus = "Refund intiated"
 		} else {
 			order.PaymentStatus = "Failed"
 		}

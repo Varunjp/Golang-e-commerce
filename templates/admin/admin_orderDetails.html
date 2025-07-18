@@ -84,7 +84,7 @@
         <p><strong>Order Date:</strong> {{.Order.CreateAt | formatDate }}</p>
         <p><strong>Payment:</strong> {{.Order.PaymentMethod}}</p>
         <p><strong>Status:</strong> {{.Order.Status}}</p>
-        <p><strong>Total:</strong> ₹{{.Order.TotalAmount}}</p>
+        <p><strong>Total:</strong> ₹{{.Order.TotalAmount | round2}}</p>
 
         <hr>
 

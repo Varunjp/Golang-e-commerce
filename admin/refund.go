@@ -214,6 +214,25 @@ func WalletRefundApproval (c *gin.Context){
 
 		}
 
+		var temord models.Order
+		db.Db.Preload("OrderItems").Where("id = ?",order.ID).First(&temord)
+		checkRemaing := 0
+
+		for _, item := range temord.OrderItems {
+			if item.Status == "Pending" || item.Status == "Processing" || item.Status == "Delivered" || item.Status == "Delivered non returnable" {
+				checkRemaing++
+			}
+		}
+
+		if checkRemaing == 0 {
+
+			if order.PaymentMethod != "cod" || order.Status == "Delivered" || order.PaymentStatus == "Refund is being processed" || order.Status == "Returned" {
+				order.PaymentStatus = "Refunded"
+			} else {
+				order.PaymentStatus = "Failed"
+			}
+		}
+
 		db.Db.Save(&order)
 	}
 	
