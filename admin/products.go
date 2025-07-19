@@ -1,12 +1,17 @@
 package admin
 
 import (
+	"bytes"
 	"encoding/base64"
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
 	"first-project/models/responsemodels"
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"log"
 	"math"
 	"net/http"
@@ -218,6 +223,35 @@ func AddProduct(c *gin.Context){
 		return 
 	}
 
+	// image check
+	for i := 0; i < 3; i++{
+		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
+
+		if base64Str != "" {
+			
+			var base64Data string
+			if strings.Contains(base64Str, ",") {
+				// Format: data:image/jpeg;base64,<data>
+				parts := strings.SplitN(base64Str, ",", 2)
+				base64Data = parts[1]
+			} else {
+				// Raw base64 only
+				base64Data = base64Str
+			}
+		
+			decoded, err := base64.StdEncoding.DecodeString(base64Data)
+			if err != nil {
+				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
+				return
+			}
+
+			if !isValidImage(decoded) {
+				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
+				return
+			}
+		}
+	}
+
 	var subCat models.SubCategory
 	var ProductCheck models.Product
 	
@@ -297,6 +331,11 @@ func AddProduct(c *gin.Context){
 				c.String(http.StatusBadRequest, fmt.Sprintf("Failed to decode image %d: %v", i+1, err))
 				return
 			}
+
+			if !isValidImage(decoded) {
+				c.String(http.StatusBadRequest, fmt.Sprintf("Uploaded file %d is not a valid image", i+1))
+				return
+			}
 		
 			// Ensure upload folder exists
 			if _, err := os.Stat("upload"); os.IsNotExist(err) {
@@ -347,6 +386,11 @@ func AddProduct(c *gin.Context){
 
 	c.Redirect(http.StatusSeeOther,"/admin/products")
 
+}
+
+func isValidImage(data []byte) bool {
+    _, _, err := image.Decode(bytes.NewReader(data))
+    return err == nil
 }
 
 func AddProductVariantPage(c *gin.Context){
@@ -543,6 +587,36 @@ func UpdateProduct(c *gin.Context){
 		return 
 	}
 
+	// image check
+	for i := 0; i < 3; i++{
+		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
+
+		if base64Str != "" {
+			
+			var base64Data string
+			if strings.Contains(base64Str, ",") {
+				// Format: data:image/jpeg;base64,<data>
+				parts := strings.SplitN(base64Str, ",", 2)
+				base64Data = parts[1]
+			} else {
+				// Raw base64 only
+				base64Data = base64Str
+			}
+		
+			decoded, err := base64.StdEncoding.DecodeString(base64Data)
+			if err != nil {
+				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
+				return
+			}
+
+			if !isValidImage(decoded) {
+				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
+				return
+			}
+			
+		}
+	}
+
 	var Product models.Product
 	var Product_variant models.Product_Variant
 
@@ -633,8 +707,6 @@ func UpdateProduct(c *gin.Context){
 		
 	}
 
-	
-
 	c.Redirect(http.StatusSeeOther,"/admin/products")
 }
 
@@ -657,7 +729,7 @@ func DeleteImage(c *gin.Context){
 		return
 	}
 
-	c.Redirect(http.StatusTemporaryRedirect,"/admin/products")
+	c.Redirect(http.StatusSeeOther,"/admin/products")
 }
 
 func DeleteProduct(c *gin.Context){

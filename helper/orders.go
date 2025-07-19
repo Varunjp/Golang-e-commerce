@@ -440,5 +440,11 @@ func AdminOrderCancel(orderId uint)error{
 		db.Db.Save(&item)
 	}
 
+	var usedCoupon models.UsedCoupon
+
+	if err := db.Db.Where("order_id = ?",orderId).First(&usedCoupon).Error; err == nil{
+		db.Db.Delete(&usedCoupon)
+	}
+
 	return nil 
 }

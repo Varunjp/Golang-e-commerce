@@ -299,7 +299,13 @@ func AdminOrderUpdate(c *gin.Context){
 			c.HTML(http.StatusInternalServerError,"admin_orderDetails.html",gin.H{"error":err})
 			return 
 		}
-		order.PaymentStatus = "Not valid"
+		
+		if order.PaymentMethod != "cod"{
+			order.PaymentStatus = "Refunded"
+		}else{
+			order.PaymentStatus = "Not valid"
+		}
+		
 	case "Delivered":
 		for _,item := range order.OrderItems{
 
