@@ -298,9 +298,15 @@ func ReturnItem (c *gin.Context){
 	itemId := c.PostForm("item_id")
 	reason := c.PostForm("reason")
 	var Order models.Order
+	var OrderItem models.OrderItem
 
 	if err := db.Db.Where("id = ?",orderID).First(&Order).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":"Failed to load order details,please try again later."})
+		return 
+	}
+
+	if err := db.Db.Where("id = ? AND status = ?",itemId,"Delivered").First(&OrderItem).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":"Order already returned"})
 		return 
 	}
 

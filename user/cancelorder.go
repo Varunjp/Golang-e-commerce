@@ -46,7 +46,7 @@ func CancelOrderItem(c *gin.Context){
 		return 
 	}
 
-	if order.Status == "Delivered" || orderItem.Status == "Delivered"{
+	if order.Status == "Delivered" || orderItem.Status == "Delivered" || orderItem.Status == "Cancelled"{
 		c.Redirect(http.StatusSeeOther,"/user/orders")
 		return 
 	}

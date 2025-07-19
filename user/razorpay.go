@@ -55,7 +55,7 @@ func CreateRazorpayOrder(c *gin.Context){
 	
 	var orderitems []models.OrderItem
 	
-	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
+	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL AND status = ?",userID,"Delivered").Find(&orderitems).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
 			c.JSON(http.StatusInternalServerError,gin.H{"success":false})
 			log.Println(err)
@@ -89,10 +89,9 @@ func CreateRazorpayOrder(c *gin.Context){
 			}
 		}
 
-		if itemCount >= 5 {
+		if itemCount > 5 {
 
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
-
 			c.JSON(http.StatusBadRequest,gin.H{"success":false})
 			return 
 		}
