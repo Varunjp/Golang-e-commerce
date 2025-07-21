@@ -46,7 +46,7 @@ func CancelOrderItem(c *gin.Context){
 		return 
 	}
 
-	if order.Status == "Delivered" || orderItem.Status == "Delivered" || orderItem.Status == "Cancelled"{
+	if order.Status == "Delivered" || orderItem.Status == "Delivered" || order.Status == "Cancelled" || orderItem.Status == "Cancelled" || order.Status == "Returned" || orderItem.Status == "Returned" || order.Status == "Return requested" || orderItem.Status == "Return requested"{
 		c.Redirect(http.StatusSeeOther,"/user/orders")
 		return 
 	}
@@ -132,8 +132,8 @@ func CancelOrder(c *gin.Context){
 		return 
 	}
 
-	if order.Status == "Returned" {
-		c.HTML(http.StatusBadRequest,"myOrders.html",gin.H{"error":"Cannot return order","user":"done"})
+	if order.Status == "Returned" || order.Status == "Cancelled"{
+		c.HTML(http.StatusBadRequest,"myOrders.html",gin.H{"error":"Cannot return or cancell order","user":"done"})
 		return 
 	}
 
@@ -194,7 +194,7 @@ func CancelOrder(c *gin.Context){
 	
 	if WalletTransaction.ID != 0 || order.PaymentMethod != "cod" || order.Status == "Delivered"{
 		order.Status = "Cancelled"
-		order.PaymentStatus = "Refunded"
+		order.PaymentStatus = "Refund initiated"
 		order.Reason = reason
 	}else{
 		order.Status = "Cancelled"

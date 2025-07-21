@@ -199,6 +199,16 @@ func PaymentSuccess(c *gin.Context){
 	for _,item := range CartItems{
 		var product models.Product_Variant
 		db.Db.Where("id = ?",item.ProductID).First(&product)
+
+		if product.Stock < item.Quantity {
+			erram := helper.CreditWallet(uint(userID),payload.Amount,"Stock not available for the product")
+			if erram != nil{
+				log.Println(erram)
+			}
+			c.JSON(http.StatusNotFound,gin.H{"success":false,"redirect":"/user/cart" ,"error":"Stock not available for the product"})
+			return 
+		}
+
 		total += item.Price * float64(item.Quantity)
 		totalTax += product.Tax * float64(item.Quantity)
 		totalAmount+= item.Price * float64(item.Quantity)

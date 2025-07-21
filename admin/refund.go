@@ -147,6 +147,11 @@ func WalletRefundApproval (c *gin.Context){
 		return 
 	}
 
+	if !transaction.RefundStatus{
+		c.HTML(http.StatusBadRequest,"wallet.html",gin.H{"error":"Transaction already approved."})
+		return 
+	} 
+
 	if err := db.Db.Model(&models.Wallet{}).Where("user_id = ?",transaction.UserID).Update("balance",gorm.Expr("balance + ?",math.Abs(transaction.Amount))).Error; err != nil {
 		c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to update user wallet, please try again later"})
 		return
@@ -253,6 +258,11 @@ func WalletRefundDecline (c *gin.Context){
 
 	if err := db.Db.Where("id = ?",transactionId).First(&transaction).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Failed to get details for specific transcation, please try again later"})
+		return 
+	}
+
+	if !transaction.RefundStatus{
+		c.HTML(http.StatusBadRequest,"wallet.html",gin.H{"error":"Transaction already processed."})
 		return 
 	}
 

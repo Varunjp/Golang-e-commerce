@@ -44,7 +44,7 @@
       <div class="d-flex flex-column align-items-end gap-2">
         <a href="/user/order/{{.ID}}" class="btn btn-sm btn-outline-primary">View Details</a>
         
-        {{ if or (eq .Status "Processing") (eq .Status "Delivered") }}
+        {{ if (eq .Status "Delivered") }}
           <a href="/user/invoice/{{.ID}}" class="btn btn-sm btn-outline-success">Download Invoice</a>
         {{ end }}
 

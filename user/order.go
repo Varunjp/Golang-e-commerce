@@ -91,7 +91,7 @@ func ReturnOrder(c *gin.Context){
 		return 
 	}
 
-	if order.Status == "Returned" {
+	if order.Status == "Returned" || order.Status == "Return requested"{
 		c.HTML(http.StatusBadRequest,"myOrders.html",gin.H{"error":"Cannot return order","user":"done"})
 		return 
 	}
