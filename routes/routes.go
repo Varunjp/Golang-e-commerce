@@ -19,7 +19,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/register",middleware.NoCacheMiddleware(),user.RegisterPage)
 	router.POST("/user/register",middleware.NoCacheMiddleware(),user.RegisterUser)
 	router.POST("/verify-otp",middleware.NoCacheMiddleware(),user.VerfiyOTP)
-	router.GET("/",user.HomePage)
+	router.GET("/",middleware.NoCacheMiddleware(),user.HomePage)
 	router.GET("/user/logout",middleware.NoCacheMiddleware(),user.UserLogout)
 	router.GET("auth/google/login",middleware.NoCacheMiddleware(),user.HandleGoogleLogin)
 	router.GET("/auth/google/callback",middleware.NoCacheMiddleware(),user.HandleGoogleCallback)
