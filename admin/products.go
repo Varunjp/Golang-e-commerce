@@ -223,6 +223,15 @@ func AddProduct(c *gin.Context){
 		return 
 	}
 
+	var pcount int64
+
+	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ","%"+ProductName+"%").Count(&pcount).Error; err == nil{
+		if pcount > 0 {
+			c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Product name already exist"})
+			return 
+		}
+	}
+
 	// image check
 	for i := 0; i < 3; i++{
 		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
