@@ -772,18 +772,18 @@ func DeleteProduct(c *gin.Context){
         return
 	}
 
-	totalVariant := len(Product.Product_variants)
-	var delCount int 
+	// totalVariant := len(Product.Product_variants)
+	// var delCount int 
 
-	for _,vari := range Product.Product_variants{
-		if vari.DeletedAt.Time.Format("2006-01-02") != ""{
-			delCount++
-		}
-	}
+	// for _,vari := range Product.Product_variants{
+	// 	if vari.DeletedAt.Time.Format("2006-01-02") != ""{
+	// 		delCount++
+	// 	}
+	// }
 
-	if totalVariant == delCount {
-		db.Db.Delete(&Product)
-	}
+	// if totalVariant == delCount {
+	// 	db.Db.Delete(&Product)
+	// }
 
 
 	c.Redirect(http.StatusSeeOther,"/admin/products")
