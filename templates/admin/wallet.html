@@ -48,6 +48,7 @@
                 <th>#</th>
                 <th>User</th>
                 <th>Type</th>
+                <th>Item Name</th>
                 <th>Amount</th>
                 <th>Description</th>
                 <th>Date</th>
@@ -59,6 +60,7 @@
                 <td>{{ .ID }}</td>
                 <td>{{ .UserName }}</td>
                 <td>{{ .Type }}</td>
+                <td>{{ .Itemname}}</td>
                 <td>₹{{ printf "%.2f" .Amount }}</td>
                 <td>{{ .Description }}</td>
                 <td>{{ .CreatedAt.Format "02/01/06 3:04 PM" }}</td>

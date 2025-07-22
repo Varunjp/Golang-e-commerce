@@ -18,6 +18,15 @@ import (
 
 func HandleGoogleLogin(c *gin.Context){
 
+	tokenStr,err := c.Cookie("JWT-User")
+	if err == nil {
+		if tokenStr != ""{
+			c.Redirect(http.StatusSeeOther,"/")
+			return 
+		}
+	}
+
+
 	GetValues()
 
 	url := GoogleOauthConfig.AuthCodeURL("random-state")
@@ -27,6 +36,14 @@ func HandleGoogleLogin(c *gin.Context){
 
 func HandleGoogleCallback(c *gin.Context){
 	
+	tokenStr,err := c.Cookie("JWT-User")
+	if err == nil {
+		if tokenStr != ""{
+			c.Redirect(http.StatusSeeOther,"/")
+			return 
+		}
+	}
+
 	code := c.Query("code")
 	if code == ""{
 		c.HTML(http.StatusBadRequest,"userLogin.html",gin.H{"error":"No code in callback"})

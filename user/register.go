@@ -15,6 +15,13 @@ import (
 
 func RegisterPage(c *gin.Context) {
 	ref := c.Query("ref")
+	tokenStr,err := c.Cookie("JWT-User")
+	if err == nil{
+		if tokenStr != ""{
+			c.Redirect(http.StatusSeeOther,"/")
+			return 
+		}
+	}
 	c.HTML(http.StatusOK,"register.html",gin.H{"ReferralCode":ref})
 }
 
@@ -38,8 +45,8 @@ func RegisterUser(c *gin.Context){
 		})
 		return 
 	}
-
-	if err := db.Db.Model(models.User{}).Where("email = ?",input.Email).Error; err == nil{
+	var testUser models.User
+	if err := db.Db.Where("email = ?",input.Email).First(&testUser).Error; err == nil{
 		c.HTML(http.StatusConflict,"register.html",gin.H{
 			"error":"Email already exist",
 		})

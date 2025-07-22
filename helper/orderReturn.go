@@ -4,13 +4,12 @@ import (
 	db "first-project/DB"
 	"first-project/models"
 	"fmt"
-	"log"
 	"math"
 
 	"gorm.io/gorm"
 )
 
-func ItemCancelOnline(orderId, itemId, reason string) error{
+func ItemReturnOnline(orderId, itemId, reason string) error{
 	var order models.Order
 	var orderItem models.OrderItem
 	var usedCoupon models.UsedCoupon
@@ -84,7 +83,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				Amount: refundAmount+walletAmount,
 				Type: "Credit",
 				Description: reason,
-				RefundStatus: false,
+				RefundStatus: true,
 			}
 
 			if WalletTransaction.ID != 0 {
@@ -94,13 +93,6 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 			err := db.Db.Create(&walletTranscation).Error
 			if err != nil{
-				return err 
-			}
-
-			transfererr := CreditCancelWallet(order.UserID,refundAmount+walletAmount,reason)
-
-			if transfererr != nil{
-				log.Println("Failed to credit user wallet")
 				return err 
 			}
 	
@@ -116,18 +108,11 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				Amount: order.TotalAmount,
 				Type: "Credit",
 				Description: reason,
-				RefundStatus: false,
+				RefundStatus: true,
 			}
 			err := db.Db.Create(&walletTransaction).Error
 			if err != nil{
 				return err 
-			}
-
-			transferErr := CreditCancelWallet(order.UserID,order.TotalAmount,reason)
-
-			if transferErr != nil{
-				log.Println("Failed to credit user wallet")
-				return transferErr
 			}
 
 			if WalletTransaction.ID != 0 {
@@ -144,17 +129,11 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				Amount: itemTotal+walletAmount,
 				Type: "Credit",
 				Description: reason,
-				RefundStatus: false,
+				RefundStatus: true,
 			}
 			err := db.Db.Create(&walletTransaction).Error
 			if err != nil{
 				return err 
-			}
-
-			transferErr := CreditCancelWallet(order.UserID,itemTotal+walletAmount,reason)
-
-			if transferErr != nil{
-				return transferErr
 			}
 
 			if WalletTransaction.ID != 0 {
@@ -174,7 +153,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			Amount: itemTotal+walletAmount,
 			Type: "Credit",
 			Description: reason,
-			RefundStatus: false,
+			RefundStatus: true,
 		}
 
 		if WalletTransaction.ID != 0 {
@@ -184,12 +163,6 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 		err := db.Db.Create(&newalletTransaction).Error
 		if err != nil{
 			return err 
-		}
-
-		transferErr := CreditCancelWallet(order.UserID,itemTotal+walletAmount,reason)
-
-		if transferErr != nil{
-			return transferErr
 		}
 
 	}
@@ -204,7 +177,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 	return nil
 }
 
-func ItemCancelCod(orderId, itemId, reason string) error{
+func ItemReturnCod(orderId, itemId, reason string) error{
 	var order models.Order
 	var orderItem models.OrderItem
 	var usedCoupon models.UsedCoupon
@@ -275,7 +248,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					Amount: refundAmount+walletAmount,
 					Type: "Credit",
 					Description: reason,
-					RefundStatus: false,
+					RefundStatus: true,
 				}
 
 				if WalletTransaction.ID != 0 {
@@ -285,12 +258,6 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 				err := db.Db.Create(&walletTranscation).Error
 				if err != nil{
 					return err 
-				}
-
-				transferErr := CreditCancelWallet(order.UserID,refundAmount+walletAmount,reason)
-
-				if transferErr != nil{
-					return transferErr
 				}
 	
 				orderItem.Status = "Return requested"
@@ -305,17 +272,11 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					Amount: itemTotal+walletAmount,
 					Type: "Credit",
 					Description: reason,
-					RefundStatus: false,
+					RefundStatus: true,
 				}
 				err := db.Db.Create(&walletTransaction).Error
 				if err != nil{
 					return err 
-				}
-
-				transferErr := CreditCancelWallet(order.UserID,itemTotal+walletAmount,reason)
-
-				if transferErr != nil{
-					return transferErr
 				}
 
 				if WalletTransaction.ID != 0 {
@@ -337,20 +298,13 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 				Amount: itemTotal+walletAmount,
 				Type: "Credit",
 				Description: reason,
-				RefundStatus: false,
+				RefundStatus: true,
 			}
 
 			err := db.Db.Create(&walletTransaction).Error
 			if err != nil{
 				return err 
 			}
-
-			transferErr := CreditCancelWallet(order.UserID,itemTotal+walletAmount,reason)
-
-			if transferErr != nil{
-				return transferErr
-			}
-
 			if WalletTransaction.ID != 0 {
 				db.Db.Delete(&WalletTransaction)
 			}
@@ -397,17 +351,11 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 						OrderItemID: orderItem.ID,
 						Type: "Credit",
 						Description: fmt.Sprintf("Refund for order : %d",order.ID),
-						RefundStatus: false,
+						RefundStatus: true,
 					}
 
 					db.Db.Create(&newTransaction)
 					db.Db.Delete(&WalletTransaction)
-
-					transferErr := CreditCancelWallet(order.UserID,math.Abs(WalletTransaction.Amount),fmt.Sprintf("Refund for order : %d",order.ID))
-
-					if transferErr != nil{
-						return transferErr
-					}
 				}
 			}
 
@@ -423,17 +371,11 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					OrderItemID: orderItem.ID,
 					Type: "Credit",
 					Description: fmt.Sprintf("Refund for order : %d",order.ID),
-					RefundStatus: false,
+					RefundStatus: true,
 				}
 
 				db.Db.Create(&newTransaction)
 				db.Db.Delete(&WalletTransaction)
-
-				transferErr := CreditCancelWallet(order.UserID,math.Abs(WalletTransaction.Amount),fmt.Sprintf("Refund for order : %d",order.ID))
-
-				if transferErr != nil{
-					return transferErr
-				}
 
 			}
 			orderItem.Status = "Return requested"
@@ -455,50 +397,3 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 	return nil 
 }
 
-func AdminOrderCancel(orderId uint)error{
-	var order models.Order
-	var walletTransaction models.WalletTransaction
-
-	if err := db.Db.Preload("OrderItems").Where("id = ?",orderId).First(&order).Error; err != nil{
-		return err 
-	}
-
-	if err := db.Db.Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction).Error; err != nil{
-		if err != gorm.ErrRecordNotFound{
-			return err
-		}
-	}
-
-
-	if order.PaymentMethod != "cod" {
-		totalAmount := order.TotalAmount
-		if walletTransaction.ID != 0{
-			totalAmount += math.Abs(walletTransaction.Amount)
-		}
-		err := CreditWallet(order.UserID,order.TotalAmount,"Order cancelled")
-		if err != nil{
-			return err 
-		}
-	}else if walletTransaction.ID != 0 {
-		walletAmount := math.Abs(walletTransaction.Amount)
-		err := CreditWallet(order.UserID,walletAmount,"Order cancelled")
-		if err != nil{
-			return err 
-		}
-	}
-
-	for _, item := range order.OrderItems{
-
-		db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
-		item.Status = "Cancelled"
-		db.Db.Save(&item)
-	}
-
-	var usedCoupon models.UsedCoupon
-
-	if err := db.Db.Where("order_id = ?",orderId).First(&usedCoupon).Error; err == nil{
-		db.Db.Delete(&usedCoupon)
-	}
-
-	return nil 
-}

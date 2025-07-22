@@ -37,9 +37,10 @@ func WalletTransactions(c *gin.Context){
 	
 	var WalletTransactions []models.WalletTransaction
 	type response struct{
-		ID 			uint
+		ID 			string
 		UserName 	string
 		Type 		string
+		Itemname	string 
 		Amount 		float64
 		Description string 
 		CreatedAt 	time.Time 
@@ -63,15 +64,40 @@ func WalletTransactions(c *gin.Context){
 
 	for i, transaction := range WalletTransactions {
 		var user models.User
+		var order models.Order
+		var orderitem models.OrderItem
+		var product models.Product_Variant
 		db.Db.Where("id = ?",transaction.UserID).First(&user)
+		db.Db.Where("id = ?",transaction.OrderID).First(&order)
+		db.Db.Unscoped().Where("id = ?",transaction.OrderItemID).First(&orderitem)
+		db.Db.Where("id = ?",orderitem.ProductID).First(&product)
+
+		var variant_name string 
+		var orderidstr string 
+		if orderitem.Status == ""{
+			variant_name = "---Full Order---"
+		}else{
+			variant_name = product.Variant_name
+		}
+
+		if transaction.OrderID == 0 {
+			orderidstr = "Order detail NA"
+		}else{
+			orderidstr = order.OrderID
+		}
+	
+
 		ResponseTransactions[i] = response{
-			ID: transaction.ID,
+			ID: orderidstr,
 			UserName: user.Username,
 			Type: transaction.Type,
+			Itemname: variant_name,
 			Amount: math.Abs(transaction.Amount),
 			Description: transaction.Description,
 			CreatedAt: transaction.CreatedAt,
 		}
+		
+		
 	}
 
 	c.HTML(http.StatusOK,"wallet.html",gin.H{
@@ -93,6 +119,7 @@ func WalletRefunds(c *gin.Context){
 		UserName 	string
 		OrderStrID  string 
 		OrderID 	uint
+		Itemname 	string 
 		Amount 		float64
 		Description string 
 		CreatedAt 	time.Time 
@@ -115,13 +142,25 @@ func WalletRefunds(c *gin.Context){
 		for i, transaction := range walletTransactions {
 			var user models.User
 			var order models.Order
+			var orderitem models.OrderItem
+			var product models.Product_Variant
 			db.Db.Where("id = ?",transaction.UserID).First(&user)
 			db.Db.Where("id = ?",transaction.OrderID).First(&order)
+			db.Db.Unscoped().Where("id = ?",transaction.OrderItemID).First(&orderitem)
+			db.Db.Where("id = ?",orderitem.ProductID).First(&product)
+
+			var variant_name string 
+			if orderitem.Status == ""{
+				variant_name = "---Full Order---"
+			}else{
+				variant_name = product.Variant_name
+			}
 			ResponseTransactions[i] = response{
 				ID: transaction.ID,
 				UserName: user.Username,
 				OrderStrID: order.OrderID,
 				OrderID: transaction.OrderID,
+				Itemname: variant_name,
 				Amount: math.Abs(transaction.Amount),
 				Description: transaction.Description,
 				CreatedAt: transaction.CreatedAt,

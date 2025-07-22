@@ -13,6 +13,14 @@ import (
 
 
 func LoginPage(c *gin.Context){
+	tokenstr,err := c.Cookie("JWT-User")
+
+	if err == nil{
+		if tokenstr != ""{
+			c.Redirect(http.StatusSeeOther,"/")
+			return 
+		}
+	}
 	c.HTML(http.StatusOK,"userLogin.html",nil)
 }
 
@@ -21,6 +29,15 @@ func Login(c * gin.Context){
 	var input struct {
 		Email 		string `form:"email" binding:"required"`
 		Password	string `form:"password" binding:"required"`
+	}
+
+	tokenstr,err := c.Cookie("JWT-User")
+
+	if err == nil{
+		if tokenstr != ""{
+			c.Redirect(http.StatusSeeOther,"/")
+			return 
+		}
 	}
 
 	if err := c.ShouldBind(&input); err != nil{

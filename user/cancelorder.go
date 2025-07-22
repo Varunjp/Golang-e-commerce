@@ -106,7 +106,7 @@ func CancelOrderItem(c *gin.Context){
 		order.PaymentStatus = "Not Valid"
 	}else if cancelCount == 0 && order.PaymentMethod != "cod"{
 		order.Status = "Cancelled"
-		order.PaymentStatus = "Refund intiated"
+		order.PaymentStatus = "Refunded"
 	}
 
 	orderItem.Status = "Cancelled"
@@ -172,10 +172,18 @@ func CancelOrder(c *gin.Context){
 			Amount: order.TotalAmount+walletAmount,
 			Type: "Credit",
 			Description: "Refund",
-			RefundStatus: true,
+			RefundStatus: false,
 		}
 
 		db.Db.Create(&walletTransaction)
+
+		transferErr := helper.CreditCancelWallet(order.UserID,order.TotalAmount+walletAmount,reason)
+
+		if transferErr != nil{
+			c.Redirect(http.StatusSeeOther,"/user/order/"+OrderIDStr)
+			db.Db.Delete(&walletTransaction)
+			return 
+		}
 		
 	}else if order.PaymentMethod == "cod" && WalletTransaction.ID != 0{
 		
@@ -185,16 +193,24 @@ func CancelOrder(c *gin.Context){
 			Amount: walletAmount,
 			Type: "Credit",
 			Description: "Refund request for order :"+strconv.Itoa(int(WalletTransaction.OrderID)),
-			RefundStatus: true,
+			RefundStatus: false,
 		}
 
 		db.Db.Create(&newTransaction)
+
+		transferErr := helper.CreditCancelWallet(order.UserID,walletAmount,reason)
+
+		if transferErr != nil{
+			c.Redirect(http.StatusSeeOther,"/user/order/"+OrderIDStr)
+			db.Db.Delete(&newTransaction)
+			return 
+		}
 	}
 	
 	
 	if WalletTransaction.ID != 0 || order.PaymentMethod != "cod" || order.Status == "Delivered"{
 		order.Status = "Cancelled"
-		order.PaymentStatus = "Refund initiated"
+		order.PaymentStatus = "Refunded"
 		order.Reason = reason
 	}else{
 		order.Status = "Cancelled"

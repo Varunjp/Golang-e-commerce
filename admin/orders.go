@@ -5,7 +5,6 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"first-project/utils"
-	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -211,6 +210,7 @@ func AdminOrderDetails(c *gin.Context){
 		Size 		string
 		Price 		float64
 		Quantity 	int 
+		Tax 		float64
 		SubTotal 	float64
 		Status 		string
 		Reason 		string 
@@ -238,6 +238,7 @@ func AdminOrderDetails(c *gin.Context){
 				Size: Product.Size,
 				Price: Product.Price,
 				Quantity: item.Quantity,
+				Tax: (Product.Tax * float64(item.Quantity)),
 				SubTotal: subTotal,
 				Status: item.Status,
 				Reason: item.Reason,
@@ -360,8 +361,6 @@ func AdminItemOrder(c *gin.Context){
 	
 	newTotal := order.SubTotal - retrunAmount
 
-	//delete
-	fmt.Println("Checking new total :",newTotal)
 
 	if newTotal < 0 {
 		newTotal = 0
@@ -371,11 +370,6 @@ func AdminItemOrder(c *gin.Context){
 	var walletTransaction models.WalletTransaction
 	db.Db.Unscoped().Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction)
 
-	//delete
-	fmt.Println("Checking status of values after cancel")
-	fmt.Println("Amount accept for coupon min amount :",valueCheck)
-	fmt.Println("Checking used coupon :",usedCouponId)
-	fmt.Println("Checking any err :",errVal)
 
 	if valueCheck && errVal == nil{
 		if newTotal == 0 {

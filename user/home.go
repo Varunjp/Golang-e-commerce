@@ -47,7 +47,6 @@ func HomePage(c *gin.Context){
 	}
 
 	
-	
 }
 
 func DemoPage(c *gin.Context){

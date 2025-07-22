@@ -311,7 +311,7 @@ func ReturnItem (c *gin.Context){
 	}
 
 	if Order.PaymentMethod != "cod" {
-		err := helper.ItemCancelOnline(orderID,itemId,reason)
+		err := helper.ItemReturnOnline(orderID,itemId,reason)
 
 		if err != nil{
 			c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
@@ -319,7 +319,7 @@ func ReturnItem (c *gin.Context){
 		}
 	}else{
 
-		err := helper.ItemCancelCod(orderID,itemId,reason)
+		err := helper.ItemReturnCod(orderID,itemId,reason)
 		if err != nil{
 			c.HTML(http.StatusInternalServerError,"orderDetails.html",gin.H{"error":err})
 			return 

@@ -84,7 +84,8 @@
         <p><strong>Order Date:</strong> {{.Order.CreateAt | formatDate }}</p>
         <p><strong>Payment:</strong> {{.Order.PaymentMethod}}</p>
         <p><strong>Status:</strong> {{.Order.Status}}</p>
-        <p><strong>Total:</strong> ₹{{.Order.TotalAmount | round2}}</p>
+        <p><strong>Total Tax:</strong> ₹{{.Order.TotalTax}}</p>
+        <p><strong>Grant Total:</strong> ₹{{.Order.TotalAmount | round2}}</p>
 
         <hr>
 
@@ -97,6 +98,7 @@
               <th>Size</th>
               <th>Price</th>
               <th>Qty</th>
+              <th>Tax</th>
               <th>Subtotal</th>
               <th>Status</th>
               <th>Action</th>
@@ -111,6 +113,7 @@
                 <td>{{.Size}}</td>
                 <td>₹{{.Price}}</td>
                 <td>{{.Quantity}}</td>
+                <td>₹{{.Tax}}</td>
                 <td>₹{{ .SubTotal}}</td>
                 <td>{{.Status}}</td>
                 {{ if eq .Status "Processing"}}
