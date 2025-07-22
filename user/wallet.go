@@ -68,7 +68,7 @@ func WalletTransaction(c *gin.Context){
 	}
 
 	type response struct {
-		ID  		uint
+		ID  		string
 		Type 		string 
 		Amount 		float64
 		Description string
@@ -81,8 +81,11 @@ func WalletTransaction(c *gin.Context){
 	
 	for i,trans := range walletTransaction {
 
+		var order models.Order
+		db.Db.Where("id = ?",trans.OrderID).First(&order)
+
 		transactions[i] = response{
-			ID: trans.ID,
+			ID: order.OrderID,
 			Type: trans.Type,
 			Amount: trans.Amount,
 			Description: trans.Description,
