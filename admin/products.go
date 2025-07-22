@@ -7,6 +7,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"first-project/models/responsemodels"
+	"first-project/utils"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -223,6 +224,8 @@ func AddProduct(c *gin.Context){
 		return 
 	}
 
+	ProductSize = utils.SizeAdjust(ProductSize)
+	
 	var pcount int64
 
 	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ","%"+ProductName+"%").Count(&pcount).Error; err == nil{
