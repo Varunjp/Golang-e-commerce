@@ -38,7 +38,7 @@
           <div class="alert alert-danger">{{.error}}</div>
         {{end}}
         <div class="card-body">
-          <p><strong>Order Date:</strong> {{.Order.OrderDate}}</p>
+          <p><strong>Order Date:</strong> {{.Order.OrderDate | formatDate }}</p>
           <p><strong>Address:</strong>
                 {{.address.AddressLine1}}<br>
                 {{.address.AddressLine2}}<br>

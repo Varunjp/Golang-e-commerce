@@ -63,12 +63,31 @@ func ShowProductList(c *gin.Context){
         return
 	}
 
-	subQuery := db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL AND stock > ?", true,0).Group("product_id")
+	var subQuery *gorm.DB
+	var query *gorm.DB
 
-	query := db.Db.
-    Preload("Product_images", func(db *gorm.DB) *gorm.DB {
-        return db.Order("order_no ASC")
-    }).Joins("JOIN (?) AS selected ON selected.id = product_variants.id", subQuery).Model(&models.Product_Variant{})
+	if len(categories) != 0 || size != "" || search != "" || sortBy != ""{
+
+		query = db.Db.
+		Preload("Product_images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("order_no ASC")
+		}).Model(&models.Product_Variant{})
+
+	}else{
+		subQuery = db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL AND stock > ?", true,0).Group("product_id")
+
+		query = db.Db.
+		Preload("Product_images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("order_no ASC")
+		}).Joins("JOIN (?) AS selected ON selected.id = product_variants.id", subQuery).Model(&models.Product_Variant{})
+	}
+
+	// subQuery = db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL AND stock > ?", true,0).Group("product_id")
+
+	// query = db.Db.
+    // Preload("Product_images", func(db *gorm.DB) *gorm.DB {
+    //     return db.Order("order_no ASC")
+    // }).Joins("JOIN (?) AS selected ON selected.id = product_variants.id", subQuery).Model(&models.Product_Variant{})
 	
 	
 	if search != ""{

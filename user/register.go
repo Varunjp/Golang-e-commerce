@@ -39,6 +39,12 @@ func RegisterUser(c *gin.Context){
 		return 
 	}
 
+	if err := db.Db.Model(models.User{}).Where("email = ?",input.Email).Error; err == nil{
+		c.HTML(http.StatusConflict,"register.html",gin.H{
+			"error":"Email already exist",
+		})
+	}
+
 	phonePattern := regexp.MustCompile(`^[0-9]{10}$`)
 
 	if !phonePattern.MatchString(input.Phone){
@@ -97,7 +103,7 @@ func RegisterUser(c *gin.Context){
 
 	
 	if err != nil{
-		c.HTML(http.StatusInternalServerError,"register.html",gin.H{"error":"Failed to generate Otp"})
+		c.HTML(http.StatusInternalServerError,"register.html",gin.H{"error":"Failed to send Otp,please try again later"})
 		fmt.Println("Error :",err)
 		return
 	}
