@@ -225,7 +225,7 @@ func AddProduct(c *gin.Context){
 	}
 
 	ProductSize = utils.SizeAdjust(ProductSize)
-	
+
 	var pcount int64
 
 	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ","%"+ProductName+"%").Count(&pcount).Error; err == nil{
@@ -748,10 +748,16 @@ func DeleteProduct(c *gin.Context){
 	
 	id := c.Param("id")
 	var Product_variant models.Product_Variant
+	var Product models.Product
 
 	if err := db.Db.First(&Product_variant,id).Error; err!=nil{
-		c.String(http.StatusNotFound, "Product not found")
+		c.HTML(http.StatusNotFound,"admin_product_list.html", gin.H{"error":"Product not found"})
         return
+	}
+
+	if err := db.Db.Preload("Product_variants").Where("product_id = ?",Product_variant.ProductID).First(&Product).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Failed get product details"})
+		return 
 	}
 
 	err := helper.CancelOrderForProduct(id)
@@ -762,9 +768,23 @@ func DeleteProduct(c *gin.Context){
 	}
 
 	if err := db.Db.Delete(&Product_variant).Error; err != nil{
-		c.String(http.StatusInternalServerError, "Failed to delete product")
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html", gin.H{"error":"Failed to delete product"})
         return
 	}
+
+	totalVariant := len(Product.Product_variants)
+	var delCount int 
+
+	for _,vari := range Product.Product_variants{
+		if vari.DeletedAt.Time.Format("2006-01-02") != ""{
+			delCount++
+		}
+	}
+
+	if totalVariant == delCount {
+		db.Db.Delete(&Product)
+	}
+
 
 	c.Redirect(http.StatusSeeOther,"/admin/products")
 }
