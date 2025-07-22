@@ -228,7 +228,7 @@ func AddCoupon(c *gin.Context){
 		catId,_ := strconv.Atoi(categoryID)
 
 		coupon = models.Coupons{
-		Code: input.Code,
+		Code: strings.ToUpper(input.Code),
 		Description: input.Description,
 		Discount: input.Discount,
 		MinAmount: input.MinAmount,
@@ -241,7 +241,7 @@ func AddCoupon(c *gin.Context){
 	}else{
 
 		coupon = models.Coupons{
-		Code: input.Code,
+		Code: strings.ToUpper(input.Code),
 		Description: input.Description,
 		Discount: input.Discount,
 		MinAmount: input.MinAmount,
