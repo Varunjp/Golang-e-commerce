@@ -31,6 +31,7 @@ func GetUrl(router *gin.Engine){
 	router.POST("/reset-password/resend-otp",middleware.NoCacheMiddleware(),user.Resetpassword_ResendOTP)
 	router.GET("/user/reset-password",middleware.NoCacheMiddleware(),user.ShowRestPasswordPage)
 	router.POST("/user/reset-password",middleware.NoCacheMiddleware(),user.ResetPassword)
+	router.GET("/user/verifyOtppage",middleware.NoCacheMiddleware(),user.VerifyOTPPage)
 
 	// User profile page
 	router.GET("/user/profile",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.UserProfilePage)

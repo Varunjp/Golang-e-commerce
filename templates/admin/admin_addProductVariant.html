@@ -63,7 +63,7 @@
         <a href="/admin/products" class="btn btn-outline-light">Back to Products</a>
       </div>
 
-      <form action="/admin/variants/create" method="POST">
+      <form action="/admin/variants/create" id="variantform" method="POST">
         <div class="card card-dark p-4 mb-4">
           <h5>Variant Details</h5>
           <div class="row">
@@ -113,35 +113,94 @@
 </div>
 
 <script>
-  const sizeSelect = document.getElementById("sizeSelect");
-  const productSelect = document.getElementById("productSelect");
 
-  const sizeOptions = {
-    clothing: ["XS", "S", "M", "L", "XL"],
-    shoes: ["UK-6", "UK-7", "UK-8", "UK-9", "UK-10"]
-  };
+  document.addEventListener('DOMContentLoaded',() =>{
 
-  productSelect.addEventListener("change", function () {
-    const selectedOption = productSelect.options[productSelect.selectedIndex];
-    const type = selectedOption.getAttribute("data-type");
+    const sizeSelect = document.getElementById("sizeSelect");
+    const productSelect = document.getElementById("productSelect");
+    const form = document.getElementById('variantform')
 
-    // Clear existing options
-    sizeSelect.innerHTML = "";
-
-    if (type && sizeOptions[type]) {
-      sizeOptions[type].forEach(size => {
-        const option = document.createElement("option");
-        option.value = size;
-        option.textContent = size;
-        sizeSelect.appendChild(option);
-      });
-    } else {
-      const defaultOption = document.createElement("option");
-      defaultOption.text = "Select Size";
-      defaultOption.disabled = true;
-      defaultOption.selected = true;
-      sizeSelect.appendChild(defaultOption);
+    if (!form){
+      console.error('Form not found!');
+      return;
     }
+
+    const sizeOptions = {
+      clothing: ["XS", "S", "M", "L", "XL"],
+      shoes: ["UK-6", "UK-7", "UK-8", "UK-9", "UK-10"]
+    };
+
+    productSelect.addEventListener("change", function () {
+      const selectedOption = productSelect.options[productSelect.selectedIndex];
+      const type = selectedOption.getAttribute("data-type");
+
+      // Clear existing options
+      sizeSelect.innerHTML = "";
+
+      if (type && sizeOptions[type]) {
+        sizeOptions[type].forEach(size => {
+          const option = document.createElement("option");
+          option.value = size;
+          option.textContent = size;
+          sizeSelect.appendChild(option);
+        });
+      } else {
+        const defaultOption = document.createElement("option");
+        defaultOption.text = "Select Size";
+        defaultOption.disabled = true;
+        defaultOption.selected = true;
+        sizeSelect.appendChild(defaultOption);
+      }
+    });
+
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+
+      // clear previous errors
+      document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+      document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
+      const formData = new FormData(form)
+
+      fetch(form.action,{
+        method: form.method,
+        body: formData,
+        headers:  {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(async response =>{
+        const res = await response.json();
+
+        if(response.ok){
+          if (res.redirect){
+            window.location.href = res.redirect;
+          }else{
+            location.reload();
+          }
+        }else if (response.status === 400){
+          if (res.errors){
+            Object.keys(res.errors).forEach(field => {
+              const input = form.querySelector(`[name="${field}"]`);
+              if (input) {
+                input.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.innerText = res.errors[field];
+                input.insertAdjacentElement('afterend', feedback);
+              }
+            });
+          }
+        }else{
+          alert('Something went wrong. Please try again.');
+        }
+
+      })
+      .catch(() =>{
+        alert('Network error. Please try again.');
+      });
+
+    });
+
+
   });
 </script>
 

@@ -5,7 +5,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"first-project/utils"
-	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"time"
@@ -26,7 +26,7 @@ func RegisterPage(c *gin.Context) {
 }
 
 func RegisterUser(c *gin.Context){
-	
+	Errors := make(map[string]string)
 	var input struct {
 		Username string		`form:"username" binding:"required"`
 		Email	 string		`form:"email" binding:"required"`
@@ -40,53 +40,42 @@ func RegisterUser(c *gin.Context){
 	newreferralCode := helper.GenerateUniqueReferralCode()
 
 	if err:= c.ShouldBind(&input); err != nil{
-		c.HTML(http.StatusBadRequest,"register.html",gin.H{
-			"error":"Invalid data",
+		c.JSON(http.StatusBadRequest,gin.H{
+			"status":"error","error":"Invalid data",
 		})
 		return 
 	}
 	var testUser models.User
 	if err := db.Db.Where("email = ?",input.Email).First(&testUser).Error; err == nil{
-		c.HTML(http.StatusConflict,"register.html",gin.H{
-			"error":"Email already exist",
-		})
+		Errors["email"] = "Email already exist"
 	}
 
 	phonePattern := regexp.MustCompile(`^[0-9]{10}$`)
 
 	if !phonePattern.MatchString(input.Phone){
-		c.HTML(http.StatusBadRequest,"register.html",gin.H{
-			"error":"Phone number must be exactly 10 digits",
-		})
-		return
+		Errors["phone"] = "Phone number must be exactly 10 digits"
 	}
 
 	if helper.IsName(input.Username){
-		c.HTML(http.StatusBadRequest,"register.html",gin.H{
-			"error":"Name cannot contain special characters",
-		})
-		return
+		Errors["username"] = "Name cannot contain special characters"
 	}
 
 	if helper.IsSameDigitPhone(input.Phone){
-		c.HTML(http.StatusBadRequest,"register.html",gin.H{
-			"error":"Phone number cannot contain all same digits",
-		})
-		return
+		Errors["phone"] = "Phone number cannot contain all same digits"
 	}
 
 	if !helper.IsValidPassword(input.Password){
-		c.HTML(http.StatusBadRequest,"register.html",gin.H{
-			"error":"Password must be at least 8 characters with uppercase, lowercase, number, and special character",
-		})
-		return
+		Errors["password"] = "Password must be at least 8 characters with uppercase, lowercase, number, and special character"
 	}
 
 	if input.Password != input.Confirmpass{
-		c.HTML(http.StatusBadRequest,"register.html",gin.H{
-			"error":"Passwords do not match",
-		})
-		return
+		Errors["password"]="Passwords do not match"
+		Errors["confirm_password"] = "Passwords do not match"
+	}
+
+	if len(Errors) > 0 {
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
+		return 
 	}
 
 	hashedPassword,_ := utils.HashPassword(input.Password)
@@ -104,25 +93,32 @@ func RegisterUser(c *gin.Context){
 		user.ReferredBy = referralCode
 	}
 
-	otp,_ := helper.GenerateAndSaveOtp(user.Email)
-
-	err := helper.SendOTPEmail(user.Email,otp)
-
-	
-	if err != nil{
-		c.HTML(http.StatusInternalServerError,"register.html",gin.H{"error":"Failed to send Otp,please try again later"})
-		fmt.Println("Error :",err)
-		return
-	}
-
 	if err := db.Db.Create(&user).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"register.html",gin.H{"error":"Failed to create account"})
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Failed to create account"})
 		return 
 	}
 
-	c.HTML(http.StatusOK,"verifyOtp.html",gin.H{
+	go func(){
+		otp,_ := helper.GenerateAndSaveOtp(user.Email)
+
+		err := helper.SendOTPEmail(user.Email,otp)
+
+		if err != nil{
+			log.Println("Error :",err)
+		}
+	}()
+
+
+
+	c.JSON(http.StatusOK,gin.H{
+		"redirect": "/user/verifyOtppage",
 		"email":user.Email,
 	})
+}
+
+func VerifyOTPPage(c *gin.Context){
+	email := c.Query("email")
+	c.HTML(http.StatusOK,"verifyOtp.html",gin.H{"email":email})
 }
 
 

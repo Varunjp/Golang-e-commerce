@@ -492,6 +492,7 @@ func AddProductVariantPage(c *gin.Context){
 }
 
 func AddProductVariant (c *gin.Context){
+	Errors := make(map[string]string )
 	// form data
 	productID := c.PostForm("product_id")
 	variant_name := c.PostForm("variant_name")
@@ -499,13 +500,24 @@ func AddProductVariant (c *gin.Context){
 	ProductStock,_ := strconv.Atoi(c.PostForm("stock"))
 	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
 
-	if strings.TrimSpace(variant_name) == "" || strings.TrimSpace(size) == ""{
-		c.HTML(http.StatusBadRequest,"admin_addProductVariant.html",gin.H{"error":"Invalid entry on name or size"})
-		return 
+	if strings.TrimSpace(variant_name) == ""{
+		Errors["variant_name"] = "Invalid name entry"
 	}
 
-	if ProductStock < 1 || ProductPrice < 1 {
-		c.HTML(http.StatusBadRequest,"admin_addProductVariant.html",gin.H{"error":"Stock or price could not be less than 1"})
+	if strings.TrimSpace(size) == ""{
+		Errors["size"] = "Invalid size entry"
+	}
+
+	if ProductStock < 1 {
+		Errors["stock"] = "Stock cannot be less than zero"
+	}
+
+	if ProductPrice < 1 {
+		Errors["price"] = "Price cannot be less than zero"
+	}
+
+	if len(Errors) > 0 {
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
 		return 
 	}
 
@@ -514,14 +526,14 @@ func AddProductVariant (c *gin.Context){
 	var ProductVariant models.Product_Variant
 
 	if err := db.Db.Preload("Product_variants").Where("product_id = ?",productID).First(&Product).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Could not load product details"})
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Could not load product details"})
 		return 
 	}
 
 	productVariantID := Product.Product_variants[0].ID
 
 	if err := db.Db.Where("product_variant_id = ?",productVariantID).Find(&ProductImage).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Could not load product images."})
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Could not load product images."})
 		return 
 	}
 
@@ -530,8 +542,12 @@ func AddProductVariant (c *gin.Context){
 		ProductVariant.Price = ProductPrice
 
 		db.Db.Save(&ProductVariant)
-
-		c.Redirect(http.StatusSeeOther,"/admin/products")
+		
+		c.JSON(http.StatusOK,gin.H{
+			"status":"success",
+			"message":"Variant updated",
+			"redirect":"/admin/products",
+		})
 		return 
 	}
 
@@ -545,7 +561,7 @@ func AddProductVariant (c *gin.Context){
 	}
 
 	if err := db.Db.Create(&newProductVariant).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Error while creating new variant, please try again later"})
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Error while creating new variant, please try again later"})
 		return 
 	}
 
@@ -560,7 +576,11 @@ func AddProductVariant (c *gin.Context){
 		db.Db.Create(&newProductImage)
 	}
 
-	c.Redirect(http.StatusSeeOther,"/admin/products")
+	c.JSON(http.StatusOK,gin.H{
+		"status":"success",
+		"message":"Variant added successfully",
+		"redirect":"/admin/products",
+	})
 }
 
 func UpdateProductPage(c *gin.Context){
