@@ -37,7 +37,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/user/profile",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.UserProfilePage)
 	router.GET("/user/edit-profile",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.EditProfilePage)
 	router.POST("/user/update-profile",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.UpdateProfile)
-	router.POST("/user/add-address,middleware.AuthVaildUser()",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddAddress)
+	router.POST("/user/add-address",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddAddress)
 	router.POST("/user/edit-address",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.EditAddress)
 	router.POST("/delete-address",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.DeleteAddress)
 	router.GET("/user/change-password",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ChangePasswordPage)
