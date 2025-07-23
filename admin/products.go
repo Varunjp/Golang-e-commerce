@@ -26,6 +26,20 @@ import (
 	"gorm.io/gorm"
 )
 
+func isValidImage(data []byte) bool {
+    reader := bytes.NewReader(data)
+    _, format, err := image.Decode(reader)
+    if err != nil {
+        return false
+    }
+    switch format {
+    case "jpeg", "png", "gif":
+        return true
+    default:
+        return false
+    }
+}
+
 func ViewProducts(c *gin.Context){
 
 	var Products []models.Product_Variant
@@ -202,6 +216,7 @@ func AddProductPage(c *gin.Context){
 
 func AddProduct(c *gin.Context){
 
+	Errors := make(map[string]string)
 
 	ProductName := c.PostForm("name")
 	ProductSubCat := c.PostForm("subcategory_id")
@@ -219,9 +234,20 @@ func AddProduct(c *gin.Context){
 	ProductVariantName = strings.TrimLeft(ProductVariantName," ")
 	ProductSize = strings.TrimSpace(ProductSize)
 
-	if strings.TrimSpace(ProductName) == "" || strings.TrimSpace(ProductVariantName) == "" || strings.TrimSpace(ProductDescription) == "" || ProductSize == ""{
-		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Provided empty name for product name or description or size"})
-		return 
+	if strings.TrimSpace(ProductName) == "" {
+		Errors["name"] = "Name should be properly defined"	
+	}
+
+	if strings.TrimSpace(ProductVariantName) == ""{
+		Errors["varian_name"] = "Variant name should be properly defined"
+	}
+
+	if strings.TrimSpace(ProductDescription) == ""{
+		Errors["description"] = "Provide proper description"
+	}
+
+	if ProductSize == ""{
+		Errors["size"] = "Size should be properly defined"
 	}
 
 	ProductSize = utils.SizeAdjust(ProductSize)
@@ -230,17 +256,19 @@ func AddProduct(c *gin.Context){
 
 	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ","%"+ProductName+"%").Count(&pcount).Error; err == nil{
 		if pcount > 0 {
-			c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Product name already exist"})
-			return 
+			Errors["name"] = "Product already exist"
+			
 		}
 	}
+
+	icount := 0
 
 	// image check
 	for i := 0; i < 3; i++{
 		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
 
 		if base64Str != "" {
-			
+
 			var base64Data string
 			if strings.Contains(base64Str, ",") {
 				// Format: data:image/jpeg;base64,<data>
@@ -252,15 +280,18 @@ func AddProduct(c *gin.Context){
 			}
 		
 			decoded, err := base64.StdEncoding.DecodeString(base64Data)
+
 			if err != nil {
-				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
-				return
+				Errors[fmt.Sprintf("cropped_image%d", i)] = "Image is invalid"
+				continue
 			}
 
 			if !isValidImage(decoded) {
-				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
-				return
+				Errors[fmt.Sprintf("cropped_image%d", i)] = "Image is invalid"
+				continue
 			}
+
+			icount++
 		}
 	}
 
@@ -268,28 +299,39 @@ func AddProduct(c *gin.Context){
 	var ProductCheck models.Product
 	
 	if ProductPrice <= 0 {
-		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Price cannot be 0 or less"})
-		return
+		Errors["price"] = "Price must be greater than 0"
+		
 	}
 
 	if err := db.Db.Where("product_name ILIKE ?",ProductName).First(&ProductCheck).Error; err == nil{
-		c.HTML(http.StatusConflict,"admin_product_list.html",gin.H{"error":"Product already exist"})
-		return 
+		Errors["name"] = "Already exist"
+		
 	}
 
 	if ProductStock < 1 {
-		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Quanity cannot be less than 1"})
-		return 
+		Errors["stock"] = "Stock must be greater than 0"
+		
+	}
+
+	if icount == 0 {
+		Errors["cropped_image0"] = "At least one image is required"
+	}
+
+	if len(Errors) > 0 {
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
+		return
 	}
 
 	if err := db.Db.Where("sub_category_id = ?",ProductSubCat).First(&subCat).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"category id does not exist"})
+		
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message": "Something went wrong"})
 		return
 	}
 
 	
 	if subCat.CategoryID == 0 {
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"category id does not exist"})
+		
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message": "Something went wrong"})
 		return
 	}
 
@@ -302,7 +344,8 @@ func AddProduct(c *gin.Context){
 	}
 
 	if err := db.Db.Create(&product).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":err.Error()})
+		
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message": "Something went wrong"})
 		return
 	}
 
@@ -316,7 +359,8 @@ func AddProduct(c *gin.Context){
 	}
 	
 	if err := db.Db.Create(&variant).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":err.Error()})
+		
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message": "Something went wrong"})
 		return 
 	}
 
@@ -327,7 +371,7 @@ func AddProduct(c *gin.Context){
 		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
 	
 		if base64Str != "" {
-			
+
 			var base64Data string
 			if strings.Contains(base64Str, ",") {
 				// Format: data:image/jpeg;base64,<data>
@@ -340,12 +384,14 @@ func AddProduct(c *gin.Context){
 		
 			decoded, err := base64.StdEncoding.DecodeString(base64Data)
 			if err != nil {
-				c.String(http.StatusBadRequest, fmt.Sprintf("Failed to decode image %d: %v", i+1, err))
+				
+				c.JSON(http.StatusBadRequest,gin.H{"status":"error"})
 				return
 			}
 
 			if !isValidImage(decoded) {
-				c.String(http.StatusBadRequest, fmt.Sprintf("Uploaded file %d is not a valid image", i+1))
+		
+				c.JSON(http.StatusBadRequest,gin.H{"status":"error"})
 				return
 			}
 		
@@ -379,7 +425,8 @@ func AddProduct(c *gin.Context){
 			}
 		
 			if err := db.Db.Create(&image).Error; err != nil {
-				c.String(http.StatusInternalServerError, fmt.Sprintf("Error saving image %d to DB: %v", i+1, err))
+				
+				c.JSON(http.StatusBadRequest,gin.H{"status":"error"})
 				return
 			}
 
@@ -392,18 +439,20 @@ func AddProduct(c *gin.Context){
 	if imageCount < 1 {
 		db.Db.Delete(&models.Product{},product.ProductID)
 		db.Db.Delete(&models.Product_Variant{},variant.ID)
-		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Provide atleast 1 image"})
+		
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","message": "Upload atleast 1 image"})
 		return
 	}
 
-	c.Redirect(http.StatusSeeOther,"/admin/products")
+	c.JSON(http.StatusOK,gin.H{
+		"status": "success",
+		"message": "Product added successfully",
+		"redirect": "/admin/products",
+	})
 
 }
 
-func isValidImage(data []byte) bool {
-    _, _, err := image.Decode(bytes.NewReader(data))
-    return err == nil
-}
+
 
 func AddProductVariantPage(c *gin.Context){
 	var Products []models.Product
@@ -581,7 +630,7 @@ func UpdateProductPage(c *gin.Context){
 }
 
 func UpdateProduct(c *gin.Context){
-	
+	Errors := make(map[string]string)
 	productID,_ := strconv.Atoi(c.Param("id"))
 	ProductName := c.PostForm("name")
 	ProductSubCat,_ := strconv.Atoi(c.PostForm("subcategory"))
@@ -594,10 +643,24 @@ func UpdateProduct(c *gin.Context){
 	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
 	ProductTax,_ := strconv.ParseFloat(c.PostForm("tax"),64)
 
-	if strings.TrimSpace(ProductName) == "" || strings.TrimSpace(ProductVariantName) == "" || strings.TrimSpace(ProductDescription) == "" || ProductSize == ""{
-		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Provided empty name for product name or description or size"})
-		return 
+	if strings.TrimSpace(ProductName) == "" {
+		Errors["name"] = "Name should be properly defined"	
 	}
+
+	if strings.TrimSpace(ProductVariantName) == ""{
+		Errors["varian_name"] = "Variant name should be properly defined"
+	}
+
+	if strings.TrimSpace(ProductDescription) == ""{
+		Errors["description"] = "Provide proper description"
+	}
+
+	if ProductSize == ""{
+		Errors["size"] = "Size should be properly defined"
+	}
+
+	ProductSize = utils.SizeAdjust(ProductSize)
+
 
 	// image check
 	for i := 0; i < 3; i++{
@@ -617,33 +680,45 @@ func UpdateProduct(c *gin.Context){
 		
 			decoded, err := base64.StdEncoding.DecodeString(base64Data)
 			if err != nil {
-				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
-				return
+				Errors[fmt.Sprintf("cropped_image%d", i)] = "Image is invalid"
+				continue
 			}
 
 			if !isValidImage(decoded) {
-				c.HTML(http.StatusBadRequest,"admin_product_list.html", gin.H{"error":"Please provide a valid image for product"})
-				return
+				Errors[fmt.Sprintf("cropped_image%d", i)] = "Image is invalid"
+				continue
 			}
 			
 		}
+	}
+
+	if ProductPrice <= 0 {
+		Errors["price"] = "Price must be greater than 0"
+		
+	}
+
+	if ProductStock < 1 {
+		Errors["stock"] = "Stock must be greater than 0"
+		
+	}
+
+
+	if len(Errors) > 0 {
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
+		return
 	}
 
 	var Product models.Product
 	var Product_variant models.Product_Variant
 
 	if err := db.Db.First(&Product_variant,productID).Error;err != nil{
-		c.String(http.StatusNotFound,"Error loading product detail from DB: %v",err)
+		c.JSON(http.StatusNotFound,gin.H{"status":"error","message":"Error loading product detail from DB"})
 		return
 	}
 
-	if ProductStock < 1 {
-		c.HTML(http.StatusBadRequest,"admin_product_list.html",gin.H{"error":"Product stock cannot be updated below 1"})
-		return 
-	}
 
 	if err := db.Db.Where("product_id = ?", Product_variant.ProductID).First(&Product).Error;err != nil{
-		c.String(http.StatusNotFound,"Error loading product detail from DB: %v",err)
+		c.JSON(http.StatusNotFound,gin.H{"status":"error","message":"Error loading product detail from DB"})
 		return
 	}
 
@@ -652,7 +727,7 @@ func UpdateProduct(c *gin.Context){
 	Product.Description = ProductDescription
 
 	if err := db.Db.Save(Product).Error;err != nil{
-		c.String(http.StatusInternalServerError, "Failed to update product")
+		c.JSON(http.StatusInternalServerError, gin.H{"status":"error","message":"Failed to update product"})
         return
 	}
 	
@@ -663,7 +738,7 @@ func UpdateProduct(c *gin.Context){
 	Product_variant.Tax = ProductTax
 
 	if err := db.Db.Save(Product_variant).Error; err!= nil{
-		c.String(http.StatusInternalServerError, "Failed to update product")
+		c.JSON(http.StatusInternalServerError, gin.H{"status":"error","message":"Failed to update product"})
         return
 	}
 
@@ -685,7 +760,7 @@ func UpdateProduct(c *gin.Context){
 		
 			decoded, err := base64.StdEncoding.DecodeString(base64Data)
 			if err != nil {
-				c.String(http.StatusBadRequest, fmt.Sprintf("Failed to decode image %d: %v", i+1, err))
+				c.JSON(http.StatusBadRequest,gin.H{"status":"error"})
 				return
 			}
 		
@@ -711,7 +786,7 @@ func UpdateProduct(c *gin.Context){
 			}
 		
 			if err := db.Db.Create(&image).Error; err != nil {
-				c.String(http.StatusInternalServerError, fmt.Sprintf("Error saving image %d to DB: %v", i+1, err))
+				c.JSON(http.StatusBadRequest,gin.H{"status":"error"})
 				return
 			}
 		}
@@ -719,7 +794,11 @@ func UpdateProduct(c *gin.Context){
 		
 	}
 
-	c.Redirect(http.StatusSeeOther,"/admin/products")
+	c.JSON(http.StatusOK,gin.H{
+		"status": "success",
+		"message": "Product added successfully",
+		"redirect": "/admin/products",
+	})
 }
 
 func DeleteImage(c *gin.Context){

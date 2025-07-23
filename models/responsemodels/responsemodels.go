@@ -30,3 +30,19 @@ type HomePage struct {
 	Price		int
 	Discount	int
 }
+
+
+type ProductForm struct {
+	Name           string
+	SubcategoryID  string
+	Description    string
+	VariantName    string
+	Size           string
+	Stock          string
+	Price          string
+	Tax            string
+	CroppedImages  [3]string
+	Order          [3]string
+	IsPrimary      string
+	Errors         map[string]string
+}

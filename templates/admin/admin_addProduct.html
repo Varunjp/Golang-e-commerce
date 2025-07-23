@@ -7,6 +7,7 @@
   <link href="https://unpkg.com/cropperjs/dist/cropper.min.css" rel="stylesheet" />
   <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+  <script src="/static/product.js" defer></script>
   <style>
     body {
       background-color: #111;
@@ -162,21 +163,6 @@
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-<script src="/static/js.js"></script>
-<script>
-
-document.getElementById('productForm').addEventListener('submit', function(e) {
-  const name = document.getElementById('name').value.trim();
-  const description = document.getElementById('description').value;
-  const variant_name = document.getElementById('variant_name').value.trim();
-
-  if (name === '' || description === '' || variant_name === '') {
-    e.preventDefault(); // ⛔ Prevent form submission
-    alert('Please enter valid name');
-  }
-});
-
-</script>  
 
 
 </body>
