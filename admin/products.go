@@ -452,8 +452,6 @@ func AddProduct(c *gin.Context){
 
 }
 
-
-
 func AddProductVariantPage(c *gin.Context){
 	var Products []models.Product
 	type response struct {
@@ -825,12 +823,21 @@ func DeleteImage(c *gin.Context){
 	
 	ID := c.Param("id")
 	var Image models.Product_image
+	var productImages []models.Product_image
 
 	if err := db.Db.Where("product_image_id = ?",ID).First(&Image).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"edit_Product.html",gin.H{
-			"error":"Image not found "+err.Error(),
-		})
+		c.Redirect(http.StatusSeeOther,"/admin/products")
 		return
+	}
+
+	if err := db.Db.Where("product_variant_id = ?",Image.ProductVariantID).Find(&productImages).Error; err != nil{
+		c.Redirect(http.StatusSeeOther,"/admin/products/edit/"+strconv.Itoa(int(Image.ProductVariantID)))
+		return 
+	}
+
+	if len(productImages) == 1 {
+		c.Redirect(http.StatusSeeOther,"/admin/products/edit/"+strconv.Itoa(int(Image.ProductVariantID)))
+		return 
 	}
 
 	if err := db.Db.Delete(&Image).Error; err != nil{
