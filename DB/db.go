@@ -38,7 +38,6 @@ func DbInit(){
 		&models.Product{},
 		&models.Product_Variant{},
 		&models.Product_image{},
-		&models.Review{},
 		&models.Banner{},
 		&models.OTPVerification{},
 		&models.Coupons{},

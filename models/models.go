@@ -18,7 +18,6 @@ type User struct{
 	ReferredBy 				string 
 	Created_at 				time.Time
 	Updated_at 				time.Time
-	Reviews					[]Review					`gorm:"constraint:OnDelete:CASCADE; foreignKey:UserID"`
 	Orders					[]Order						`gorm:"constraint:ONDELETE:CASCADE; foreignKey:UserID"`
 	ProfileImages			[]ProfileImage				`gorm:"constraint:ONDELETE:CASCADE; foreignKey:UserID"`
 	CartItems				[]CartItem					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
@@ -196,7 +195,6 @@ type Product struct {
 	SubCategory				SubCategory			`gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CreatedAt 				time.Time
 	Product_variants 		[]Product_Variant 	`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductID"`
-	Reviews					[]Review 			`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductID"`
 	DeletedAt				gorm.DeletedAt 		`gorm:"index"`
 }
 
@@ -229,17 +227,6 @@ type Product_image struct {
 	DeleteAt						gorm.DeletedAt		`gorm:"index"`
 }
 
-type Review struct {
-	ID 				uint		`gorm:"primarykey;autoIncrement"`
-	UserID			uint
-	ProductID		uint
-	Rating			int
-	Comment			string
-	CreatedAt		time.Time 
-	UpdatedAt		time.Time 
-	User			User		`gorm:"constraint: OnDelete:CASCADE"`
-	Product			Product		`gorm:"constraint: OnDelete:CASCADE"`
-}
 
 type Banner struct {
 	ID				uint		`gorm:"primarykey;autoIncrement"`
