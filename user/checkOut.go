@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -430,6 +431,7 @@ func AddNewAddressPage(c *gin.Context){
 
 func AddNewAddress(c *gin.Context){
 
+	Errors := make(map[string]string)
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 
@@ -440,13 +442,35 @@ func AddNewAddress(c *gin.Context){
 	PostalCode:= c.PostForm("postalcode")
 	City := c.PostForm("city")
 
-	if strings.TrimSpace(AddressLine1) == "" || strings.TrimSpace(AddressLine2) == "" || strings.TrimSpace(Country) == "" || strings.TrimSpace(State) == "" || strings.TrimSpace(City) == "" {
-		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Invaild address passed"})
-		return 
+	if strings.TrimSpace(AddressLine1) == "" {
+		Errors["line1"] = "Invaild line passed"
 	}
 
-	if len(PostalCode) != 6 {
-		c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Invaild postal code"})
+	if strings.TrimSpace(AddressLine2) == "" {
+		Errors["line2"] = "Invaild line passed"
+	}
+
+	if strings.TrimSpace(Country) == ""{
+		Errors["country"] = "Invaild country passed"
+	}
+
+	if strings.TrimSpace(State) == ""{
+		Errors["state"] = "Invaild state passed"
+	}
+
+	if strings.TrimSpace(City) == ""{
+		Errors["city"] = "Invaild city passed"
+	}
+
+	phonePattern := regexp.MustCompile(`^[0-9]{6}$`)
+
+	if !phonePattern.MatchString(PostalCode){
+		Errors["postalcode"] = "Postal code must be exactly 6 digits"
+	}
+
+
+	if len(Errors) > 0{
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
 		return 
 	}
 
@@ -461,10 +485,14 @@ func AddNewAddress(c *gin.Context){
 	}
 
 	if err := db.Db.Create(&address).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to save new address"})
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Failed to save new address"})
 		return 
 	}
 
-	c.Redirect(http.StatusSeeOther,"/user/checkout")
+	c.JSON(http.StatusOK,gin.H{
+		"status":"successful",
+		"message":"address added",
+		"redirect":"/user/checkout",
+	})
 
 }
