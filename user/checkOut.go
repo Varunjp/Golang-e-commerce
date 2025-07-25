@@ -236,9 +236,9 @@ func CheckOutOrder(c *gin.Context){
 		tax := product.Tax * float64(item.Quantity)
 		total +=tax
 	}
-
+	session := sessions.Default(c)
 	if total > 1000 {
-		session := sessions.Default(c)
+		
 		session.Set("flash","Order above 1000 cannot be ordered as cod, please choose online payment.")
 		session.Save()
 		c.Redirect(http.StatusSeeOther,"/user/checkout")
@@ -259,6 +259,13 @@ func CheckOutOrder(c *gin.Context){
 			
 		}
 
+		if !coupon.IsActive {
+
+			session.Set("flash","Selected coupon is not active now")
+			session.Save()
+			c.Redirect(http.StatusSeeOther,"/user/checkout")
+			return 
+		}
 		
 		if coupon.ID != 0 && total > coupon.MinAmount{
 			discount = (total * coupon.Discount)/100

@@ -100,7 +100,9 @@
                 </li>
                 {{end}}
           </ul>
-
+          {{ if eq .Order.Status "Failed"}}
+          <a href="/order/retry?orderId={{.Order.OrderID}}"><button class="btn btn-outline-primary">Retry</button></a>
+          {{ end }}
         </div>
       </div>
     </div>

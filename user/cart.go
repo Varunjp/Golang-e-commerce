@@ -61,19 +61,25 @@ func AddToCart(c *gin.Context){
 	if err := db.Db.Where("user_id = ? AND product_id = ?",id,productID).First(&cart).Error; err == nil{
 		
 		if (cart.Quantity + quantity) > product.Stock {
-			c.JSON(http.StatusConflict,gin.H{"error":"Item out of stock"})
+			session.Set("error","Item out of stock")
+			session.Save()
+			c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 			return 
 		}
 
 		if (cart.Quantity + quantity) > Limit {
-			c.JSON(http.StatusConflict,gin.H{"error":"User exceeded limit to purchase the item"})
+			session.Set("error","User exceeded limit to purchase the item")
+			session.Save()
+			c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 			return 
 		}
 
 		cart.Quantity = cart.Quantity + quantity
 
 		if err := db.Db.Save(&cart).Error; err != nil{
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"Not able to add to cart"})
+			session.Set("error","Not able to add to cart")
+			session.Save()
+			c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 			return 
 		}
 
@@ -93,12 +99,16 @@ func AddToCart(c *gin.Context){
 		}
 
 		if err := db.Db.Create(&newCart).Error; err != nil{
-			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to add item"})
+			session.Set("error","Failed to add item")
+			session.Save()
+			c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 			return 
 		}
 
 		if err := db.Db.Where("user_id = ? AND product_id = ?",id,productID).First(&wishlist).Error; err != nil && err != gorm.ErrRecordNotFound{
-			c.JSON(http.StatusNotFound,gin.H{"error":"Failed to load wishlist"})
+			session.Set("error","Failed to load wishlist")
+			session.Save()
+			c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 			return 
 		}
 
@@ -111,7 +121,10 @@ func AddToCart(c *gin.Context){
 		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 
 	}else {
-		c.JSON(http.StatusInternalServerError,gin.H{"error":"Issue with database"})
+		session.Set("error","Issue with database")
+		session.Save()
+		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
+		return 
 	}
 
 }
@@ -183,13 +196,9 @@ func UpdateCartItem(c *gin.Context){
 			db.Db.Save(&cart)
 		}
 	case "dec":
-		if cart.Quantity == 1 {
-			db.Db.Delete(&cart)
-			c.Redirect(http.StatusFound,"/user/cart")
-			return 
-		}else{
+		if cart.Quantity != 1 {
 			cart.Quantity--
-			db.Db.Save(&cart)
+			db.Db.Save(&cart) 
 		}
 	}
 

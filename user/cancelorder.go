@@ -51,7 +51,7 @@ func CancelOrderItem(c *gin.Context){
 		return 
 	}
 
-	if order.PaymentMethod != "cod"{
+	if order.PaymentMethod != "cod" && order.PaymentMethod != "Wallet"{
 		err := helper.ItemCancelOnline(OrderId,ItemId,reason)
 
 		if err != nil{
@@ -64,9 +64,21 @@ func CancelOrderItem(c *gin.Context){
 			}
 			return 
 		}
-	}else{
+	}else if order.PaymentMethod == "cod"{
 
 		err := helper.ItemCancelCod(OrderId,ItemId,reason)
+		if err != nil{
+			session.Set("flash","Could not cancel order item, please try again later")
+			session.Save()
+			if referer != ""{
+				c.Redirect(http.StatusSeeOther,referer)
+			}else{
+				c.Redirect(http.StatusSeeOther,"/user/orders")
+			}
+			return 
+		}
+	}else if order.PaymentMethod == "Wallet"{
+		err := helper.WalletOrderCancel(OrderId,ItemId,reason)
 		if err != nil{
 			session.Set("flash","Could not cancel order item, please try again later")
 			session.Save()
@@ -164,7 +176,7 @@ func CancelOrder(c *gin.Context){
 		walletAmount = math.Abs(WalletTransaction.Amount)
 	}
 
-	if order.PaymentMethod != "cod" || order.Status == "Delivered" {
+	if order.PaymentMethod != "cod" && order.PaymentMethod != "Wallet" {
 		
 		walletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
@@ -185,8 +197,49 @@ func CancelOrder(c *gin.Context){
 			return 
 		}
 		
+	}else if order.PaymentMethod != "Wallet" && order.Status == "Delivered" {
+
+		walletTransaction := models.WalletTransaction{
+			UserID: order.UserID,
+			OrderID: order.ID,
+			Amount: order.TotalAmount+walletAmount,
+			Type: "Credit",
+			Description: "Refund",
+			RefundStatus: false,
+		}
+
+		db.Db.Create(&walletTransaction)
+
+		transferErr := helper.CreditCancelWallet(order.UserID,order.TotalAmount+walletAmount,reason)
+
+		if transferErr != nil{
+			c.Redirect(http.StatusSeeOther,"/user/order/"+OrderIDStr)
+			db.Db.Delete(&walletTransaction)
+			return 
+		}
+
+
 	}else if order.PaymentMethod == "cod" && WalletTransaction.ID != 0{
 		
+		newTransaction := models.WalletTransaction{
+			UserID: WalletTransaction.UserID,
+			OrderID: WalletTransaction.OrderID,
+			Amount: walletAmount,
+			Type: "Credit",
+			Description: "Refund request for order :"+strconv.Itoa(int(WalletTransaction.OrderID)),
+			RefundStatus: false,
+		}
+
+		db.Db.Create(&newTransaction)
+
+		transferErr := helper.CreditCancelWallet(order.UserID,walletAmount,reason)
+
+		if transferErr != nil{
+			c.Redirect(http.StatusSeeOther,"/user/order/"+OrderIDStr)
+			db.Db.Delete(&newTransaction)
+			return 
+		}
+	}else if order.PaymentMethod == "Wallet"{
 		newTransaction := models.WalletTransaction{
 			UserID: WalletTransaction.UserID,
 			OrderID: WalletTransaction.OrderID,

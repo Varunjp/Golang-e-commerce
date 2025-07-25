@@ -68,6 +68,22 @@ func DebitWallet(userId uint, amount float64, orderID uint,reason string) error 
 
 }
 
+func UpdateDebitWallet(userID uint,orderId uint)error {
+	var latestTranscation models.WalletTransaction
+
+	if err := db.Db.Where("user_id = ? AND order_id = ?",userID,userID).Order("created_at DESC").First(&latestTranscation).Error; err != nil{
+		return err 
+	}
+
+	latestTranscation.OrderID = orderId
+
+	if err := db.Db.Save(&latestTranscation).Error; err != nil{
+		return err 
+	}
+
+	return nil 
+}
+
 func CreditCancelWallet(userId uint, amount float64, reason string) error {
 
 

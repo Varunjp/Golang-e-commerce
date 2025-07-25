@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	razorpay "github.com/razorpay/razorpay-go"
 	"gorm.io/gorm"
@@ -42,6 +43,8 @@ func CreateRazorpayOrder(c *gin.Context){
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 	var usedcouponcheck models.UsedCoupon
 	var totalAmount float64
+	var wallet models.Wallet
+	session := sessions.Default(c)
 
 	couponCode := req.CouponCode
 
@@ -51,6 +54,19 @@ func CreateRazorpayOrder(c *gin.Context){
 			return 
 		}
 
+		var coupon models.Coupons
+
+		if err := db.Db.Where("id = ?",couponCode).First(&coupon).Error; err != nil{
+			c.JSON(http.StatusBadRequest,gin.H{"success":false})
+			return 
+		}
+
+		if !coupon.IsActive{
+			session.Set("flash","Selected coupon is not active now")
+			session.Save()
+			c.JSON(http.StatusOK,gin.H{"success":true,"redirect":"/user/checkout"})
+			return
+		}
 	}
 	
 	var orderitems []models.OrderItem
@@ -111,6 +127,29 @@ func CreateRazorpayOrder(c *gin.Context){
 		}
 	}
 
+	var walletAmount float64
+	if req.IsWallet {
+		if err := db.Db.Where("user_id = ?",userID).First(&wallet).Error; err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"success":false})
+			return 
+		}
+		walletAmount = math.Min(wallet.Balance,totalAmount)
+		totalAmount = totalAmount - walletAmount
+		
+		if totalAmount < 1 {
+			odID,err := WalletPayment(c,walletAmount,couponCode,req.AddressID)
+
+			if err != nil || odID == 0 {
+				c.JSON(http.StatusInternalServerError,gin.H{"success":false})
+				return 
+			}
+
+			c.JSON(http.StatusOK,gin.H{"success":true,"redirect": fmt.Sprintf("/order/confirmation/%d",odID)})
+			return
+		}
+		
+	}
+	
 	totalAmount = totalAmount *100
 
 	client := razorpay.NewClient(os.Getenv("RAZORPAY_KEY_ID"), os.Getenv("RAZORPAY_KEY_SECRET"))
@@ -127,6 +166,13 @@ func CreateRazorpayOrder(c *gin.Context){
 		log.Println("error from order :",err.Error())
 		c.JSON(http.StatusInternalServerError,gin.H{"success":false,"error":"Failed to create Razorpay order"})
 		return 
+	}
+
+	if req.IsWallet {
+		if err := helper.DebitWallet(uint(userID),walletAmount,uint(userID),"Purchase on :"+time.Now().Format("2006-01-02 15:04:05"));err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"success":false})
+			return 
+		}
 	}
 
 	c.JSON(http.StatusOK,gin.H{
@@ -240,12 +286,6 @@ func PaymentSuccess(c *gin.Context){
 			discount = coupon.MaxAmount	
 		}
 
-		if payload.IsWallet {
-				wallet := (total+totalTax)-discount
-				discount += wallet
-		}
-	}else if payload.IsWallet {
-		discount = (total+totalTax) - payload.Amount
 	}
 
 
@@ -309,16 +349,7 @@ func PaymentSuccess(c *gin.Context){
 
 	if payload.IsWallet {
 
-		var walletAmount float64
-
-		if coupon.ID != 0 {
-			couponDiscount := math.Round((total+totalTax) * coupon.Discount /100) 
-			walletAmount = ((total+totalTax) - payload.Amount)-couponDiscount
-		}else{
-			walletAmount = (total+totalTax) - payload.Amount
-		}
-
-		err := helper.DebitWallet(uint(userID),walletAmount,order.ID,"Order debit")
+		err := helper.UpdateDebitWallet(order.UserID,order.ID)
 
 		if err != nil{
 			c.JSON(http.StatusInternalServerError,gin.H{"success":false})

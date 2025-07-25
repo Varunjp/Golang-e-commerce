@@ -1,0 +1,236 @@
+package user
+
+import (
+	db "first-project/DB"
+	"first-project/helper"
+	"first-project/models"
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+)
+
+func WalletPayment(c *gin.Context,amount float64,couponcode string,addressId string) (uint,error){
+
+	tokenStr,_ := c.Cookie("JWT-User")
+	_,userID,_ := helper.DecodeJWT(tokenStr)
+
+	var CartItems []models.CartItem
+	if err := db.Db.Where("user_id = ?",userID).Find(&CartItems).Error; err != nil {
+		erram := helper.CreditWallet(uint(userID),amount,"Product removed from cart")
+		if erram != nil{
+			log.Println(erram)
+		}
+		c.JSON(http.StatusNotFound,gin.H{"success":false,"redirect":"/user/cart" ,"error":"Not able to load cart items"})
+		return 0,erram
+	}
+
+	if len(CartItems) == 0 {
+		erram := helper.CreditWallet(uint(userID),amount,"Product removed from cart")
+		if erram != nil{
+			log.Println(erram)
+		}
+		c.JSON(http.StatusBadRequest,gin.H{"success":false,"redirect":"/user/cart","error":"Cart is empty"})
+		return 0,erram
+	}
+
+	var total float64
+	var totalTax float64
+	var totalAmount float64
+	for _,item := range CartItems{
+		var product models.Product_Variant
+		db.Db.Where("id = ?",item.ProductID).First(&product)
+
+		if product.Stock < item.Quantity {
+			erram := helper.CreditWallet(uint(userID),amount,"Stock not available for the product")
+			if erram != nil{
+				log.Println(erram)
+			}
+			c.JSON(http.StatusNotFound,gin.H{"success":false,"redirect":"/user/cart" ,"error":"Stock not available for the product"})
+			return 0,erram
+		}
+
+		total += item.Price * float64(item.Quantity)
+		totalTax += product.Tax * float64(item.Quantity)
+		totalAmount+= item.Price * float64(item.Quantity)
+	}
+
+	totalAmount += totalTax
+
+	var coupon models.Coupons
+
+	if couponcode != ""{
+		if err := db.Db.Where("id = ?",couponcode).First(&coupon).Error; err != nil{
+			if err != gorm.ErrRecordNotFound {
+				c.JSON(http.StatusInternalServerError,gin.H{"success":false,"redirect":"/user/cart","error":"Failed to load details"})
+				return 0,err
+			}
+		}
+	}
+	
+
+	var discount float64
+	if coupon.ID != 0 {
+
+		if totalAmount > coupon.MinAmount {
+			discount = (totalAmount * coupon.Discount)/100
+		}
+		
+		if coupon.MaxAmount < discount {
+			discount = coupon.MaxAmount	
+		}
+
+
+	}
+
+	neOrderId := helper.GenerateOrderID()
+	totalAmount = totalAmount - discount
+	addIdint,_ := strconv.Atoi(addressId)
+
+	order := models.Order{
+		UserID: uint(userID),
+		OrderID: neOrderId,
+		AddressID: uint(addIdint),
+		DiscountTotal: discount,
+		SubTotal: total+totalTax,
+		TotalTax: totalTax,
+		TotalAmount: totalAmount,
+		Status: "Processing",
+		PaymentStatus: "Successful",
+		PaymentMethod: "Wallet",
+		CreateAt: time.Now(),
+	}
+
+
+	if err := db.Db.Create(&order).Error; err != nil{
+		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to create order"})
+		return 0,err
+	}
+
+	var address models.Address
+
+	db.Db.Where("address_id  = ?",addressId).First(&address)
+
+	OrderAddress := models.OrderAddress{
+		OrderID: order.ID,
+		AddressLine1: address.AddressLine1,
+		AddressLine2: address.AddressLine2,
+		Country: address.Country,
+		City: address.City,
+		State: address.State,
+		PostalCode: address.PostalCode,
+	}
+
+	db.Db.Create(&OrderAddress)
+
+	if couponcode != ""{
+
+		
+		usedcoupon := models.UsedCoupon{
+			UserID: order.UserID,
+			CouponID: coupon.ID,
+			OrderID: order.ID,
+		}
+
+		if err := db.Db.Create(&usedcoupon).Error; err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Error while saving coupon upadate please try again later."})
+			return 0,err
+		}
+
+	}
+
+	if err := helper.DebitWallet(uint(userID),amount,order.ID,fmt.Sprintf("Purchase on order : %v",order.OrderID));err != nil{
+		c.JSON(http.StatusInternalServerError,gin.H{"success":false})
+		return 0,err
+	}
+
+	var orderitems []models.OrderItem
+	
+	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
+		if err != gorm.ErrRecordNotFound{
+			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load user details please try again later"})
+			return 0,err
+		}
+	}
+
+	for _,item := range CartItems{
+
+		itemCount := 0
+		var product models.Product_Variant
+
+		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
+			c.JSON(http.StatusBadRequest,gin.H{"error":"Insufficient stock"})
+			return 0,err
+		}
+		db.Db.Where("id = ?",item.ProductID).First(&product)
+
+		for _, oritems := range orderitems{
+			if item.ProductID == oritems.ProductID{
+				itemCount = item.Quantity + oritems.Quantity
+			}
+		}
+
+		if itemCount >= 5 {
+			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+			amount := item.Price * float64(item.Quantity) + product.Tax * float64(item.Quantity)
+			order.TotalAmount = order.TotalAmount - amount
+			db.Db.Save(&order)
+			err := helper.CreditWallet(order.UserID,amount,"Limit exceeded in the product")
+			if err != nil{
+				log.Println(err)
+			}
+		}
+
+		if product.Stock < item.Quantity{
+			orderItem := models.OrderItem{
+				UserID: uint(userID),
+				OrderID: order.ID,
+				ProductID: item.ProductID,
+				Quantity: item.Quantity,
+				Status: "Cancelled ",
+				Price: item.Price,
+			}
+
+			if err := db.Db.Create(&orderItem).Error; err != nil{
+				log.Println(err)
+			}
+			amount := item.Price * float64(item.Quantity)
+			err := helper.CreditWallet(uint(userID),amount,"Product out of stock")
+			if err!= nil{
+				log.Println(err)
+			}
+		}else{
+			orderItem := models.OrderItem{
+				UserID: uint(userID),
+				OrderID: order.ID,
+				ProductID: item.ProductID,
+				Quantity: item.Quantity,
+				Status: "Processing",
+				Price: item.Price,
+			}
+
+			if err := db.Db.Create(&orderItem).Error; err != nil{
+				log.Println(err)
+			}
+
+			// delete from wishlist
+			var wishlist models.WishList
+
+			if err := db.Db.Where("user_id = ? AND product_id = ?",userID,item.ProductID).First(&wishlist).Error; err == nil{
+				db.Db.Delete(&wishlist)
+			}
+		}
+
+	}
+
+	if err := db.Db.Delete(&CartItems).Error; err != nil{
+		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to clear cart items"})
+		return 0,err
+	}
+
+	return order.ID,nil
+}

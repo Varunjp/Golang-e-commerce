@@ -117,6 +117,16 @@ func RegisterUser(c *gin.Context){
 }
 
 func VerifyOTPPage(c *gin.Context){
+
+	token,err := c.Cookie("JWT-User")
+
+	if err == nil{
+		if token != ""{
+			c.Redirect(http.StatusSeeOther,"/")
+			return 
+		}
+	}
+
 	email := c.Query("email")
 	c.HTML(http.StatusOK,"verifyOtp.html",gin.H{"email":email})
 }

@@ -168,6 +168,9 @@
                   //alert("Error creating Razorpay order");
                   window.location.href = "/user/cart";
                   return;
+              }else if (data.success && data.redirect){
+                window.location.href = data.redirect;
+                return;
               }
 
               const options = {

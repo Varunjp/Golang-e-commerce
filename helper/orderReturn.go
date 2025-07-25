@@ -205,11 +205,6 @@ func ItemReturnCod(orderId, itemId, reason string) error{
 		}
 	}
 
-	walletAmount := 0.0
-
-	if WalletTransaction.ID != 0 {
-		walletAmount = math.Abs(WalletTransaction.Amount)
-	}
 
 	if err := db.Db.Where("id = ?",orderItem.ProductID).First(&Product).Error; err != nil{
 		return err 
@@ -245,7 +240,7 @@ func ItemReturnCod(orderId, itemId, reason string) error{
 					UserID: order.UserID,
 					OrderID: order.ID,
 					OrderItemID: orderItem.ID,
-					Amount: refundAmount+walletAmount,
+					Amount: refundAmount,
 					Type: "Credit",
 					Description: reason,
 					RefundStatus: true,
@@ -269,7 +264,7 @@ func ItemReturnCod(orderId, itemId, reason string) error{
 					UserID: order.UserID,
 					OrderID: order.ID,
 					OrderItemID: orderItem.ID,
-					Amount: itemTotal+walletAmount,
+					Amount: itemTotal,
 					Type: "Credit",
 					Description: reason,
 					RefundStatus: true,
@@ -295,7 +290,7 @@ func ItemReturnCod(orderId, itemId, reason string) error{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: itemTotal+walletAmount,
+				Amount: itemTotal,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: true,

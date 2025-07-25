@@ -85,6 +85,12 @@ func GetUrl(router *gin.Engine){
 	router.POST("/create-razorpay-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.CreateRazorpayOrder)
 	router.POST("/payment/success",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.PaymentSuccess)
 
+	// User retry payment
+	router.GET("/order/retry",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.RetryOrderPage)
+	router.POST("/create-razorpay-retryorder",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.RetryOrderCreate)
+	router.POST("/payment/retry-success",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.RetryPaymentSuccess)
+	router.POST("/order/retry-failed",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.RetryFailed)
+
 	// User wishlist
 	router.GET("/user/add-wishlist/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddToWishlist)
 	router.GET("/user/remove-wishlist/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.RemoveWishlist)
