@@ -5,6 +5,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -103,6 +104,10 @@ func OrderFailed(c *gin.Context){
 			return 
 		}
 
+	}
+
+	if err := db.Db.Delete(&cartItems).Error; err != nil{
+		log.Println(err)
 	}
 
 	c.JSON(http.StatusOK,gin.H{"success":true,"redirect": fmt.Sprintf("/order/failed-page/%d",order.ID)})

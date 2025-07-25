@@ -357,6 +357,7 @@ func EditCouponPage(c *gin.Context){
 
 func EditCoupon(c *gin.Context){
 	var couponExist models.Coupons
+	Errors := make(map[string]string)
 	idParam := c.Param("id")
 	id,err := strconv.Atoi(idParam)
 	if err != nil{
@@ -373,35 +374,50 @@ func EditCoupon(c *gin.Context){
 
 	newCode := c.PostForm("code")
 	newDescription := c.PostForm("description")
-
-	coupon.Code = newCode
-	coupon.Description = newDescription
-
 	discount,_ := strconv.ParseFloat(c.PostForm("discount"),64)
 	minAmount,_ := strconv.ParseFloat(c.PostForm("min_amount"),64)
 	maxAmount,_ := strconv.ParseFloat(c.PostForm("max_amount"),64)
+
+	if err := db.Db.Where("code ILIKE ?",newCode).First(&couponExist).Error; err == nil{
+		Errors["code"] = "Already exist"
+	}
+
+	if strings.TrimSpace(newCode) == "" || strings.TrimSpace(newDescription) == "" || minAmount == 0 || discount == 100{
+		Errors["code"] = "Coupon code doesn't meet requirment" 
+	}
+
+	if minAmount <= 0 {
+		Errors["min_amount"] = "Coupon minimum amount should be greater than zero"
+	}
+
+	if discount > 75{
+		Errors["discount"] = "Coupon disount should be less than 75%"
+	}
+
+	if strings.TrimSpace(newDescription) == ""{
+		Errors["description"] = "Coupon description doesn't meet requirment"
+	}
+
+	if len(Errors) > 0 {
+		c.JSON(http.StatusBadRequest,gin.H{
+			"status":"error",
+			"errors":Errors,
+		})
+		return 
+	}
+
+
+	coupon.Code = strings.ToUpper(newCode)
+	coupon.Description = newDescription
+
+	
 
 	coupon.Discount = discount
 	coupon.MinAmount = minAmount
 	coupon.MaxAmount = maxAmount
 	coupon.Type = c.PostForm("type")
 
-	session := sessions.Default(c)
-
-	if err := db.Db.Where("code ILIKE ?",newCode).First(&couponExist).Error; err == nil{
-		session.Set("flash","Coupon code already exist")
-		session.Save()
-		c.Redirect(http.StatusSeeOther,"/admin/coupons")
-		return
-	}
-
-
-	if strings.TrimSpace(newCode) == "" || strings.TrimSpace(newDescription) == "" || minAmount == 0 || discount == 100{
-		session.Set("flash","Coupon doesn't meet requirment")
-		session.Save()
-		c.Redirect(http.StatusSeeOther,"/admin/coupons")
-		return 
-	}
+	
 
 	categoryIDstr := c.PostForm("category_id")
 	if categoryIDstr != ""{
@@ -412,9 +428,9 @@ func EditCoupon(c *gin.Context){
 	}
 
 	if err := db.Db.Save(&coupon).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"coupon.html",gin.H{"error":"Could not update coupon"})
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Failed to update coupon"})
 		return 
 	}
 
-	c.Redirect(http.StatusSeeOther,"/admin/coupons")
+	c.JSON(http.StatusOK,gin.H{"redirect":"/admin/coupons"})
 }

@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	razorpay "github.com/razorpay/razorpay-go"
+	"gorm.io/gorm"
 )
 
 func RetryOrderPage(c *gin.Context) {
@@ -124,6 +125,10 @@ func RetryPaymentSuccess(c *gin.Context){
 	order.OrderDate = time.Now()
 
 	for _,item := range order.OrderItems{
+		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
+			c.JSON(http.StatusBadRequest,gin.H{"success":false})
+			return 
+		}
 		item.Status = "Processing"
 		db.Db.Save(&item)
 	}
