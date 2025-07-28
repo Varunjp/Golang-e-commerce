@@ -512,6 +512,27 @@ func DeleteAddress(c *gin.Context){
 	addressID := c.PostForm("address_id")
 
 	var address models.Address
+	var addresses []models.Address
+
+	if err := db.Db.Where("address_id = ?",addressID).First(&address).Error; err != nil{
+		c.JSON(http.StatusNotFound,gin.H{"error":"Failed to get address"})
+		return 
+	}
+
+	if err := db.Db.Where("user_id = ?",address.UserID).Find(&addresses).Error; err != nil{
+		c.JSON(http.StatusNotFound,gin.H{"error":"Failed to get address"})
+		return 
+	}
+
+	if address.IsDefault {
+		for _,ad := range addresses{
+			if ad.AddressID != address.AddressID {
+				ad.IsDefault = true
+				db.Db.Save(&ad)
+				break
+			}
+		}
+	}
 
 	if err := db.Db.Delete(&address,addressID).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Address not found"})
