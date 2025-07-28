@@ -861,10 +861,6 @@ func DeleteProduct(c *gin.Context){
         return
 	}
 
-	if err := db.Db.Preload("Product_variants").Where("product_id = ?",Product_variant.ProductID).First(&Product).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Failed get product details"})
-		return 
-	}
 
 	err := helper.CancelOrderForProduct(id)
 
@@ -878,18 +874,25 @@ func DeleteProduct(c *gin.Context){
         return
 	}
 
-	// totalVariant := len(Product.Product_variants)
-	// var delCount int 
+	if err := db.Db.Preload("Product_variants",func(db *gorm.DB)*gorm.DB{
+		return db.Unscoped()
+	}).Where("product_id = ?",Product_variant.ProductID).First(&Product).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"admin_product_list.html",gin.H{"error":"Failed get product details"})
+		return 
+	}
 
-	// for _,vari := range Product.Product_variants{
-	// 	if vari.DeletedAt.Time.Format("2006-01-02") != ""{
-	// 		delCount++
-	// 	}
-	// }
+	totalVariant := len(Product.Product_variants)
+	var delCount int 
 
-	// if totalVariant == delCount {
-	// 	db.Db.Delete(&Product)
-	// }
+	for _,vari := range Product.Product_variants{
+		if vari.DeletedAt.Valid {
+			delCount ++
+		}
+	}
+
+	if totalVariant == delCount {
+		db.Db.Delete(&Product)
+	}
 
 
 	c.Redirect(http.StatusSeeOther,"/admin/products")
