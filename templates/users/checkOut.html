@@ -23,7 +23,7 @@
             <div class="card-body">
               {{range .Addresses}}
                 <div class="form-check mb-3">
-                  <input class="form-check-input" type="radio" name="address_id" value="{{.AddressID}}" id="address{{.AddressID}}" required>
+                  <input class="form-check-input" type="radio" name="address_id" value="{{.AddressID}}" id="address{{.AddressID}}" required {{if .IsDefault}}checked{{end}}>
                   <label class="form-check-label" for="address{{.AddressID}}">
                     {{.AddressLine1}}, {{.AddressLine2}}, {{.City}}, {{.State}} - {{.PostalCode}}, {{.Country}}
                   </label>

@@ -44,6 +44,7 @@ type Address struct {
 	City 			string
 	State 			string  
 	PostalCode 		string
+	IsDefault		bool
 	Orders			[]Order						`gorm:"constraint:ONDELETE:CASCADE;foreignKey:AddressID"`
 	DeletedAt		gorm.DeletedAt
 }

@@ -89,8 +89,18 @@
                 <strong>Line 2 : </strong> {{.AddressLine2}}<br>
                 <strong>City : </strong>{{.City}}, <strong>State : </strong>{{.State}} <strong>PinCode : </strong> {{.PostalCode}}<br>
                 <strong>Contry : </strong>{{.Country}}
+                <br>
+                {{if .IsDefault}}
+                <span class="badge bg-success">Default</span>
+                {{else}}
+                  <form method="POST" action="/user/address/set-default" class="d-inline">
+                    <input type="hidden" name="address_id" value="{{.AddressID}}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Make Default</button>
+                  </form>
+                {{end}}
                 <hr>
               </div>
+
             {{else}}
               <p>No addresses available.</p>
             {{end}}

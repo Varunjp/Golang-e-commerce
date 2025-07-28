@@ -438,6 +438,7 @@ func AddNewAddressPage(c *gin.Context){
 
 func AddNewAddress(c *gin.Context){
 
+	var addresses []models.Address
 	Errors := make(map[string]string)
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userID,_ := helper.DecodeJWT(tokenStr)
@@ -481,6 +482,21 @@ func AddNewAddress(c *gin.Context){
 		return 
 	}
 
+	if err := db.Db.Where("user_id = ?",userID).Find(&addresses).Error; err != nil{
+		if err != gorm.ErrRecordNotFound{
+			c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Failed to get address list"})
+			return 
+		}
+	}
+
+	for _,adrs := range addresses {
+		adrs.IsDefault = false
+		if err := db.Db.Save(&adrs).Error; err != nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"status":"error","message":"Failed to save address"})
+			return 
+		}
+	}
+
 	address := models.Address{
 		UserID: uint(userID),
 		AddressLine1: AddressLine1,
@@ -489,6 +505,7 @@ func AddNewAddress(c *gin.Context){
 		State: State,
 		PostalCode: PostalCode,
 		City: City,
+		IsDefault: true,
 	}
 
 	if err := db.Db.Create(&address).Error; err != nil{

@@ -60,7 +60,7 @@ func UserOrderCancelItem(itemId string) error {
 		
 	} else if !valueCheck && errVal == nil {
 
-		if walletTransaction.ID != 0 {
+		if walletTransaction.ID != 0 && order.PaymentMethod != "Wallet"{
 
 			var updateTotal float64
 			if newTotal == 0 {

@@ -44,6 +44,7 @@ func GetUrl(router *gin.Engine){
 	router.POST("/user/change-password",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.ChangePassword)
 	router.POST("/user/upload-profile-image",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.UploadProfileImage)
 	router.POST("/user/verify-email-otp",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.UpdateEmail)
+	router.POST("/user/address/set-default",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.MakeAddressDefault)
 
 	// User referral
 	router.GET("/user/create/referral",middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.GenerateReferralCode)
