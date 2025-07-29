@@ -356,7 +356,7 @@ func EditCouponPage(c *gin.Context){
 }
 
 func EditCoupon(c *gin.Context){
-	var couponExist models.Coupons
+	// var couponExist models.Coupons
 	Errors := make(map[string]string)
 	idParam := c.Param("id")
 	id,err := strconv.Atoi(idParam)
@@ -378,9 +378,9 @@ func EditCoupon(c *gin.Context){
 	minAmount,_ := strconv.ParseFloat(c.PostForm("min_amount"),64)
 	maxAmount,_ := strconv.ParseFloat(c.PostForm("max_amount"),64)
 
-	if err := db.Db.Where("code ILIKE ?",newCode).First(&couponExist).Error; err == nil{
-		Errors["code"] = "Already exist"
-	}
+	// if err := db.Db.Where("code ILIKE ?",newCode).First(&couponExist).Error; err == nil{
+	// 	Errors["code"] = "Already exist"
+	// }
 
 	if strings.TrimSpace(newCode) == "" || strings.TrimSpace(newDescription) == "" || minAmount == 0 || discount == 100{
 		Errors["code"] = "Coupon code doesn't meet requirment" 

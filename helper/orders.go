@@ -62,7 +62,6 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 		adjustedTotal := order.TotalAmount - itemTotal
 
-	
 		// less than minmum amount in coupon
 		if adjustedTotal < coupon.MinAmount && adjustedTotal > 0{
 
@@ -95,14 +94,18 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 	
 
 		}else if adjustedTotal < coupon.MinAmount && adjustedTotal < 0{
+			
+			var refundAmount float64
 
+			newTotal := orignalTotal - itemTotal
+			refundAmount = order.TotalAmount - newTotal
 			
 			// amount refund
 			walletTransaction := models.WalletTransaction{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: order.TotalAmount,
+				Amount: refundAmount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: false,
@@ -112,14 +115,16 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				return err 
 			}
 
-			transferErr := CreditCancelWallet(order.UserID,order.TotalAmount,reason)
+			order.DiscountTotal = 0
+
+			transferErr := CreditCancelWallet(order.UserID,refundAmount,reason)
 
 			if transferErr != nil{
 				log.Println("Failed to credit user wallet")
 				return transferErr
 			}
 
-
+			db.Db.Delete(&usedCoupon)
 		}else{
 
 			// amount refund

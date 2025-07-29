@@ -288,10 +288,9 @@ func PaymentSuccess(c *gin.Context){
 
 	}
 
-
 	neOrderId := helper.GenerateOrderID()
 	totalAmount = totalAmount - discount
-
+	
 	order := models.Order{
 		UserID: uint(userID),
 		OrderID: neOrderId,
@@ -359,7 +358,7 @@ func PaymentSuccess(c *gin.Context){
 
 	var orderitems []models.OrderItem
 	
-	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL",userID).Find(&orderitems).Error; err != nil{
+	if err := db.Db.Where("user_id = ? AND deleted_at IS NULL AND status = ?",userID,"Delivered").Find(&orderitems).Error; err != nil{
 		if err != gorm.ErrRecordNotFound{
 			c.HTML(http.StatusInternalServerError,"checkOut.html",gin.H{"error":"Failed to load user details please try again later"})
 			return 
@@ -413,6 +412,7 @@ func PaymentSuccess(c *gin.Context){
 				OrderID: order.ID,
 				ProductID: item.ProductID,
 				Quantity: item.Quantity,
+				Tax: product.Tax,
 				Status: "Processing",
 				Price: item.Price,
 			}

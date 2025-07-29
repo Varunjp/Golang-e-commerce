@@ -66,7 +66,7 @@
                         {{if gtf .Discount 0.0 }}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
                     </div>
                     <div class="col-3 col-md-3 text-end fw-bold">
-                        ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) .Tax)}}
+                        ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) (mulFloat .Tax .Quantity))}}
                     </div>
                     <!--testing-->
                     <div class="col-12 col-md-2 text-end">

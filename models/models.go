@@ -100,6 +100,7 @@ type OrderItem struct {
 	ProductID			uint 	`gorm:"index"`
 	Quantity			int 
 	Price 				float64	`gorm:"not null"`
+	Tax					float64
 	Discount 			float64	
 	Status 				string
 	PaymentStatus 		string 

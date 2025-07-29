@@ -373,6 +373,11 @@ func CheckOutOrder(c *gin.Context){
 	for _,item := range CartItems{
 
 		itemCount := 0
+		var product models.Product_Variant
+
+		if err := db.Db.Where("id = ?",item.ProductID).First(&product).Error; err != nil{
+			c.JSON(http.StatusBadRequest,gin.H{"error":"Failed to get product details"})
+		}
 
 		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"Insufficient stock"})
@@ -397,6 +402,7 @@ func CheckOutOrder(c *gin.Context){
 			OrderID: order.ID,
 			ProductID: item.ProductID,
 			Quantity: item.Quantity,
+			Tax: product.Tax,
 			Status: "Processing",
 			Price: item.Price,		
 		}
