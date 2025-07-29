@@ -39,7 +39,48 @@ func VerifyProduct() gin.HandlerFunc{
 
 		for _,item := range CartItems{
 			var product models.Product_Variant
-			if err := db.Db.Where("id = ?",item.ProductID).First(&product).Error; err != nil{
+			var ogpro models.Product
+			var subCat models.SubCategory
+			var cate models.Category
+			err := db.Db.Where("id = ?",item.ProductID).First(&product).Error
+			errp := db.Db.Where("product_id = ?",product.ProductID).First(&ogpro).Error
+
+			if err != nil || errp != nil{
+				if referer != ""{
+					db.Db.Delete(&item)
+					c.Redirect(http.StatusSeeOther,referer)
+				}else{
+					c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Product has been removed."})
+				}
+				c.Abort()
+				return 
+			}
+
+			if err := db.Db.Where("sub_category_id = ?",ogpro.SubCategoryID).First(&subCat).Error; err != nil{
+				if referer != ""{
+					db.Db.Delete(&item)
+					c.Redirect(http.StatusSeeOther,referer)
+				}else{
+					c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Product has been removed."})
+				}
+				c.Abort()
+				return
+			}
+
+
+			if err := db.Db.Where("category_id = ?",subCat.CategoryID).First(&cate).Error; err != nil{
+				if referer != ""{
+					db.Db.Delete(&item)
+					c.Redirect(http.StatusSeeOther,referer)
+				}else{
+					c.HTML(http.StatusNotFound,"cart.html",gin.H{"error":"Product has been removed."})
+				}
+				c.Abort()
+				return
+			}
+
+
+			if cate.IsBlocked{
 				if referer != ""{
 					db.Db.Delete(&item)
 					c.Redirect(http.StatusSeeOther,referer)
