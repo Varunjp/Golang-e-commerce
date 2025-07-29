@@ -228,14 +228,17 @@ func CheckOutOrder(c *gin.Context){
 	}
 
 	var total float64
+	var tax float64
 
 	for _,item := range CartItems{
 		var product models.Product_Variant
 		total += item.Price * float64(item.Quantity)
 		db.Db.Where("id = ?",item.ProductID).First(&product)
-		tax := product.Tax * float64(item.Quantity)
-		total +=tax
+		tax += product.Tax * float64(item.Quantity)
+		
 	}
+
+	total +=tax
 	session := sessions.Default(c)
 	if total > 1000 {
 		
@@ -307,6 +310,7 @@ func CheckOutOrder(c *gin.Context){
 		AddressID: addressID,
 		TotalAmount: finalAmount,
 		SubTotal: total,
+		TotalTax: tax,
 		DiscountTotal: discount+walletUsed,
 		Status: "Processing",
 		PaymentMethod: paymentOption,
