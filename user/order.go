@@ -124,13 +124,15 @@ func ReturnOrder(c *gin.Context){
 	}
 
 	if order.PaymentMethod != "cod" || order.Status == "Delivered" {
+
+		desc := fmt.Sprintf("Refund request for order : %s",order.OrderID)
 		
 		walletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
 			OrderID: order.ID,
 			Amount: order.TotalAmount+walletAmount,
 			Type: "Credit",
-			Description: "Refund",
+			Description: desc,
 			RefundStatus: true,
 		}
 

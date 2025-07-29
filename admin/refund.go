@@ -197,7 +197,7 @@ func WalletRefundApproval (c *gin.Context){
 	}
 
 	transaction.RefundStatus = false
-	transaction.Description = reason
+	transaction.Description = transaction.Description+" "+reason
 	transaction.Type = "Credit"
 
 	if err := db.Db.Save(&transaction).Error; err != nil{

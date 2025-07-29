@@ -105,9 +105,6 @@ func CreateRazorpayOrder(c *gin.Context){
 			}
 		}
 
-		//delete
-		fmt.Println("checking count :",itemCount)
-
 		if itemCount > 5 {
 
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
