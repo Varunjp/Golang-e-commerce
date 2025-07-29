@@ -92,6 +92,9 @@ func GetUrl(router *gin.Engine){
 	router.POST("/payment/retry-success",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.RetryPaymentSuccess)
 	router.POST("/order/retry-failed",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.RetryFailed)
 
+	// User review
+	router.POST("/user/review",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.Review)
+
 	// User wishlist
 	router.GET("/user/add-wishlist/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddToWishlist)
 	router.GET("/user/remove-wishlist/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.RemoveWishlist)

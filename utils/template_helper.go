@@ -28,6 +28,10 @@ func TemplateFuncs() template.FuncMap {
 		"addFloat":addFloat,
 		"formatDate":formatDate,
 		"round2":round2,
+		"seq":sec,
+		"floor":floor,
+		"toFloat":tofloat,
+
 	}
 }
 
@@ -70,4 +74,20 @@ func formatDate(t time.Time)string{
 
 func round2(f float64)float64{
 	return math.Round(f*100)/100
+}
+
+func sec(n int) []int{
+	s := make([]int, n)
+	for i := range s {
+		s[i] = i
+	}
+	return s
+}
+
+func floor (x float64) float64{
+	return math.Floor(x)
+}
+
+func tofloat(i int)float64{
+	return float64(i)
 }

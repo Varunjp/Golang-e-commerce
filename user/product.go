@@ -6,6 +6,7 @@ import (
 	"first-project/models"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -24,6 +25,12 @@ func Product(c *gin.Context){
 	var product models.Product
 	var product_variant models.Product_Variant
 	var images []models.Product_image
+	type ReviewResponse struct{
+		UserName 	string
+		Rating 		int 
+		CreatedAt 	time.Time
+		Comment 	string
+	}
 
 	if err := db.Db.Where("deleted_at IS NULL").First(&product_variant,productID).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Product not found"})
@@ -34,6 +41,32 @@ func Product(c *gin.Context){
 		c.JSON(http.StatusNotFound,gin.H{"error":"Product not found"})
 		return 
 	}
+
+	var reviews []models.Review
+	var respReview []ReviewResponse
+    db.Db.Preload("User").Where("product_id = ?", product.ProductID).Order("created_at desc").Find(&reviews)
+
+	for _,rev := range reviews{
+		respReview =  append(respReview, ReviewResponse{
+			UserName: rev.User.Username,
+			Rating: rev.Rating,
+			CreatedAt: rev.CreatedAt,
+			Comment: rev.Comment,
+		})
+	}
+
+    // Calculate average rating
+    var total int64
+    var sum float64
+    db.Db.Model(&models.Review{}).
+        Where("product_id = ?", product.ProductID).
+        Count(&total).
+        Select("AVG(rating)").Row().Scan(&sum)
+
+    averageRating := 0.0
+    if total > 0 {
+        averageRating = sum
+    }
 
 	type responseVariant struct {
 		ID		uint 
@@ -71,6 +104,9 @@ func Product(c *gin.Context){
 				"AllVariants":availableVariants,
 				"Images": images,
 				"Wishlist":isWishlist,
+				"Reviews": respReview,
+				"AverageRating": averageRating,
+				"TotalReviews":  total,
 				"message":flash,
 			})
 			return 
@@ -84,6 +120,9 @@ func Product(c *gin.Context){
 				"variant": product_variant,
 				"AllVariants":availableVariants,
 				"Images": images,
+				"Reviews": respReview,
+				"AverageRating": averageRating,
+				"TotalReviews":  total,
 				"Wishlist":isWishlist,
 				"error":errmsg,
 			})
@@ -95,6 +134,9 @@ func Product(c *gin.Context){
 			"Product": product,
 			"variant": product_variant,
 			"AllVariants":availableVariants,
+			"Reviews": respReview,
+			"AverageRating": averageRating,
+			"TotalReviews":  total,
 			"Images": images,
 			"Wishlist":isWishlist,
 		})
@@ -109,6 +151,9 @@ func Product(c *gin.Context){
 				"variant": product_variant,
 				"AllVariants":availableVariants,
 				"Images": images,
+				"Reviews": respReview,
+				"AverageRating": averageRating,
+				"TotalReviews":  total,
 				"Wishlist":false,
 				"message":flash,
 			})
@@ -122,6 +167,9 @@ func Product(c *gin.Context){
 				"variant": product_variant,
 				"AllVariants":availableVariants,
 				"Images": images,
+				"Reviews": respReview,
+				"AverageRating": averageRating,
+				"TotalReviews":  total,
 				"Wishlist":false,
 				"error":errmsg,
 			})
@@ -133,6 +181,9 @@ func Product(c *gin.Context){
 			"variant": product_variant,
 			"AllVariants":availableVariants,
 			"Images": images,
+			"Reviews": respReview,
+			"AverageRating":  averageRating,
+			"TotalReviews":  total,
 			"Wishlist":false,
 		})
 	}

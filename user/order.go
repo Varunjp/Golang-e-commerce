@@ -199,6 +199,8 @@ func OrderItems(c *gin.Context){
 		Price 			float64
 		Discount		float64
 		Tax 			float64
+		ReviewCheck 	bool
+		ParentProduct  	uint
 	}
 	
 	
@@ -232,7 +234,20 @@ func OrderItems(c *gin.Context){
 	for i, item := range Order.OrderItems{
 		
 		var Product models.Product_Variant
+		var count int64
 		err := db.Db.Unscoped().Preload("Product_images").Where("id = ?",item.ProductID).Unscoped().First(&Product).Error
+
+		if err := db.Db.Model(&models.Review{}).Where("user_id = ? AND product_id = ? AND order_id = ?",Order.UserID,Product.ProductID,Order.ID).Count(&count).Error; err != nil{
+			log.Println(err)
+		}
+
+		var check bool
+
+		if count > 0{
+			check = false
+		}else{
+			check = true
+		}
 
 		if err != nil {
 			c.HTML(http.StatusNotFound,"orderDetails.html",gin.H{"error":"Product details not found"})
@@ -251,6 +266,8 @@ func OrderItems(c *gin.Context){
 				Price: item.Price,
 				Discount: 0.0,
 				Tax: Product.Tax,
+				ReviewCheck: check,
+				ParentProduct: Product.ProductID,
 			}
 		}else{
 			response[i] = Response{
@@ -264,6 +281,8 @@ func OrderItems(c *gin.Context){
 				Price: item.Price,
 				Discount: 0.0,
 				Tax: Product.Tax,
+				ReviewCheck: check,
+				ParentProduct: Product.ProductID,
 			}
 		}
 

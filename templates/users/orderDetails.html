@@ -47,6 +47,9 @@
           <p><strong>Status:</strong> <span class="badge bg-{{.Order.BadgeClass}}">{{.Order.Status}}</span></p>
           <p><strong>Payment method:</strong> <span class="badge bg-secondary">{{.Order.PaymentMethod}}</span></p>
           <p><strong>Payment Status:</strong> <span class="badge bg-{{.Order.BadgeClass}}">{{.Order.PaymentStatus}}</span></p>
+          {{ if or (eq .Order.Status "Returned") (eq .Order.Status "Cancelled") }}
+          <p><strong>Reason :</strong> <span class="badge bg-{{.Order.BadgeClass}}">{{.Order.Reason}}</span></p>
+          {{ end }}
           <hr>
 
           <h6>Items</h6>
@@ -54,48 +57,72 @@
                 {{range .OrderItems}}
                 <li class="list-group-item">
                     <div class="row g-2 align-items-center">
-                    <div class="col-3 col-md-2">
-                        <img src="/{{.ImageURL}}" class="img-fluid rounded" alt="{{.ProductName}}">
-                    </div>
-                    <div class="col-6 col-md-7">
-                        <div class="fw-bold"> <a href="/user/product/{{.ProductID}}" class="text-decoration-none text-dark">{{.ProductName}}</a></div>
-                        Qty: {{.Quantity}}<br>
-                        Price: ₹{{printf "%.2f" .Price}}<br>
-                        Size: {{ .Size}}<br>
-                        Tax: ₹{{printf "%.2f" .Tax}}<br>
-                        {{if gtf .Discount 0.0 }}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
-                    </div>
-                    <div class="col-3 col-md-3 text-end fw-bold">
-                        ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) (mulFloat .Tax .Quantity))}}
-                    </div>
-                    <!--testing-->
-                    <div class="col-12 col-md-2 text-end">
-                      {{if or (eq .Status "Processing") (eq .Status "Pending")}}
-                      <form method="POST" action="/user/cancel-item">
-                        <input type="hidden" name="order_id" value="{{$.Order.ID}}">
-                        <input type="hidden" name="item_id" value="{{.ID}}">
-                        <input type="text" name="reason" placeholder="Reason for cancel" required>
-                        <button type="submit" class="btn btn-sm btn-danger mt-2">Cancel</button>
-                      </form>
-                      {{else if eq .Status "Delivered"}}
-                      <span class="badge bg-success mt-2">{{.Status}}</span>
-                      <form method="POST" action="/user/return-item" class="mt-2">
-                        <input type="hidden" name="order_id" value="{{$.Order.ID}}">
-                        <input type="hidden" name="item_id" value="{{.ID}}">
-                        <input type="text" name="reason" placeholder="Reason for return" required>
-                        <button type="submit" class="btn btn-sm btn-danger mt-2">Return</button>
-                      </form>
-                      
-                      {{else if or (eq .Status "Failed") (eq .Status "Canceled")}}
-                      <span class="badge bg-danger mt-2">{{.Status}}</span>
-                      {{else if eq .Status "Delivered"}}
-                      <span class="badge bg-success mt-2">{{.Status}}</span>
-                      {{else}}
-                      <span class="badge bg-secondary mt-2">{{.Status}}</span>
-                      {{end}}
-                    </div>
+                      <div class="col-3 col-md-2">
+                          <img src="/{{.ImageURL}}" class="img-fluid rounded" alt="{{.ProductName}}">
+                      </div>
+                      <div class="col-6 col-md-7">
+                          <div class="fw-bold"> <a href="/user/product/{{.ProductID}}" class="text-decoration-none text-dark">{{.ProductName}}</a></div>
+                          Qty: {{.Quantity}}<br>
+                          Price: ₹{{printf "%.2f" .Price}}<br>
+                          Size: {{ .Size}}<br>
+                          Tax: ₹{{printf "%.2f" .Tax}}<br>
+                          {{if gtf .Discount 0.0 }}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
+                      </div>
+                      <div class="col-3 col-md-3 text-end fw-bold">
+                          ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) (mulFloat .Tax .Quantity))}}
+                      </div>
+                      <!--testing-->
+                      <div class="col-12 col-md-2 text-end">
+                        {{if or (eq .Status "Processing") (eq .Status "Pending")}}
+                        <form method="POST" action="/user/cancel-item">
+                          <input type="hidden" name="order_id" value="{{$.Order.ID}}">
+                          <input type="hidden" name="item_id" value="{{.ID}}">
+                          <input type="text" name="reason" placeholder="Reason for cancel" required>
+                          <button type="submit" class="btn btn-sm btn-danger mt-2">Cancel</button>
+                        </form>
+                        {{else if eq .Status "Delivered"}}
+                        <span class="badge bg-success mt-2">{{.Status}}</span>
+                        <form method="POST" action="/user/return-item" class="mt-2">
+                          <input type="hidden" name="order_id" value="{{$.Order.ID}}">
+                          <input type="hidden" name="item_id" value="{{.ID}}">
+                          <input type="text" name="reason" placeholder="Reason for return" required>
+                          <button type="submit" class="btn btn-sm btn-danger mt-2">Return</button>
+                        </form>
+                        
+                        {{else if or (eq .Status "Failed") (eq .Status "Canceled")}}
+                        <span class="badge bg-danger mt-2">{{.Status}}</span>
+                        {{else if eq .Status "Delivered"}}
+                        <span class="badge bg-success mt-2">{{.Status}}</span>
+                        {{else}}
+                        <span class="badge bg-secondary mt-2">{{.Status}}</span>
+                        {{end}}
+                      </div>
 
+                    {{ if and (eq .Status "Delivered") ( .ReviewCheck) }}
+                      <div class="row mt-2">
+                        <div class="col-12 col-md-6 text-start">
+                          <form method="POST" action="/user/review" class="border p-3 rounded shadow-sm bg-light">
+                            <input type="hidden" name="order_id" value="{{$.Order.ID}}">
+                            <input type="hidden" name="user_id" value="{{ $.Order.UserID }}">
+                            <input type="hidden" name="product_id" value="{{ .ParentProduct }}">
 
+                            <div class="mb-3">
+                              <label for="rating" class="form-label fw-semibold">Rating (1 to 5)</label>
+                              <input type="number" class="form-control" name="rating" id="rating" min="1" max="5" required>
+                            </div>
+
+                            <div class="mb-3">
+                              <label for="review" class="form-label fw-semibold">Write your review</label>
+                              <textarea class="form-control" name="review" id="review" rows="3" placeholder="Share your thoughts about the product..." required></textarea>
+                            </div>
+
+                            <div class="text-end">
+                              <button type="submit" class="btn btn-success">Submit Review</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    {{end }}
                     </div>
                 </li>
                 {{end}}

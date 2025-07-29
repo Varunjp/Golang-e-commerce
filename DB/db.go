@@ -45,6 +45,7 @@ func DbInit(){
 		&models.Wallet{},
 		&models.WalletTransaction{},
 		&models.OrderAddress{},
+		&models.Review{},
 	)
 
 	if autoerr != nil{

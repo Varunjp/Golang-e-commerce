@@ -134,6 +134,7 @@ func ShowProductList(c *gin.Context){
 		Price				float64
 		DiscountedPrice		string 
 		ImageURL 			string
+		Rating 				int
 		Wishlist 			bool 
 	},len(products))
 
@@ -153,6 +154,17 @@ func ShowProductList(c *gin.Context){
 
 		db.Db.Where("product_id  = ?",p.ProductID).First(&pro)
 		db.Db.Where("sub_category_id = ?",pro.SubCategoryID).First(&subCat)
+		var total int64
+		var sum float64
+		db.Db.Model(&models.Review{}).
+			Where("product_id = ?", pro.ProductID).
+			Count(&total).
+			Select("AVG(rating)").Row().Scan(&sum)
+
+		averageRating := 0.0
+		if total > 0 {
+			averageRating = sum
+		}
 
 		if !subCat.IsBlocked{
 
@@ -167,11 +179,12 @@ func ShowProductList(c *gin.Context){
 			
 
 			if p.Stock > 0 {
-				formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice string; ImageURL string; Wishlist bool}{
+				formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice string;ImageURL string; Rating int;Wishlist bool}{
 					ID: p.ID,
 					Name: p.Variant_name,
 					Price: p.Price,
 					DiscountedPrice: "",
+					Rating: int(averageRating),
 					Wishlist: isWishlist,
 				}
 

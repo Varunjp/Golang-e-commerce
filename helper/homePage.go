@@ -28,24 +28,24 @@ func GetHomePage() ([]responsemodels.HomePage, string, error){
 
 		var Image models.Product_image
 
-		var Rating struct {
-			ID		uint	`gorm:"column:id"`
-			Rating	int		`gorm:"column:avg"`
-		}
+		// var Rating struct {
+		// 	ID		uint	`gorm:"column:id"`
+		// 	Rating	int		`gorm:"column:avg"`
+		// }
 
 		if err := db.Db.Where("order_no = 1 AND product_variant_id = ?",product.ID).First(&Image).Error; err != nil{
 			Image.Image_url = ""
 		}
 
-		if err := db.Db.Select("id,AVG(rating)").Where("product_id = ?",product.ProductID).Table("reviews").Group("id,product_id").Find(&Rating).Error; err != nil{
-			Rating.Rating = 0
-		}
+		// if err := db.Db.Select("id,AVG(rating)").Where("product_id = ?",product.ProductID).Table("reviews").Group("id,product_id").Find(&Rating).Error; err != nil{
+		// 	Rating.Rating = 0
+		// }
 
 		result[i] = responsemodels.HomePage{
 			ID: product.ID,
 			ImageURL: Image.Image_url,
 			Name: product.Variant_name,
-			Rating: Rating.Rating,
+			// Rating: Rating.Rating,
 			Price: int(product.Price),
 		}
 	}

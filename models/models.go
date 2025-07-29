@@ -22,6 +22,7 @@ type User struct{
 	ProfileImages			[]ProfileImage				`gorm:"constraint:ONDELETE:CASCADE; foreignKey:UserID"`
 	CartItems				[]CartItem					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
 	WishLists				[]WishList					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
+	Reviews 				[]Review					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
 	DeletedAt 				gorm.DeletedAt	
 }
 
@@ -90,6 +91,7 @@ type Order struct{
 	BadgeClass 				string
 	Reason 					string 	
 	OrderItems				[]OrderItem  `gorm:"constraint:ONDELETE:CASCADE;foreignKey:OrderID"`
+	Reviews 				[]Review	`gorm:"constraint:ONDELETE:CASCADE;foreignKey:OrderID"`
 	Address 				Address 	`gorm:"constraint:ONDELETE:CASCADE"`
 }
 
@@ -115,6 +117,7 @@ type WishList struct {
 	ProductID 	uint 		`gorm:"not null"`
 	CreatedAt 	time.Time
 }
+
 
 type Coupons struct {
 	ID					uint 		`gorm:"primarykey;autoIncrement"`
@@ -197,8 +200,10 @@ type Product struct {
 	SubCategory				SubCategory			`gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CreatedAt 				time.Time
 	Product_variants 		[]Product_Variant 	`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductID"`
+	Reviews          		[]Review          	`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductID"`
 	DeletedAt				gorm.DeletedAt 		`gorm:"index"`
 }
+
 
 type Product_Variant struct {
 	ID					uint				`gorm:"primarykey;autoIncrement"`
@@ -229,6 +234,18 @@ type Product_image struct {
 	DeleteAt						gorm.DeletedAt		`gorm:"index"`
 }
 
+type Review struct {
+    ID        				uint      			`gorm:"primarykey;autoIncrement"`
+    ProductID 				uint				`gorm:"not null;index"`
+	Product    				Product   			`gorm:"constraint: OnDelete:CASCADE"`
+    UserID    				uint				`gorm:"not null;index"`
+    User      				User      			`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
+	OrderID 				uint
+	Order 					Order				`gorm:"constraint:ONDELETE:CASCADE"`
+    Rating    				int       
+    Comment   				string
+    CreatedAt 				time.Time
+}
 
 type Banner struct {
 	ID				uint		`gorm:"primarykey;autoIncrement"`
