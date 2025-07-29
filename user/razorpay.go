@@ -105,6 +105,9 @@ func CreateRazorpayOrder(c *gin.Context){
 			}
 		}
 
+		//delete
+		fmt.Println("checking count :",itemCount)
+
 		if itemCount > 5 {
 
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
@@ -371,10 +374,6 @@ func PaymentSuccess(c *gin.Context){
 		itemCount := 0
 		var product models.Product_Variant
 
-		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
-			c.JSON(http.StatusBadRequest,gin.H{"error":"Insufficient stock"})
-			return 
-		}
 		db.Db.Where("id = ?",item.ProductID).First(&product)
 
 		for _, oritems := range orderitems{
@@ -383,8 +382,7 @@ func PaymentSuccess(c *gin.Context){
 			}
 		}
 
-		if itemCount >= 5 {
-			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+		if itemCount > 5 {
 			amount := item.Price * float64(item.Quantity) + product.Tax * float64(item.Quantity)
 			order.TotalAmount = order.TotalAmount - amount
 			db.Db.Save(&order)
@@ -400,14 +398,14 @@ func PaymentSuccess(c *gin.Context){
 				OrderID: order.ID,
 				ProductID: item.ProductID,
 				Quantity: item.Quantity,
-				Status: "Cancelled ",
+				Status: "Cancelled",
 				Price: item.Price,
 			}
 
 			if err := db.Db.Create(&orderItem).Error; err != nil{
 				log.Println(err)
 			}
-			amount := item.Price * float64(item.Quantity)
+			amount := item.Price * float64(item.Quantity) + product.Tax * float64(item.Quantity)
 			err := helper.CreditWallet(uint(userID),amount,"Product out of stock")
 			if err!= nil{
 				log.Println(err)
@@ -432,6 +430,11 @@ func PaymentSuccess(c *gin.Context){
 			if err := db.Db.Where("user_id = ? AND product_id = ?",userID,item.ProductID).First(&wishlist).Error; err == nil{
 				db.Db.Delete(&wishlist)
 			}
+		}
+
+		if err := db.Db.Model(&models.Product_Variant{}).Where("id = ? AND stock >= ?",item.ProductID,item.Quantity).Update("stock",gorm.Expr("stock - ?",item.Quantity)).Error; err != nil{
+			c.JSON(http.StatusBadRequest,gin.H{"error":"Insufficient stock"})
+			return 
 		}
 
 	}

@@ -310,7 +310,7 @@ func AdminOrderUpdate(c *gin.Context){
 	case "Delivered":
 		for _,item := range order.OrderItems{
 
-			if item.Status != "Returned"{
+			if item.Status != "Returned" && item.Status != "Cancelled"{
 				item.Status = "Delivered"
 			}
 			

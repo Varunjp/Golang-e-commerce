@@ -29,6 +29,11 @@
             </p>
 
             <a href="/user/product/{{ .ID }}" class="btn btn-outline-primary w-100">View Details</a>
+            <form method="POST" action="/cart/add" class="d-flex align-items-center m-5"> 
+                <input type="hidden" name="product_id" value="{{ .ID }}">
+                <input type="hidden" name="quantity" value="1" class="form-control" style="width: 80px;"> 
+                <button type="submit" class="btn btn-dark w-100 rounded">Add to Cart</button> 
+            </form>
           </div>
         </div>
       </div>

@@ -337,6 +337,7 @@ func DownloadPdf(c *gin.Context){
 	orderID,_ := strconv.Atoi(c.Param("id"))
 	var order models.Order
 	var User models.User
+	var address models.OrderAddress
 
 	if err := db.Db.Preload("OrderItems").Where("id = ?",orderID).First(&order).Error; err != nil {
 		c.HTML(http.StatusInternalServerError,"myOrder.html",gin.H{"error":"Failed to fetch order details, please try again later"})
@@ -348,56 +349,119 @@ func DownloadPdf(c *gin.Context){
 		return
 	}
 
-	pdf := gofpdf.New("P","mm","A4","")
+	if err := db.Db.Where("order_id = ?",order.ID).First(&address).Error; err != nil{
+		c.HTML(http.StatusInternalServerError,"myOrder.html",gin.H{"error":"Failed to fetch user details, please try again later"})
+		return
+	}
+
+	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
-	
-	pdf.SetFont("Arial","B",16)
-	pdf.Cell(40,10,"Invoice")
 
-	pdf.Ln(12)
-	pdf.SetFont("Arial","",12)
-	pdf.Cell(40,10,"Company : Fashion Art")
-	pdf.Ln(8)
-	pdf.Cell(40,10,fmt.Sprintf("Order ID: %v",order.OrderID))
-	pdf.Ln(8)
-	pdf.Cell(40,10,fmt.Sprintf("Customer: %s",User.Username))
-	pdf.Ln(8)
-	pdf.Cell(40,10,fmt.Sprintf("Date: %v",order.OrderDate.Format("2006-01-02")))
+	// Heading
+	pdf.SetFont("Helvetica", "B", 20)
+	pdf.CellFormat(0, 12, "INVOICE", "", 1, "C", false, 0, "")
 
-	pdf.Ln(12)
-	pdf.SetFont("Arial","B",12)
-	pdf.CellFormat(80, 10, "Product", "1", 0, "", false, 0, "")
-	pdf.CellFormat(30, 10, "Qty", "1", 0, "", false, 0, "")
-	pdf.CellFormat(40, 10, "Price", "1", 0, "", false, 0, "")
-	pdf.CellFormat(30, 10, "Tax", "1", 1, "", false, 0, "")
+	pdf.Ln(5)
 
-	pdf.SetFont("Arial", "", 12)
+	// Company Details
+	pdf.SetFont("Helvetica", "", 11)
+	pdf.Cell(0, 6, "Sold By: Fashion Art Private Limited")
+	pdf.Ln(6)
+	pdf.Cell(0, 6, "From Address: FashionArtify, Calicut")
+	pdf.Ln(6)
+	pdf.Cell(0, 6, "GSTIN: 39AACCB8899Z1Z")
+	pdf.Ln(10)
 
-	for _,item := range order.OrderItems{
+	// Invoice Info
+	pdf.Cell(0, 6, fmt.Sprintf("Order ID: %v", order.OrderID))
+	pdf.Ln(6)
+	pdf.Cell(0, 6, fmt.Sprintf("Order Date: %s", order.OrderDate.Format("1/2/2006")))
+	pdf.Ln(6)
+	pdf.Cell(0, 6, fmt.Sprintf("Invoice Date: %s", order.OrderDate.Format("1/2/2006")))
+	pdf.Ln(10)
 
-		var Product models.Product_Variant
+	// Billing Address
+	pdf.SetFont("Helvetica", "BU", 12)
+	pdf.Cell(0, 6, "Billing Address:")
+	pdf.Ln(6)
 
-		if err := db.Db.Where("id = ?",item.ProductID).Unscoped().First(&Product).Error; err != nil{
-			c.HTML(http.StatusInternalServerError,"myOrder.html",gin.H{"error":"Failed to retrive product details"})
-			return 
+	pdf.SetFont("Helvetica", "", 11)
+	pdf.Cell(0, 6, User.Username)
+	pdf.Ln(6)
+	pdf.Cell(0, 6,  address.AddressLine1)
+	pdf.Ln(6)
+	pdf.Cell(0, 6, fmt.Sprintf("%s, %s - %s", address.City, address.State, address.PostalCode))
+	pdf.Ln(6)
+	pdf.Cell(0, 6, fmt.Sprintf("Phone: %s", User.Phone))
+	pdf.Ln(10)
+
+	// Table Header
+	pdf.SetFont("Helvetica", "B", 11)
+	pdf.SetFillColor(240, 240, 240)
+	pdf.CellFormat(80, 10, "Description", "1", 0, "", false, 0, "")
+	pdf.CellFormat(20, 10, "Qty", "1", 0, "", false, 0, "")
+	pdf.CellFormat(30, 10, "Price", "1", 0, "", false, 0, "")
+	pdf.CellFormat(30, 10, "Discount", "1", 0, "", false, 0, "")
+	pdf.CellFormat(30, 10, "Total", "1", 1, "", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 10)
+	pdf.SetFillColor(255, 255, 255)
+
+	var subtotal float64
+
+	for _, item := range order.OrderItems {
+		var product models.Product_Variant
+		if err := db.Db.Unscoped().Where("id = ?", item.ProductID).First(&product).Error; err != nil {
+			c.String(http.StatusInternalServerError, "Error fetching product: %v", err)
+			return
 		}
 
-		pdf.CellFormat(80, 10, Product.Variant_name, "1", 0, "", false, 0, "")
-		pdf.CellFormat(30, 10, fmt.Sprintf("%d", item.Quantity), "1", 0, "", false, 0, "")
-		pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", item.Price), "1", 0, "", false, 0, "")
-		pdf.CellFormat(30, 10, fmt.Sprintf("%.2f", Product.Tax), "1", 1, "", false, 0, "")
+		lineTotal := float64(item.Quantity) * item.Price
+		subtotal += lineTotal
+
+		desc := product.Variant_name
+		if pdf.GetStringWidth(desc) > 75 { // 75 to keep within 80mm width
+			for len(desc) > 0 && pdf.GetStringWidth(desc+"...") > 75 {
+				desc = desc[:len(desc)-1]
+			}
+			desc += "..."
+		}
+
+		// Continue the rest of the row at same height
+		pdf.CellFormat(80, 16, desc, "1", 0, "", false, 0, "")
+		pdf.CellFormat(20, 16, fmt.Sprintf("%d", item.Quantity), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 16, fmt.Sprintf("Rs. %.2f", item.Price), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 16, "Rs. 0.00", "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 16, fmt.Sprintf("Rs. %.2f", lineTotal), "1", 1, "C", false, 0, "")
 	}
 
-	pdf.Ln(8)
-	pdf.CellFormat(140, 10, "Total:", "", 0, "R", false, 0, "")
-	pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", order.TotalAmount), "1", 1, "", false, 0, "")
+	// Summary
+	pdf.SetFont("Helvetica", "B", 10)
 
+	pdf.CellFormat(160, 10, "Subtotal", "1", 0, "L", false, 0, "")
+	pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.SubTotal), "1", 1, "C", false, 0, "")
+
+	pdf.CellFormat(160, 10, "Coupon Discount", "1", 0, "L", false, 0, "")
+	pdf.CellFormat(30, 10, fmt.Sprintf("- Rs. %.2f", order.DiscountTotal), "1", 1, "C", false, 0, "")
+
+	finalPayable := order.SubTotal - order.DiscountTotal
+	pdf.SetFont("Helvetica", "B", 11)
+	pdf.SetFillColor(230, 255, 230) // Light green for total
+	pdf.CellFormat(160, 10, "Final Payable", "1", 0, "L", false, 0, "")
+	pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", finalPayable), "1", 1, "C", false, 0, "")
+
+	// Footer / Signature
+	pdf.Ln(15)
+	pdf.SetFont("Helvetica", "", 10)
+	pdf.CellFormat(0, 6, "Fashion Art Private Limited", "", 1, "R", false, 0, "")
+	pdf.CellFormat(0, 6, "(Signature Placeholder)", "", 1, "R", false, 0, "")
+	pdf.CellFormat(0, 6, "Authorized Signatory", "", 1, "R", false, 0, "")
+
+	// Send as response
 	c.Header("Content-Type", "application/pdf")
-	c.Header("Content-Disposition","attachment; filename=invoice.pdf")
-	err := pdf.Output(c.Writer)
+	c.Header("Content-Disposition", "attachment; filename=invoice.pdf")
 
-	if err != nil{
-		c.String(http.StatusInternalServerError,"Failed to generate PDF: %v",err)
+	if err := pdf.Output(c.Writer); err != nil {
+		c.String(http.StatusInternalServerError, "Failed to generate PDF: %v", err)
 	}
-
 }
