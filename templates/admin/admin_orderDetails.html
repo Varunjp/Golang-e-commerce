@@ -142,7 +142,7 @@
           {{else if eq .Order.Status "Shipped"}}
             <button name="status" value="Delivered" class="btn btn-success">Mark as Delivered</button>
           {{else if eq .Order.Status "Return requested"}}
-          <button name="status" value="Cancelled" class="btn btn-danger">Accept return</button>
+          <button name="status" value="Returned" class="btn btn-danger">Accept return</button>
           {{else}}
             <span class="text-light">No further actions</span>
           {{end}}

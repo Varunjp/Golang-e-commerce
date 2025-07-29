@@ -151,7 +151,7 @@
                     <span class="badge badge-delivered">Delivered</span>
                   {{ else if or (eq .Status "Cancelled") (eq .Status "Refund is being processed" ) }}
                     <span class="badge badge-cancelled">Cancelled</span>
-                  {{ else if (eq .Status "Returned")}}
+                  {{ else if or (eq .Status "Return") (eq .Status "Returned")}}
                     <span class="badge badge-cancelled">Returned</span>
                   {{ else if (eq .Status "Failed")}}
                     <span class="badge badge-cancelled">Failed</span>

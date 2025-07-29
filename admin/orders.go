@@ -288,7 +288,7 @@ func AdminOrderUpdate(c *gin.Context){
 		}
 	}
 
-	if totalItem == checkCount {
+	if totalItem == checkCount && status != "Returned"{
 		c.Redirect(http.StatusSeeOther,"/admin/order/"+orderId)
 		return 
 	}
@@ -317,6 +317,16 @@ func AdminOrderUpdate(c *gin.Context){
 			db.Db.Save(&item)
 		}
 		order.PaymentStatus = "Success"
+	case "Returned":
+		for _,item := range order.OrderItems{
+
+			if item.Status != "Returned" && item.Status != "Cancelled"{
+				item.Status = "Returned"
+			}
+			
+			db.Db.Save(&item)
+		}
+		order.PaymentStatus = "Refunded"
 	}
 
 	order.Status = status
