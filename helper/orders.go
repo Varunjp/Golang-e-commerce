@@ -67,13 +67,18 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 			newTotal := orignalTotal - itemTotal
 			refundAmount := order.TotalAmount - newTotal
-
+			
 			if refundAmount < 0{
 				refundAmount = 0
 			}
+
 			if refundAmount < 1{
 				desc := newTotal - order.TotalAmount
 				order.DiscountTotal = desc 
+			}else{
+				
+				order.DiscountTotal = 0.0
+				db.Db.Delete(&usedCoupon)
 			}
 			// amount refunded
 			walletTranscation := models.WalletTransaction{
@@ -150,6 +155,22 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 		}else{
 			
 			returnamount := itemTotal
+			newTotal := orignalTotal - itemTotal
+			
+			if adjustedTotal < newTotal {
+				returnamount = order.TotalAmount - newTotal
+				if returnamount < 0 {
+					returnamount = 0
+				}
+
+				if order.TotalAmount < newTotal {
+					order.DiscountTotal = newTotal - order.TotalAmount
+				}else{
+					order.DiscountTotal = 0.0
+					db.Db.Delete(&usedCoupon)
+				}
+				
+			}
 
 			if returnamount > order.TotalAmount{
 				returnamount = 0

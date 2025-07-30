@@ -69,8 +69,9 @@ func UserOrderCancelItem(itemId string) error {
 				order.SubTotal = order.SubTotal - retrunAmount
 
 			}else{
+
 				order.SubTotal = order.SubTotal - retrunAmount
-				order.TotalAmount = order.TotalAmount - retrunAmount
+				order.TotalAmount = order.SubTotal
 			}
 
 			
