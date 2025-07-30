@@ -76,19 +76,33 @@ func WishlistPage(c *gin.Context) {
 		ID					uint
 		Name				string
 		Price				float64
-		DiscountedPrice		string 
+		DiscountedPrice		float64 
 		ImageURL 			string
+		Rating 				int
 	}
 
 	response := make([]Response,len(products))
 
 	for i,p := range products{
 
+		var total int64
+		var sum float64
+		db.Db.Model(&models.Review{}).
+			Where("product_id = ?", p.ProductID).
+			Count(&total).
+			Select("AVG(rating)").Row().Scan(&sum)
+
+		averageRating := 0.0
+		if total > 0 {
+			averageRating = sum
+		}
+
 		response[i] = Response{
 			ID: p.ID,
 			Name: p.Variant_name,
 			Price: p.Price,
-			DiscountedPrice: "",
+			DiscountedPrice: p.DiscountedPrice,
+			Rating: int(averageRating),
 		}
 
 		if len(p.Product_images) > 0 {

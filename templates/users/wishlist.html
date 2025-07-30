@@ -11,19 +11,28 @@
     {{ else }}
       {{ range .Products }}
       <div class="col-md-4 mb-4">
-        <div class="card">
+        <div class="card position-relative">
+          <!-- Remove from wishlist icon -->
+            <a href="/user/remove-wishlist/{{ .ID }}" class="position-absolute top-0 end-0 m-2 text-warning fs-4">
+              <i class="bi bi-star-fill"></i>
+            </a>
           <img src="/{{ .ImageURL }}" class="card-img-top" alt="{{ .Name }}">
           <div class="card-body">
             <h6 class="card-title">{{ .Name }}</h6>
-
-            <!-- Remove from wishlist icon -->
-            <a href="/user/remove-wishlist/{{ .ID }}" class="w-25 m-2 text-danger">
-              <i class="bi bi-star-fill"></i>
-            </a>
-
+            <div class="mb-2 text-warning">
+              {{ $rating := .Rating }}
+                {{ range $i := seq 5 }}
+                  {{ if lt $i $rating }}
+                    <i class="bi bi-star-fill"></i>
+                  {{ else }}
+                    <i class="bi bi-star"></i>
+                {{ end }}
+              {{ end }}
+            </div>
+          
             <p class="card-text">
               <span class="text-danger fw-bold">₹{{ .Price }}</span>
-              {{ if .DiscountedPrice }}
+              {{ if gtf .DiscountedPrice 0.0 }}
               <del class="text-muted">₹{{ .DiscountedPrice }}</del>
               {{ end }}
             </p>
