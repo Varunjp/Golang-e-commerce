@@ -97,8 +97,8 @@
 
                 <p class="card-text">
                   <span class="text-danger fw-bold">₹{{ .Price }}</span>
-                  {{ if .DiscountedPrice }}
-                  <del class="text-muted">${{ .DiscountedPrice }}</del>
+                  {{ if gt .DiscountedPrice 0 }}
+                  <del class="text-muted">₹{{ .DiscountedPrice }}</del>
                   {{ end }}
                 </p>
                 <a href="/user/product/{{ .ID }}" class="btn btn-outline-primary w-100">View Details</a>
@@ -119,19 +119,19 @@
             <ul class="pagination justify-content-center">
             {{ if gt .Page 1 }}
             <li class="page-item">
-                <a class="page-link" href="/user/shop?page={{ sub .Page 1 }}&limit=9&{{ $.QueryString}}">&laquo;</a>
+                <a class="page-link" href="/user/shop?page={{ sub .Page 1 }}&limit=9">&laquo;</a>
             </li>
             {{ end }}
         
             {{ range $i := itere .TotalPages }}
             <li class="page-item {{ if eq $i $.Page }}active{{ end }}">
-                <a class="page-link" href="/user/shop?page={{ $i }}&limit=9&{{ $.QueryString }}">{{ $i }}</a>
+                <a class="page-link" href="/user/shop?page={{ $i }}&limit=9">{{ $i }}</a>
             </li>
             {{ end }}
         
             {{ if lt .Page .TotalPages }}
             <li class="page-item">
-                <a class="page-link" href="/user/shop?page={{ add .Page 1 }}&limit=9&{{ $.QueryString }}">&raquo;</a>
+                <a class="page-link" href="/user/shop?page={{ add .Page 1 }}&limit=9">&raquo;</a>
             </li>
             {{ end }}
             </ul>

@@ -131,7 +131,7 @@ func ShowProductList(c *gin.Context){
 		ID					uint
 		Name				string
 		Price				float64
-		DiscountedPrice		string 
+		DiscountedPrice		int 
 		ImageURL 			string
 		Rating 				int
 		Wishlist 			bool 
@@ -178,11 +178,11 @@ func ShowProductList(c *gin.Context){
 			
 
 			if p.Stock > 0 {
-				formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice string;ImageURL string; Rating int;Wishlist bool}{
+				formatted[i] = struct{ID uint; Name string; Price float64; DiscountedPrice int;ImageURL string; Rating int;Wishlist bool}{
 					ID: p.ID,
 					Name: p.Variant_name,
 					Price: p.Price,
-					DiscountedPrice: "",
+					DiscountedPrice: int(p.DiscountedPrice),
 					Rating: int(averageRating),
 					Wishlist: isWishlist,
 				}
@@ -209,7 +209,6 @@ func ShowProductList(c *gin.Context){
 	session := sessions.Default(c)
 	Name,_ := session.Get("name").(string)
 
-	queryString := c.Request.URL.Query().Encode()
 
 	if Name != ""{
 		c.HTML(http.StatusOK,"product_list.html",gin.H{
@@ -223,7 +222,6 @@ func ShowProductList(c *gin.Context){
 			"Size":size,
 			"Page": page,
 			"TotalPages": totalPage,
-			"QueryString": queryString,
 			"sort": sortBy,
 		})
 		return
@@ -239,7 +237,6 @@ func ShowProductList(c *gin.Context){
 		"MaxPrice":maxPrice,
 		"Size":size,
 		"TotalPages": totalPage,
-		"QueryString": queryString,
 		"sort": sortBy,
 	})
 }

@@ -230,6 +230,7 @@ func AddProduct(c *gin.Context){
 	ProductStock,_ := strconv.Atoi(c.PostForm("stock"))
 	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
 	ProductTax,_ := strconv.ParseFloat(c.PostForm("tax"),64)
+	ProductDiscount,_ := strconv.ParseFloat(c.PostForm("discount_price"),64)
 
 	ProductVariantName = strings.TrimLeft(ProductVariantName," ")
 	ProductSize = strings.TrimSpace(ProductSize)
@@ -317,6 +318,12 @@ func AddProduct(c *gin.Context){
 		Errors["cropped_image0"] = "At least one image is required"
 	}
 
+	if ProductDiscount > 0 {
+		if ProductDiscount < ProductPrice {
+			Errors["discount_price"] = "Discount price need to be greater than sale price"
+		}
+	}
+
 	if len(Errors) > 0 {
 		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
 		return
@@ -355,6 +362,7 @@ func AddProduct(c *gin.Context){
 		Size: ProductSize,
 		Stock: ProductStock,
 		Price: ProductPrice,
+		DiscountedPrice: ProductDiscount,
 		Tax: ProductTax,
 	}
 	
@@ -660,6 +668,7 @@ func UpdateProduct(c *gin.Context){
 	ProductStock,_ := strconv.Atoi(c.PostForm("stock"))
 	ProductPrice,_ := strconv.ParseFloat(c.PostForm("price"),64) 
 	ProductTax,_ := strconv.ParseFloat(c.PostForm("tax"),64)
+	Productdiscount,_ := strconv.ParseFloat(c.PostForm("discount_price"),64)
 
 	if strings.TrimSpace(ProductName) == "" {
 		Errors["name"] = "Name should be properly defined"	
@@ -720,6 +729,12 @@ func UpdateProduct(c *gin.Context){
 		
 	}
 
+	if Productdiscount > 0{
+		if Productdiscount < ProductPrice {
+			Errors["discount_price"] = "Price need to be more than sale price"
+		}
+	}
+
 
 	if len(Errors) > 0 {
 		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
@@ -753,6 +768,7 @@ func UpdateProduct(c *gin.Context){
 	Product_variant.Size = ProductSize
 	Product_variant.Stock = ProductStock
 	Product_variant.Price = ProductPrice
+	Product_variant.DiscountedPrice = Productdiscount
 	Product_variant.Tax = ProductTax
 
 	if err := db.Db.Save(Product_variant).Error; err!= nil{

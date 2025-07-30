@@ -213,6 +213,7 @@ type Product_Variant struct {
 	Stock				int
 	Price				float64				`gorm:"not null"`
 	Tax					float64				`gorm:"not null"`
+	DiscountedPrice		float64
 	CreatedAt			time.Time
 	UpdatedAt			time.Time
 	Product 			Product				`gorm:"constraint: OnDelete:CASCADE"`
