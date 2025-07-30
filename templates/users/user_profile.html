@@ -132,38 +132,68 @@
 
 
         <!-- Orders -->
-        <div class="card">
-          <div class="card-header"><a href="/user/orders" class="text-decoration-none text-dark">Order History</a></div>
-          <div class="card-body">
-            {{if .Orders}}
-              <ul class="list-group">
-                {{range .Orders}}
-                  <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+              <h5 class="mb-0">
+                <a href="/user/orders" class="text-decoration-none text-dark">Order History</a>
+              </h5>
+            </div>
+            <div class="card-body">
+              {{if .Orders}}
+                <ul class="list-group list-group-flush">
+                  {{range .Orders}}
+                  <li class="list-group-item py-3">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap">
                       <div>
-                        <strong>Order #{{.OrderID}}</strong>  
-                        <div class="text-muted small">Placed on: {{.OrderDate  | formatDate }}</div>
-                        <div class="text-muted small">Total: ₹{{printf "%.2f" .TotalAmount}}</div>
+                        <h6 class="mb-1">Order <span class="text-primary">#{{.OrderID}}</span></h6>
+                        <div class="text-muted small">Placed on: {{.OrderDate | formatDate}}</div>
+                        <div class="text-muted small">Total Amount: ₹{{printf "%.2f" .TotalAmount}}</div>
                       </div>
                       <div class="text-end">
-                        <span class="badge bg-{{.BadgeClass}} mb-2">{{.Status}}</span><br>
+                        <span class="badge bg-{{.BadgeClass}} fs-6">{{.Status}}</span><br>
                         {{if eq .Status "Processing"}}
-                          <form method="POST" action="/user/cancel-order" onsubmit="return confirm('Are you sure you want to cancel this order?')">
-                            <input type="hidden" name="order_id" value="{{.ID}}">
-                            <textarea class="form-control form-control-sm mt-1 mb-2" name="reason" rows="2" placeholder="Reason for cancellation" required></textarea>
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel Order</button>
-                          </form>
+                        <form method="POST" action="/user/cancel-order" class="mt-2" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                          <input type="hidden" name="order_id" value="{{.ID}}">
+                          <textarea class="form-control form-control-sm mb-2" name="reason" rows="2" placeholder="Reason for cancellation" required></textarea>
+                          <button type="submit" class="btn btn-sm btn-outline-danger w-100">Cancel Order</button>
+                        </form>
                         {{end}}
                       </div>
                     </div>
                   </li>
-                {{end}}
-              </ul>
-            {{else}}
-              <p>No orders found.</p>
-            {{end}}
+                  {{end}}
+                </ul>
+
+                <!-- Pagination -->
+                <nav class="mt-4">
+                  <ul class="pagination justify-content-center">
+                    {{if gt .CurrentPage 1}}
+                    <li class="page-item">
+                      <a class="page-link" href="/user/orders?page={{sub .CurrentPage 1}}">&laquo; Previous</a>
+                    </li>
+                    {{end}}
+
+                    {{ $root := . }}
+                    {{range $i, $_ := until $root.TotalPages}}
+                      <li class="page-item {{if eq (add $i 1) $root.CurrentPage}}active{{end}}">
+                        <a class="page-link" href="/user/orders?page={{add $i 1}}">{{add $i 1}}</a>
+                      </li>
+                    {{end}}
+
+                    {{if lt .CurrentPage .TotalPages}}
+                    <li class="page-item">
+                      <a class="page-link" href="/user/orders?page={{add .CurrentPage 1}}">Next &raquo;</a>
+                    </li>
+                    {{end}}
+                  </ul>
+                </nav>
+              {{else}}
+                <div class="alert alert-info text-center mb-0">
+                  No orders found.
+                </div>
+              {{end}}
+            </div>
           </div>
-        </div>
       </div>
     </div>
   </div>

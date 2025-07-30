@@ -7,9 +7,11 @@ import (
 	"first-project/utils"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -30,7 +32,7 @@ func UserProfilePage(c *gin.Context) {
 		return 
 	}
 
-	email,id,err := helper.DecodeJWT(tokenstr)
+	_,id,err := helper.DecodeJWT(tokenstr)
 
 	if err != nil{
 		log.Println(err.Error())
@@ -39,20 +41,25 @@ func UserProfilePage(c *gin.Context) {
 	}
 
 
-	if err := db.Db.Preload("Orders",func(db *gorm.DB)*gorm.DB{
-		return db.Order("id DESC").Limit(10)
-	}).Preload("Addresses").Preload("ProfileImages",func(db *gorm.DB)*gorm.DB{
+	if err := db.Db.Preload("Addresses").Preload("ProfileImages",func(db *gorm.DB)*gorm.DB{
 		return db.Order("id DESC")
-	}).Where("email = ? AND id = ?",email,id).First(&User).Error; err != nil{
+	}).Where("id = ?",id).First(&User).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"User not found"})
 		return 
 	}
 	
 	
 	var image models.ProfileImage
+	var imageUrl string 
 
 	if err :=  db.Db.Where("user_id = ?",User.ID).First(&image).Error; err != nil{
 		log.Println(err)
+	}
+
+	if image.ImageUrl != ""{
+		imageUrl = image.ImageUrl
+	}else{
+		imageUrl = "static/images/dummy-profile-pic-300x300.png"
 	}
 
 	var wallet models.Wallet
@@ -72,6 +79,22 @@ func UserProfilePage(c *gin.Context) {
 		}
 	}
 
+	pageStr := c.Query("page")
+	page, _ := strconv.Atoi(pageStr)
+	if page < 1 {
+		page = 1
+	}
+	limit := 10
+	offset := (page - 1) * limit
+
+	var orders []models.Order
+	var totalCount int64
+
+	db.Db.Model(&models.Order{}).Where("user_id = ?", id).Count(&totalCount)
+	db.Db.Where("user_id = ?", id).Order("id DESC").Limit(limit).Offset(offset).Find(&orders)
+
+	totalPages := int(math.Ceil(float64(totalCount) / float64(limit)))
+
 	session := sessions.Default(c)
 	flash := session.Get("flash")
 
@@ -80,21 +103,25 @@ func UserProfilePage(c *gin.Context) {
 		session.Save()
 		c.HTML(http.StatusOK,"user_profile.html",gin.H{
 			"user": User,
-			"Image" : image.ImageUrl,
+			"Image" : imageUrl,
 			"Addresses": User.Addresses,
-			"Orders": User.Orders,
 			"Balance":wallet.Balance,
 			"error":flash,
+			"Orders": orders,
+			"CurrentPage": page,
+			"TotalPages":  totalPages,
 		})
 		return 
 	}
 
 	c.HTML(http.StatusOK,"user_profile.html",gin.H{
 		"user": User,
-		"Image" : image.ImageUrl,
+		"Image" : imageUrl,
 		"Addresses": User.Addresses,
-		"Orders": User.Orders,
 		"Balance":wallet.Balance,
+		"Orders": orders,
+		"CurrentPage": page,
+		"TotalPages":  totalPages,
 	})
 
 }
@@ -136,18 +163,41 @@ func UpdateProfile(c *gin.Context){
 	var User models.User
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,id,_ := helper.DecodeJWT(tokenStr)
-	session := sessions.Default(c)
+	Errors := make(map[string]string)
 
-	if strings.TrimSpace(NewName) == "" || strings.TrimSpace(NewPhone) == "" || strings.TrimSpace(email) == ""{
-		session.Set("flash","Invalid content passed")
-		session.Save()
-		c.Redirect(http.StatusSeeOther,"/user/edit-profile")
+	if strings.TrimSpace(NewName) == "" {
+		Errors["username"] = "Please provide correct name"
+	}
+
+	if strings.TrimSpace(email) == ""{
+		Errors["email"] = "Please provide email"
+	}
+
+	if strings.TrimSpace(NewPhone) == ""{
+		Errors["phone"] = "Please provide phone number"
+	}
+
+	if helper.IsName(NewName){
+		Errors["username"] = "Name cannot contain special characters"
+	}
+
+	phonePattern := regexp.MustCompile(`^[0-9]{10}$`)
+
+	if !phonePattern.MatchString(NewPhone){
+		Errors["phone"] = "Phone number must be exactly 10 digits"
+	} 
+
+	if helper.IsSameDigitPhone(NewPhone){
+		Errors["phone"] = "Phone number cannot contain all same digits"
+	}
+
+	if len(Errors) > 0{
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Errors})
 		return 
 	}
 
-
 	if err := db.Db.Where("id = ?",id).First(&User).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"edit_profile.html",gin.H{"error":"Failed to retrive user details"})
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","message":"Failed to get user details"})
 		return 
 	}
 
@@ -164,18 +214,21 @@ func UpdateProfile(c *gin.Context){
 		otp,otperr := helper.GenerateAndSaveOtp(email)
 
 		if otperr != nil{
-			c.HTML(http.StatusInternalServerError,"edit_profile.html",gin.H{"error":"Failed to generate otp"})
+			c.JSON(http.StatusBadRequest,gin.H{"status":"error"})
+			
 			return 
 		}
 
-		senterr := helper.SendOTPEmail(email,otp)
+		senterr := helper.SendOTPEmail(NewName,email,otp)
 
 		if senterr != nil{
-			c.HTML(http.StatusInternalServerError,"edit_profile.html",gin.H{"error":"Failed to send email"})
+			c.JSON(http.StatusBadRequest,gin.H{"status":"error"})
 			return 
 		}
 
-		c.HTML(http.StatusOK,"changeEmail.html",gin.H{"user":User.Username,"Email":email,"name":User.Username,"phone":User.Phone})
+		redirect := fmt.Sprintf("/user/changeEmail?email=%s&name=%s&phone=%s",email,NewName,NewPhone)
+
+		c.JSON(http.StatusOK,gin.H{"redirect":redirect})
 
 	}else{
 
@@ -184,8 +237,7 @@ func UpdateProfile(c *gin.Context){
 		return 
 		}
 
-		c.Redirect(http.StatusFound,"/user/profile")
-
+		c.JSON(http.StatusOK,gin.H{"redirect": "/user/profile"})
 	}
 
 }
@@ -255,7 +307,7 @@ func ResendEmailOtp(c *gin.Context){
 		return 
 	}
 
-	senterr := helper.SendOTPEmail(email,otp)
+	senterr := helper.SendOTPEmail(NewName,email,otp)
 
 	if senterr != nil{
 		c.HTML(http.StatusInternalServerError,"edit_profile.html",gin.H{"user":User.Username,"Email":email,"name":NewName,"phone":NewPhone,"error":"Error occured while senting otp, Please try again later"})

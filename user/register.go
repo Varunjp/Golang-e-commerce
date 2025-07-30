@@ -101,7 +101,7 @@ func RegisterUser(c *gin.Context){
 	go func(){
 		otp,_ := helper.GenerateAndSaveOtp(user.Email)
 
-		err := helper.SendOTPEmail(user.Email,otp)
+		err := helper.SendOTPEmail(input.Username,user.Email,otp)
 
 		if err != nil{
 			log.Println("Error :",err)

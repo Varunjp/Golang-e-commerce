@@ -36,7 +36,7 @@ func ResetPasswordOTPSend(c *gin.Context){
 			log.Println(err)
 		}
 
-		err = helper.SendOTPEmail(email,otp)
+		err = helper.SendOTPEmail(user.Username,email,otp)
 
 		if err != nil{
 			log.Println(err)
@@ -76,14 +76,16 @@ func ResetPasswordOTPVerify(c * gin.Context){
 
 	email := c.PostForm("email")
 	enteredOTP := c.PostForm("otp")
-
+	var user models.User
 	otpcheck,err := helper.VerfiyOTP(email,enteredOTP)
+
+	db.Db.Where("email = ?",email).First(&user)
 
 	if err != nil || !otpcheck{
 		
 		go func(){
 			otp, _ := helper.GenerateAndSaveOtp(email)
-			err := helper.SendOTPEmail(email,otp)
+			err := helper.SendOTPEmail(user.Username,email,otp)
 			if err != nil{
 				log.Println(err)
 			}
@@ -113,7 +115,7 @@ func Resetpassword_ResendOTP(c *gin.Context){
 
 		otp, _ := helper.GenerateAndSaveOtp(email)
 
-		err := helper.SendOTPEmail(email,otp)
+		err := helper.SendOTPEmail(user.Username,email,otp)
 
 		if err != nil{
 			log.Println(err)

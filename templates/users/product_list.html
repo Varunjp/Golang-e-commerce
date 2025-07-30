@@ -4,36 +4,43 @@
   <div class="row">
     <!-- Sidebar Filters -->
     <aside class="col-md-3">
-      <h5 class="mb-4">Filters</h5>
+      <div class="position-sticky" style="top: 80px;">
+            <h5 class="mb-4">Filters</h5>
       <form method="GET" action="/user/shop">
         <div class="mb-4">
           <h6>Category</h6>
             <ul class="list-unstyled">
-              {{ range .subcategory }}
+              <!-- {{ range .subcategory }}
               <li><input type="checkbox" name="category" value="{{ .SubID}}"> {{.SubCategoryName}} ({{.CategoryName}})</li>
+              {{ end }} -->
+              {{ range .subcategory }}
+                <li>
+                  <input type="checkbox" name="category" value="{{ .SubID }}"
+                    {{ if inSlice $.savedcategory (printf "%v" .SubID) }}checked{{ end }}>
+                  {{.SubCategoryName}} ({{.CategoryName}})
+                </li>
               {{ end }}
-              <!-- <li><input type="checkbox" name="category" value="shorts" id="category2"> Shorts</li>
-              <li><input type="checkbox" name="category" value="hoodies" id="category3"> Hoodies</li>
-              <li><input type="checkbox" name="category" value="jeans" id="category4"> Jeans</li> -->
             </ul>
           </div>
           <div class="mb-4">
             <h6>Price</h6>
-            Min: <input type="number" name="min_price" class="form-control" value="50">
-            Max: <input type="number" name="max_price" class="form-control" value="500">
+            Min: <input type="number" name="min_price" class="form-control" value="{{ .MinPrice }}">
+            Max: <input type="number" name="max_price" class="form-control" value="{{ .MaxPrice }}">
           </div>
           <div class="mb-4">
             <h6>Size</h6>
             <ul class="list-unstyled">
-              <li><input type="radio" name="size" value="S" id="small"> Small</li>
-              <li><input type="radio" name="size" value="M" id="medium"> Medium</li>
-              <li><input type="radio" name="size" value="L" id="large"> Large</li>
-              <li><input type="radio" name="size" value="XL" id="xlarge"> X-Large</li>
+              <li><input type="radio" name="size" value="S" id="small" {{ if eq .Size "S" }}checked{{ end }}> Small</li>
+              <li><input type="radio" name="size" value="M" id="medium" {{ if eq .Size "M" }}checked{{ end }}> Medium</li>
+              <li><input type="radio" name="size" value="L" id="large" {{ if eq .Size "L" }}checked{{ end }}> Large</li>
+              <li><input type="radio" name="size" value="XL" id="xlarge" {{ if eq .Size "XL" }}checked{{ end }}> X-Large</li>
             </ul>
           </div>
           <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
         </form>
         <a href="/user/shop" class="btn btn-secondary w-100 mt-2">Clear Filters</a>
+      </div>
+      
     </aside>
 
     <!-- Product Grid -->
@@ -65,39 +72,45 @@
       </div>
 
       <div class="row">
-        {{ range .Products }}
-        <div class="col-md-4 mb-4">
-          <div class="card position-relative">
-            {{if .Wishlist}}
-              <a href="/user/remove-wishlist/{{ .ID }}" class="position-absolute top-0 end-0 m-2 text-warning fs-4"><i class="bi bi-star-fill"></i></a>
-              {{else}}
-              <a href="/user/add-wishlist/{{ .ID }}" class="position-absolute top-0 end-0 m-2 text-secondary fs-4"><i class="bi bi-star"></i></a>
-              {{end}}
-            <img src="/{{ .ImageURL }}" class="card-img-top" alt="{{ .Name }}">
-            <div class="card-body">
-              <h6 class="card-title">{{ .Name }}</h6>
-              <div class="mb-2 text-warning">
-                {{ $rating := .Rating }}
-                  {{ range $i := seq 5 }}
-                    {{ if lt $i $rating }}
-                      <i class="bi bi-star-fill"></i>
-                    {{ else }}
-                      <i class="bi bi-star"></i>
+        {{ if .Products}}
+          {{ range .Products }}
+          <div class="col-md-4 mb-4">
+            <div class="card position-relative">
+              {{if .Wishlist}}
+                <a href="/user/remove-wishlist/{{ .ID }}" class="position-absolute top-0 end-0 m-2 text-warning fs-4"><i class="bi bi-star-fill"></i></a>
+                {{else}}
+                <a href="/user/add-wishlist/{{ .ID }}" class="position-absolute top-0 end-0 m-2 text-secondary fs-4"><i class="bi bi-star"></i></a>
+                {{end}}
+              <img src="/{{ .ImageURL }}" class="card-img-top" alt="{{ .Name }}">
+              <div class="card-body">
+                <h6 class="card-title">{{ .Name }}</h6>
+                <div class="mb-2 text-warning">
+                  {{ $rating := .Rating }}
+                    {{ range $i := seq 5 }}
+                      {{ if lt $i $rating }}
+                        <i class="bi bi-star-fill"></i>
+                      {{ else }}
+                        <i class="bi bi-star"></i>
+                      {{ end }}
                     {{ end }}
-                  {{ end }}
-              </div>
+                </div>
 
-              <p class="card-text">
-                <span class="text-danger fw-bold">₹{{ .Price }}</span>
-                {{ if .DiscountedPrice }}
-                <del class="text-muted">${{ .DiscountedPrice }}</del>
-                {{ end }}
-              </p>
-              <a href="/user/product/{{ .ID }}" class="btn btn-outline-primary w-100">View Details</a>
-              
+                <p class="card-text">
+                  <span class="text-danger fw-bold">₹{{ .Price }}</span>
+                  {{ if .DiscountedPrice }}
+                  <del class="text-muted">${{ .DiscountedPrice }}</del>
+                  {{ end }}
+                </p>
+                <a href="/user/product/{{ .ID }}" class="btn btn-outline-primary w-100">View Details</a>
+                
+              </div>
             </div>
           </div>
-        </div>
+          {{ end }}
+        {{else}}
+            <div class="col-12 text-center">
+              <h5 class="text-muted">No products available</h5>
+            </div>
         {{ end }}
       </div>
 

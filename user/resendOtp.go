@@ -23,7 +23,7 @@ func ResendOTP(c *gin.Context) {
 	go func(){
 		otp, _ := helper.GenerateAndSaveOtp(email)
 
-		err := helper.SendOTPEmail(email,otp)
+		err := helper.SendOTPEmail(user.Username,email,otp)
 		
 		if err != nil{
 			log.Println(err)

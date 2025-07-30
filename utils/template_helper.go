@@ -31,7 +31,8 @@ func TemplateFuncs() template.FuncMap {
 		"seq":sec,
 		"floor":floor,
 		"toFloat":tofloat,
-
+		"inSlice":inSlice,
+		"until":until,
 	}
 }
 
@@ -90,4 +91,21 @@ func floor (x float64) float64{
 
 func tofloat(i int)float64{
 	return float64(i)
+}
+
+func inSlice(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+func until(n int) []int {
+	result := make([]int, n)
+	for i := 0; i < n; i++ {
+		result[i] = i
+	}
+	return result
 }

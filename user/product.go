@@ -32,6 +32,15 @@ func Product(c *gin.Context){
 		Comment 	string
 	}
 
+	type relatedItem struct{
+		ID 				uint 
+		ImageURL 		string
+		Name 			string 
+		AverageRating 	int 
+		Price 			float64
+	}
+	var relatedProduct []relatedItem
+
 	if err := db.Db.Where("deleted_at IS NULL").First(&product_variant,productID).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Product not found"})
 		return 
@@ -40,6 +49,51 @@ func Product(c *gin.Context){
 	if err := db.Db.Preload("Product_variants").Where("deleted_at IS NULL AND product_id = ?",product_variant.ProductID).First(&product).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Product not found"})
 		return 
+	}
+
+	//related products
+	var ProductRelated []models.Product
+	if err := db.Db.Preload("Product_variants").Where("sub_category_id = ?",product.SubCategoryID).Limit(4).Find(&ProductRelated).Error; err != nil{
+		c.JSON(http.StatusNotFound,gin.H{"error":"Product not found"})
+		return 
+	}
+
+	for _,pro := range ProductRelated {
+		variCount := 0
+		for _, vari := range pro.Product_variants{
+			
+			if vari.ID != product_variant.ID{
+					variCount++
+				if variCount > 1{
+					break
+				}
+
+				var total int64
+				var sum float64
+				var image models.Product_image
+				db.Db.Model(&models.Review{}).
+					Where("product_id = ?", pro.ProductID).
+					Count(&total).
+					Select("AVG(rating)").Row().Scan(&sum)
+
+				averageRating := 0.0
+				if total > 0 {
+					averageRating = sum
+				}
+
+				db.Db.Where("product_variant_id = ?",vari.ID).Order("order_no ASC").First(&image)
+
+				relatedProduct = append(relatedProduct, relatedItem{
+					ID: vari.ID,
+					Name: pro.ProductName,
+					Price: vari.Price,
+					ImageURL: image.Image_url,
+					AverageRating: int(averageRating),
+				})
+			}
+
+		}
+
 	}
 
 	var reviews []models.Review
@@ -108,6 +162,7 @@ func Product(c *gin.Context){
 				"AverageRating": averageRating,
 				"TotalReviews":  total,
 				"message":flash,
+				"RelatedProducts":relatedProduct,
 			})
 			return 
 		}else if errmsg != nil{
@@ -125,6 +180,7 @@ func Product(c *gin.Context){
 				"TotalReviews":  total,
 				"Wishlist":isWishlist,
 				"error":errmsg,
+				"RelatedProducts":relatedProduct,
 			})
 			return 
 		}
@@ -139,6 +195,7 @@ func Product(c *gin.Context){
 			"TotalReviews":  total,
 			"Images": images,
 			"Wishlist":isWishlist,
+			"RelatedProducts":relatedProduct,
 		})
 	}else{
 
@@ -156,6 +213,7 @@ func Product(c *gin.Context){
 				"TotalReviews":  total,
 				"Wishlist":false,
 				"message":flash,
+				"RelatedProducts":relatedProduct,
 			})
 			return 
 		}else if errmsg != nil{
@@ -172,6 +230,7 @@ func Product(c *gin.Context){
 				"TotalReviews":  total,
 				"Wishlist":false,
 				"error":errmsg,
+				"RelatedProducts":relatedProduct,
 			})
 			return
 		}
@@ -185,6 +244,7 @@ func Product(c *gin.Context){
 			"AverageRating":  averageRating,
 			"TotalReviews":  total,
 			"Wishlist":false,
+			"RelatedProducts":relatedProduct,
 		})
 	}
 

@@ -74,19 +74,27 @@
                       <!--testing-->
                       <div class="col-12 col-md-2 text-end">
                         {{if or (eq .Status "Processing") (eq .Status "Pending")}}
-                        <form method="POST" action="/user/cancel-item">
+                        <form method="POST" action="/user/cancel-item" id="form-cancel-{{.ID}}">
                           <input type="hidden" name="order_id" value="{{$.Order.ID}}">
                           <input type="hidden" name="item_id" value="{{.ID}}">
                           <input type="text" name="reason" placeholder="Reason for cancel" required>
-                          <button type="submit" class="btn btn-sm btn-danger mt-2">Cancel</button>
+                          <button type="button" class="btn btn-sm btn-danger mt-2" 
+                            data-action="cancel" 
+                            data-message="Are you sure you want to cancel this item?" 
+                            data-form-id="form-cancel-{{.ID}}"
+                            onclick="showConfirmation(this)">Cancel</button>
                         </form>
                         {{else if eq .Status "Delivered"}}
                         <span class="badge bg-success mt-2">{{.Status}}</span>
-                        <form method="POST" action="/user/return-item" class="mt-2">
+                        <form method="POST" action="/user/return-item" id="form-return-{{.ID}}" class="mt-2">
                           <input type="hidden" name="order_id" value="{{$.Order.ID}}">
                           <input type="hidden" name="item_id" value="{{.ID}}">
                           <input type="text" name="reason" placeholder="Reason for return" required>
-                          <button type="submit" class="btn btn-sm btn-danger mt-2">Return</button>
+                          <button type="button" class="btn btn-sm btn-danger mt-2" 
+                            data-action="return" 
+                            data-message="Are you sure you want to return this item?" 
+                            data-form-id="form-return-{{.ID}}"
+                            onclick="showConfirmation(this)">Return</button>
                         </form>
                         
                         {{else if or (eq .Status "Failed") (eq .Status "Canceled")}}
@@ -127,6 +135,29 @@
                 </li>
                 {{end}}
           </ul>
+
+          <!-- Confirmation Modal -->
+            <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                  <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title" id="confirmationModalLabel">Are you sure?</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="mb-0" id="modalMessage">This action cannot be undone. Please confirm.</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Go Back</button>
+                    <button type="button" class="btn btn-warning" id="confirmActionBtn">Yes, Proceed</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          
+
+
           {{ if eq .Order.Status "Failed"}}
           <a href="/order/retry?orderId={{.Order.OrderID}}"><button class="btn btn-outline-primary">Retry</button></a>
           {{ end }}
@@ -160,5 +191,24 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let formToSubmit = null;
+
+  function showConfirmation(button) {
+    const message = button.getAttribute('data-message') || "Are you sure you want to proceed?";
+    const formId = button.getAttribute('data-form-id');
+    formToSubmit = document.getElementById(formId);
+    document.getElementById('modalMessage').innerText = message;
+    const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    modal.show();
+  }
+
+  document.getElementById('confirmActionBtn').addEventListener('click', function () {
+    if (formToSubmit) {
+      formToSubmit.submit();
+    }
+  });
+</script>
+
 </body>
 </html>

@@ -6,100 +6,132 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body.dark-mode { background-color: #121212; color: #f5f5f5; }
-    .dark-mode .form-control, .dark-mode .modal-content { background-color: #2c2c2c; color: #fff; }
-    .dark-mode .list-group-item { background-color: #1e1e1e; color: #f5f5f5; }
+    .dark-mode .form-control,
+    .dark-mode .modal-content,
+    .dark-mode .list-group-item {
+      background-color: #2c2c2c;
+      color: #fff;
+    }
+    .form-section {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    .dark-mode .form-section {
+      background: #1e1e1e;
+    }
+    .form-title {
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 1rem;
+      padding-bottom: .5rem;
+    }
   </style>
 </head>
 <body>
-<div class="container mt-5">
-  <div class="d-flex justify-content-between align-items-center">
-    <h3>Edit Profile</h3>
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="darkModeToggle">
-      <label class="form-check-label" for="darkModeToggle">Dark Mode</label>
-       <div>
-        <a href="/user/profile"><button class="btn btn-outline-dark">Back</button></a>
-       </div>
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit Profile</h2>
+    <div class="d-flex align-items-center gap-3">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="darkModeToggle">
+        <label class="form-check-label" for="darkModeToggle">Dark Mode</label>
+      </div>
+      <a href="/user/profile" class="btn btn-outline-secondary">Back</a>
     </div>
   </div>
 
   {{if .error}}
-  <div class="alert alert-danger">{{.error}}</div>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{.error}}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
   {{end}}
 
-  <form action="/user/update-profile" method="POST">
-    <div class="mb-3">
-      <label class="form-label">Username</label>
-      <input type="text" class="form-control" name="username" value="{{.user.Username}}">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Email</label>
-      <input type="email" class="form-control" name="email" value="{{.user.Email}}">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Phone</label>
-      <input type="text" class="form-control" name="phone" value="{{.user.Phone}}">
-    </div>
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-  </form>
-
-  <hr class="my-5">
-
-  <h4>Addresses</h4>
-  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addAddressModal">Add Address</button>
-
-  <ul class="list-group">
-    {{range .user.Addresses}}
-    <li class="list-group-item">
-      <strong>{{.AddressLine1}}, {{.AddressLine2}}</strong><br>
-      {{.City}}, {{.State}}, {{.Country}} - {{.PostalCode}}
-      <div class="mt-2">
-        <button class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#editAddressModal{{.AddressID}}">Edit</button>
-        <form action="/delete-address" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this address?');">
-          <input type="hidden" name="address_id" value="{{.AddressID}}">
-          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-        </form>
+  <div class="form-section mb-5">
+    <h4 class="form-title">User Information</h4>
+    <form action="/user/update-profile" id="userForm" method="POST">
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" name="username" value="{{.user.Username}}" required>
       </div>
-    </li>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" value="{{.user.Email}}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Phone</label>
+        <input type="text" class="form-control" name="phone" value="{{.user.Phone}}" required>
+      </div>
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
 
-    <!-- Edit Address Modal for each address -->
-    <div class="modal fade" id="editAddressModal{{.AddressID}}" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog">
-        <form class="modal-content" action="/user/edit-address" method="POST">
-          <div class="modal-header">
-            <h5 class="modal-title">Edit Address</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body row g-3">
+  <div class="form-section">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="form-title mb-0">Saved Addresses</h4>
+      <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">+ Add Address</button>
+    </div>
+
+    {{if not .user.Addresses}}
+      <div class="text-muted">No addresses found. Click "Add Address" to get started.</div>
+    {{else}}
+    <ul class="list-group">
+      {{range .user.Addresses}}
+      <li class="list-group-item">
+        <div><strong>{{.AddressLine1}}, {{.AddressLine2}}</strong></div>
+        <div>{{.City}}, {{.State}}, {{.Country}} - {{.PostalCode}}</div>
+        <div class="mt-2">
+          <button class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#editAddressModal{{.AddressID}}">Edit</button>
+          <form action="/delete-address" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this address?');">
             <input type="hidden" name="address_id" value="{{.AddressID}}">
-            <div class="col-12"><label>Line 1</label><input type="text" class="form-control" name="line1" value="{{.AddressLine1}}" required></div>
-            <div class="col-12"><label>Line 2</label><input type="text" class="form-control" name="line2" value="{{.AddressLine2}}"></div>
-            <div class="col-md-6"><label>Country</label><input type="text" class="form-control" name="country" value="{{.Country}}" required></div>
-            <div class="col-md-6"><label>State</label><input type="text" class="form-control" name="state" value="{{.State}}" required></div>
-            <div class="col-md-6"><label>City</label><input type="text" class="form-control" name="city" value="{{.City}}" required></div>
-            <div class="col-md-6"><label>Postal Code</label><input type="text" class="form-control" name="postal_code" value="{{.PostalCode}}" required></div>
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Update</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          </div>
-        </form>
+            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+          </form>
+        </div>
+      </li>
+
+      <!-- Edit Address Modal -->
+      <div class="modal fade" id="editAddressModal{{.AddressID}}" tabindex="-1" aria-labelledby="editAddressLabel{{.AddressID}}" aria-hidden="true">
+        <div class="modal-dialog">
+          <form class="modal-content" action="/user/edit-address" method="POST">
+            <div class="modal-header">
+              <h5 class="modal-title" id="editAddressLabel{{.AddressID}}">Edit Address</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body row g-3">
+              <input type="hidden" name="address_id" value="{{.AddressID}}">
+              <div class="col-12"><label>Line 1</label><input type="text" class="form-control" name="line1" value="{{.AddressLine1}}" required></div>
+              <div class="col-12"><label>Line 2</label><input type="text" class="form-control" name="line2" value="{{.AddressLine2}}"></div>
+              <div class="col-md-6"><label>Country</label><input type="text" class="form-control" name="country" value="{{.Country}}" required></div>
+              <div class="col-md-6"><label>State</label><input type="text" class="form-control" name="state" value="{{.State}}" required></div>
+              <div class="col-md-6"><label>City</label><input type="text" class="form-control" name="city" value="{{.City}}" required></div>
+              <div class="col-md-6"><label>Postal Code</label><input type="text" class="form-control" name="postal_code" value="{{.PostalCode}}" required></div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Update</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+      {{end}}
+    </ul>
     {{end}}
-  </ul>
+  </div>
 </div>
 
 <!-- Add Address Modal -->
-<div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressLabel" aria-hidden="true">
   <div class="modal-dialog">
     <form class="modal-content" action="/user/add-address" method="POST">
       <div class="modal-header">
-        <h5 class="modal-title">Add Address</h5>
+        <h5 class="modal-title" id="addAddressLabel">Add Address</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body row g-3">
-        <div class="col-12"><input type="hidden" class="form-control" name="user" value="{{ .user.ID}}" required></div>
+        <input type="hidden" name="user" value="{{ .user.ID}}">
         <div class="col-12"><label>Line 1</label><input type="text" class="form-control" name="line1" required></div>
         <div class="col-12"><label>Line 2</label><input type="text" class="form-control" name="line2"></div>
         <div class="col-md-6"><label>Country</label><input type="text" class="form-control" name="country" required></div>
@@ -127,6 +159,76 @@
     body.classList.toggle('dark-mode');
     localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
   });
+
+  // Auto-dismiss alerts after 3 seconds
+  setTimeout(() => {
+    const alert = document.querySelector('.alert');
+    if (alert) alert.classList.remove('show');
+  }, 3000);
 </script>
+
+<script>
+  
+  document.addEventListener('DOMContentLoaded',() =>{
+    const form = document.getElementById('userForm')
+
+    if (!form){
+      console.error('Form not found!');
+      return;
+    }
+
+    form.addEventListener('submit',function(e){
+      e.preventDefault();
+
+      // clear previous errors
+      document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+      document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
+      const formData = new FormData(form)
+
+      fetch(form.action,{
+        method: form.method,
+        body: formData,
+        headers:  {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(async response =>{
+        const res = await response.json();
+
+        if(response.ok){
+          if (res.redirect){
+            window.location.href = res.redirect;
+          }else{
+            location.reload();
+          }
+        }else if (response.status === 400){
+          if (res.errors){
+            Object.keys(res.errors).forEach(field => {
+              const input = form.querySelector(`[name="${field}"]`);
+              if (input) {
+                input.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.innerText = res.errors[field];
+                input.insertAdjacentElement('afterend', feedback);
+              }
+            });
+          }
+        }else{
+          alert('Something went wrong. Please try again.');
+        }
+
+      })
+      .catch(() =>{
+        alert('Network error. Please try again.');
+      });
+
+    });
+
+  });
+
+
+</script>
+
+
 </body>
 </html>

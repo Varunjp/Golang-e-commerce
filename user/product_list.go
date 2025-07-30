@@ -56,7 +56,6 @@ func ShowProductList(c *gin.Context){
 	minPrice,_ := strconv.ParseFloat(c.DefaultQuery("min_price","0"),64)
 	maxPrice,_ := strconv.ParseFloat(c.DefaultQuery("max_price","10000"),64)
 	sortBy := c.DefaultQuery("sort","")
-
 	
 	if minPrice > maxPrice {
 		c.HTML(http.StatusBadRequest, "product_list.html", gin.H{"error": "Min price could not be more than max price"})
