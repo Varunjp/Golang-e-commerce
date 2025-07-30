@@ -67,7 +67,14 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 			newTotal := orignalTotal - itemTotal
 			refundAmount := order.TotalAmount - newTotal
-			
+
+			if refundAmount < 0{
+				refundAmount = 0
+			}
+			if refundAmount < 1{
+				desc := newTotal - order.TotalAmount
+				order.DiscountTotal = desc 
+			}
 			// amount refunded
 			walletTranscation := models.WalletTransaction{
 				UserID: order.UserID,
@@ -96,9 +103,18 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 		}else if adjustedTotal < coupon.MinAmount && adjustedTotal < 0{
 			
 			var refundAmount float64
+			var newTotal float64
 
-			newTotal := orignalTotal - itemTotal
-			refundAmount = order.TotalAmount - newTotal
+			if CheckLeftItems(order.ID){
+				refundAmount = order.TotalAmount
+			}else{
+				newTotal = orignalTotal - itemTotal
+				refundAmount = order.TotalAmount - newTotal
+			}
+
+			if refundAmount < 0 {
+				refundAmount = 0
+			}
 			
 			// amount refund
 			walletTransaction := models.WalletTransaction{
@@ -115,7 +131,13 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				return err 
 			}
 
-			order.DiscountTotal = 0
+			if refundAmount < 1{
+				desc := newTotal - order.TotalAmount
+				order.DiscountTotal = desc 
+			}else{
+				order.DiscountTotal = 0
+			}
+			
 
 			transferErr := CreditCancelWallet(order.UserID,refundAmount,reason)
 
@@ -126,13 +148,19 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 			db.Db.Delete(&usedCoupon)
 		}else{
+			
+			returnamount := itemTotal
+
+			if returnamount > order.TotalAmount{
+				returnamount = 0
+			}
 
 			// amount refund
 			walletTransaction := models.WalletTransaction{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: itemTotal,
+				Amount: returnamount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: false,
@@ -142,7 +170,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				return err 
 			}
 
-			transferErr := CreditCancelWallet(order.UserID,itemTotal,reason)
+			transferErr := CreditCancelWallet(order.UserID,returnamount,reason)
 
 			if transferErr != nil{
 				return transferErr
@@ -154,11 +182,19 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 
 	}else{
 
+		var returnamount float64
+
+		if itemTotal > order.TotalAmount{
+			returnamount = order.TotalAmount
+		}else{
+			returnamount = itemTotal
+		}
+
 		newalletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
 			OrderID: order.ID,
 			OrderItemID: orderItem.ID,
-			Amount: itemTotal,
+			Amount: returnamount,
 			Type: "Credit",
 			Description: reason,
 			RefundStatus: false,
@@ -170,7 +206,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			return err 
 		}
 
-		transferErr := CreditCancelWallet(order.UserID,itemTotal,reason)
+		transferErr := CreditCancelWallet(order.UserID,returnamount,reason)
 
 		if transferErr != nil{
 			return transferErr

@@ -3,6 +3,7 @@ package helper
 import (
 	db "first-project/DB"
 	"first-project/models"
+	"os"
 
 	"gorm.io/gorm"
 )
@@ -11,7 +12,7 @@ func UpdateUserImage(userID int, imagePath string) error {
 
 	var ProfileImage models.ProfileImage
 
-	if err := db.Db.First(&ProfileImage,userID).Error; err != nil{
+	if err := db.Db.Where("user_id = ?",userID).First(&ProfileImage).Error; err != nil{
 
 		if err == gorm.ErrRecordNotFound{
 			newImage := models.ProfileImage{
@@ -26,6 +27,14 @@ func UpdateUserImage(userID int, imagePath string) error {
 			return err 
 		}
 
+	}
+
+	if ProfileImage.ImageUrl != ""{
+		err := os.Remove(ProfileImage.ImageUrl)
+
+		if err != nil{
+			return err 
+		}
 	}
 
 	ProfileImage.ImageUrl = imagePath

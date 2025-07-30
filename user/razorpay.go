@@ -90,6 +90,7 @@ func CreateRazorpayOrder(c *gin.Context){
 		c.JSON(http.StatusNotFound,gin.H{"success":false})
 		return
 	}
+
 	
 	for _,item := range CartItems{
 
@@ -108,6 +109,7 @@ func CreateRazorpayOrder(c *gin.Context){
 		if itemCount > 5 {
 
 			db.Db.Model(&models.Product_Variant{}).Where("id = ?",item.ProductID).Update("stock",gorm.Expr("stock + ?",item.Quantity))
+			db.Db.Delete(&item)
 			c.JSON(http.StatusBadRequest,gin.H{"success":false})
 			return 
 		}

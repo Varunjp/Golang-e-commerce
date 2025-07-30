@@ -208,8 +208,29 @@ func AddCoupon(c *gin.Context){
 		return 
 	}
 	session := sessions.Default(c)
-	if strings.TrimSpace(input.Code) == "" || strings.TrimSpace(input.Description) == "" || input.MinAmount == 0 || input.Discount > 50{
-		session.Set("flash","Coupon doesn't meet requirment")
+	if strings.TrimSpace(input.Code) == ""{
+		session.Set("flash","Please provide proper code")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/admin/coupons")
+		return 
+	}
+
+	if input.Discount > 75{
+		session.Set("flash","Maximum discount is set to 75")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/admin/coupons")
+		return 
+	}
+
+	if input.MinAmount < 100 {
+		session.Set("flash","Provide minimum amount higher than 100")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/admin/coupons")
+		return 
+	}
+
+	if strings.TrimSpace(input.Description) == "" {
+		session.Set("flash","Please provide proper description")
 		session.Save()
 		c.Redirect(http.StatusSeeOther,"/admin/coupons")
 		return 
@@ -382,7 +403,7 @@ func EditCoupon(c *gin.Context){
 	// 	Errors["code"] = "Already exist"
 	// }
 
-	if strings.TrimSpace(newCode) == "" || strings.TrimSpace(newDescription) == "" || minAmount == 0 || discount == 100{
+	if strings.TrimSpace(newCode) == ""{
 		Errors["code"] = "Coupon code doesn't meet requirment" 
 	}
 

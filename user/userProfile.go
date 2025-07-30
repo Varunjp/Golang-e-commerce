@@ -324,13 +324,17 @@ func UploadProfileImage(c *gin.Context){
 	filePath := filepath.Join(uploadPath,filename)
 
 	if err := c.SaveUploadedFile(file,filePath); err != nil{
-		c.HTML(http.StatusInternalServerError,"user_profile.html",gin.H{"error":"Unable save file"})
-		return 
+		session.Set("flash","Unable save file")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/profile")
+		return
 	}
 
 	if err := helper.UpdateUserImage(int(id),"static/images/profiles/"+filename); err != nil{
-		c.HTML(http.StatusInternalServerError,"user_profile.html",gin.H{"error":"Failed to update image"})
-		return 
+		session.Set("flash","Failed to update image")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/profile")
+		return
 	}
 
 	c.Redirect(http.StatusSeeOther,"/user/profile")

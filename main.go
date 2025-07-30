@@ -21,8 +21,6 @@ func main() {
     log.Fatal("Error while loading env file")
   }
 
-
-
   db.DbInit()
   port := os.Getenv("PORT")
 
@@ -31,9 +29,7 @@ func main() {
     port = "8080"
   }
 
-  
   router := gin.Default()
-
 
   router.Use(gin.Logger(), gin.Recovery())
 

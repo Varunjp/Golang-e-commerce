@@ -49,16 +49,31 @@ func UserOrderCancelItem(itemId string) error {
 	var walletTransaction models.WalletTransaction
 	db.Db.Unscoped().Where("order_id = ? AND user_id = ? AND type = ?", order.ID, order.UserID, "Debit").First(&walletTransaction)
 
+
 	if valueCheck && errVal == nil {
 		if newTotal == 0 {
 			order.SubTotal = 0
 			order.TotalAmount = 0
 		}else if newTotal - order.DiscountTotal < 0 {
-			order.SubTotal = newTotal
-			order.TotalAmount = newTotal
+
+			if newTotal > order.TotalAmount{
+				order.SubTotal = newTotal
+				order.TotalAmount = newTotal
+			}else{
+				order.SubTotal = newTotal
+			}
+			
 		}else{
-			order.SubTotal = order.SubTotal - retrunAmount
-			order.TotalAmount = order.TotalAmount - retrunAmount
+
+			if newTotal > order.TotalAmount{
+				order.SubTotal = order.SubTotal - retrunAmount
+
+			}else{
+				order.SubTotal = order.SubTotal - retrunAmount
+				order.TotalAmount = order.TotalAmount - retrunAmount
+			}
+
+			
 		}
 		
 	} else if !valueCheck && errVal == nil {
@@ -90,9 +105,14 @@ func UserOrderCancelItem(itemId string) error {
 				order.TotalAmount = 0
 				order.DiscountTotal = 0.0
 			}else{
-				order.SubTotal = order.SubTotal - retrunAmount
-				order.TotalAmount = order.SubTotal
-				order.DiscountTotal = 0.0
+				if newTotal > order.TotalAmount{
+					order.SubTotal = newTotal
+					// order.TotalAmount = newTotal
+				}else{
+					order.SubTotal = newTotal
+					order.TotalAmount = order.SubTotal
+					order.DiscountTotal = 0.0
+				}
 			}
 
 			
