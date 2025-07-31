@@ -686,6 +686,16 @@ func UpdateProduct(c *gin.Context){
 		Errors["size"] = "Size should be properly defined"
 	}
 
+	var pcount int64
+
+	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ","%"+ProductName+"%").Count(&pcount).Error; err == nil{
+		if pcount > 0 {
+			Errors["name"] = "Product already exist"
+			
+		}
+	}
+
+
 	ProductSize = utils.SizeAdjust(ProductSize)
 
 

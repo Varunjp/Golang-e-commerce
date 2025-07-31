@@ -41,6 +41,28 @@
       </div>
 
       <div class="container py-3">
+
+        <form method="GET" action="/admin/wallet-transactions" class="row g-3 mb-4">
+          <div class="col-md-3">
+            <label for="from" class="form-label">From</label>
+            <input type="date" id="from" name="from" class="form-control" value="{{ .from }}">
+          </div>
+          <div class="col-md-3">
+            <label for="to" class="form-label">To</label>
+            <input type="date" id="to" name="to" class="form-control" value="{{ .to }}">
+          </div>
+          <div class="col-md-4">
+            <label for="search" class="form-label">Search by Order ID</label>
+            <input type="text" id="search" name="search" class="form-control" placeholder="Order ID" value="{{ .search }}">
+          </div>
+          <div class="col-md-1 d-flex align-items-end">
+            <button type="submit" class="btn btn-outline-light w-100">Apply</button>
+          </div>
+          <div class="col-md-1 d-flex align-items-end">
+            <a href="/admin/wallet-transactions" class="btn btn-outline-secondary w-100">Clear</a>
+          </div>
+        </form>
+
         <div class="card card-dark p-3">
           <table class="table table-dark table-hover">
             <thead>
@@ -51,19 +73,33 @@
                 <th>Item Name</th>
                 <th>Amount</th>
                 <th>Description</th>
+                <th>Status</th>
                 <th>Date</th>
               </tr>
             </thead>
             <tbody>
-              {{ range .transactions }}
+              {{ if .transactions}}
+                {{ range .transactions }}
+                <tr>
+                  <td>{{ .ID }}</td>
+                  <td>{{ .UserName }}</td>
+                  <td>{{ .Type }}</td>
+                  <td>{{ .Itemname}}</td>
+                  <td>₹{{ printf "%.2f" .Amount }}</td>
+                  <td>{{ .Description }}</td>
+                  <td>{{ if .Status }} Approved {{ else }} Declined {{ end }}</td>
+                  <td>{{ .CreatedAt.Format "02/01/06 3:04 PM" }}</td>
+                </tr>
+                {{ end }}
+              {{ else }}
               <tr>
-                <td>{{ .ID }}</td>
-                <td>{{ .UserName }}</td>
-                <td>{{ .Type }}</td>
-                <td>{{ .Itemname}}</td>
-                <td>₹{{ printf "%.2f" .Amount }}</td>
-                <td>{{ .Description }}</td>
-                <td>{{ .CreatedAt.Format "02/01/06 3:04 PM" }}</td>
+                <td>--</td>
+                <td>--</td>
+                <td>--</td>
+                <td>No data found</td>
+                <td>--</td>
+                <td>--</td>
+                <td>--</td>
               </tr>
               {{ end }}
             </tbody>
@@ -74,22 +110,17 @@
             <ul class="pagination justify-content-center">
               {{ if gt .page 1 }}
               <li class="page-item">
-                <a class="page-link" href="?page={{ sub .page 1 }}&search={{ .search }}">Previous</a>
+                <a class="page-link" href="?page={{ sub .page 1 }}&search={{ .search }}&from={{ .from }}&to={{ .to }}">Previous</a>
               </li>
               {{ end }}
-              <!-- {{ range $i := iterate 1 .totalPages }}
-              <li class="page-item {{ if eq $i $.page }}active{{ end }}">
-                <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
-              </li>
-              {{ end }} -->
               {{ range $i := .PageRange }}
                 <li class="page-item {{ if eq $i $.page }}active{{ end }}">
-                  <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
+                  <a class="page-link" href="?page={{ $i }}&search={{ $.search }}&from={{ $.from }}&to={{ $.to }}">{{ $i }}</a>
                 </li>
               {{ end }}
               {{ if lt .page .totalPages }}
               <li class="page-item">
-                <a class="page-link" href="?page={{ add .page 1 }}&search={{ .search }}">Next</a>
+                <a class="page-link" href="?page={{ add .page 1 }}&search={{ .search }}&from={{ .from }}&to={{ .to }}">Next</a>
               </li>
               {{ end }}
             </ul>

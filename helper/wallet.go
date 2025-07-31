@@ -36,6 +36,7 @@ func CreditWallet(userId uint, amount float64, reason string) error {
 		Amount: amount,
 		Type: "Credit",
 		Description: reason,
+		Status: true,
 	}
 
 	if err := db.Db.Create(&transaction).Error; err != nil{
@@ -58,6 +59,7 @@ func DebitWallet(userId uint, amount float64, orderID uint,reason string) error 
 		OrderID: orderID,
 		Description: reason,
 		CreatedAt: time.Now(),
+		Status: true,
 	}
 
 	if err := db.Db.Create(&transaction).Error; err != nil{

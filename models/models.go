@@ -157,6 +157,7 @@ type WalletTransaction struct {
 	Type 			string 
 	Description 	string 
 	RefundStatus	bool 		`gorm:"default:false"`
+	Status 			bool 		
 	CreatedAt 		time.Time
 	DeletedAt 		gorm.DeletedAt
 }

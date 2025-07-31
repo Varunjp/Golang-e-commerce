@@ -89,6 +89,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: false,
+				Status: true,
 			}
 
 
@@ -130,6 +131,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: false,
+				Status: true,
 			}
 			err := db.Db.Create(&walletTransaction).Error
 			if err != nil{
@@ -185,6 +187,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: false,
+				Status: true,
 			}
 			err := db.Db.Create(&walletTransaction).Error
 			if err != nil{
@@ -219,6 +222,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			Type: "Credit",
 			Description: reason,
 			RefundStatus: false,
+			Status: true,
 		}
 
 
@@ -317,6 +321,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					Type: "Credit",
 					Description: reason,
 					RefundStatus: false,
+					Status: true,
 				}
 
 				if WalletTransaction.ID != 0 {
@@ -347,6 +352,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					Type: "Credit",
 					Description: reason,
 					RefundStatus: false,
+					Status: true,
 				}
 				err := db.Db.Create(&walletTransaction).Error
 				if err != nil{
@@ -379,6 +385,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: false,
+				Status: true,
 			}
 
 			err := db.Db.Create(&walletTransaction).Error
@@ -439,6 +446,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 						Type: "Credit",
 						Description: fmt.Sprintf("Refund for order : %d",order.ID),
 						RefundStatus: false,
+						Status: true,
 					}
 
 					db.Db.Create(&newTransaction)
@@ -465,6 +473,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					Type: "Credit",
 					Description: fmt.Sprintf("Refund for order : %d",order.ID),
 					RefundStatus: false,
+					Status: true,
 				}
 
 				db.Db.Create(&newTransaction)

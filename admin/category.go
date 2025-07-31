@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -109,13 +110,14 @@ func AddCategory (c *gin.Context){
 	}
 
 	var existingCategory models.Category
-	if err := db.Db.Where("category_name = ?",categoryName).First(&existingCategory).Error; err == nil {
+	if err := db.Db.Where("category_name ILIKE ?",categoryName).First(&existingCategory).Error; err == nil {
 		c.HTML(http.StatusConflict,"category_list.html",gin.H{"error":"Category already exists"})
 		return 
 	}
 
 	var newCategory models.Category
 	newCategory.CategoryName = categoryName
+	newCategory.CreateAt = time.Now()
 
 	if err := db.Db.Create(&newCategory).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"category_list.html",gin.H{"error":"Could not create category"})
@@ -195,10 +197,21 @@ func EditCategory(c *gin.Context){
 	categoryID := c.Param("id")
 	newName := c.PostForm("name")
 	var category models.Category
+	var existCategory models.Category
+	Error := make(map[string]string)
 
 	if strings.TrimSpace(newName) == ""{
-		c.Redirect(http.StatusSeeOther,"/admin/categories")
-		return 
+		Error["name"] = "Please provide correct name" 
+	}
+
+
+	if err := db.Db.Where("category_name ILIKE ?",newName).First(&existCategory).Error; err == nil{
+		Error["name"] = "Category already exist"
+	}
+
+	if len(Error) != 0{
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Error})
+		return
 	}
 
 	if err := db.Db.First(&category, categoryID).Error;err != nil{
@@ -215,7 +228,8 @@ func EditCategory(c *gin.Context){
 		return 
 	}
 
-	c.Redirect(http.StatusFound,"/admin/categories")
+	c.JSON(http.StatusOK,gin.H{"redirect":"/admin/categories"})
+	// c.Redirect(http.StatusFound,"/admin/categories")
 }
 
 func EditSubCategoryPage(c *gin.Context){
@@ -236,27 +250,39 @@ func UpdateSubCategory(c *gin.Context){
 
 	subCategoryID := c.Param("id")
 	newName := c.PostForm("name")
+	Error := make(map[string]string)
 
 	if strings.TrimSpace(newName) == ""{
-		c.Redirect(http.StatusSeeOther,"/admin/categories")
-		return 
+		Error["name"] = "Please provide correct name"
 	}
 
 	var subCategory models.SubCategory
+	var exist models.SubCategory
 
 	if err := db.Db.First(&subCategory,subCategoryID).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Category not found"})
 		return
 	}
 
-	subCategory.SubCategoryName = newName
+	if err := db.Db.Where("sub_category_name ILIKE ? AND category_id = ?",newName,subCategory.CategoryID).First(&exist).Error; err == nil{
+		Error["name"] = "Name already exist"
+	}
 
-	if err := db.Db.Save(&subCategory).Error; err != nil{
-		c.String(http.StatusInternalServerError,"Error while updating subcategory")
+	if len(Error) > 0{
+		c.JSON(http.StatusBadRequest,gin.H{"status":"error","errors":Error})
 		return
 	}
 
-	c.Redirect(http.StatusFound,"/admin/categories")
+	
+
+	subCategory.SubCategoryName = newName
+
+	if err := db.Db.Save(&subCategory).Error; err != nil{
+		c.JSON(http.StatusInternalServerError,"Error while updating subcategory")
+		return
+	}
+
+	c.JSON(http.StatusOK,gin.H{"redirect":"/admin/categories"})
 }
 
 func DeleteCategory(c *gin.Context){

@@ -18,6 +18,9 @@ func WalletTransactions(c *gin.Context){
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")
+	from := c.Query("from")
+	to := c.Query("to")
+	search := c.Query("search")
 
 	page, err := strconv.Atoi(pageStr)
 
@@ -43,14 +46,29 @@ func WalletTransactions(c *gin.Context){
 		Itemname	string 
 		Amount 		float64
 		Description string 
+		Status 		bool
 		CreatedAt 	time.Time 
 	}
 
 	dbOrder := db.Db.Model(&models.WalletTransaction{})
 
+	if search != ""{
+		var order models.Order
+		db.Db.Where("order_id ILIKE ?","%"+search+"%").First(&order)
+		dbOrder = dbOrder.Where("order_id = ?", order.ID)
+	}
+
+	if from !=  "" && to != "" {
+		dbOrder = dbOrder.Where("created_at BETWEEN ? AND ?", from+" 00:00:00", to+" 23:59:59")
+	}else if from != ""{
+		dbOrder = dbOrder.Where("created_at >= ?",from+" 00:00:00")
+	}else if to != ""{
+		dbOrder = dbOrder.Where("created_at <= ?",to+" 23:59:59")
+	}
+
 	dbOrder.Count(&total)
 
-	if err := db.Db.Order("id DESC").Limit(limit).Offset(offset).Find(&WalletTransactions).Error; err != nil{
+	if err := dbOrder.Order("id DESC").Limit(limit).Offset(offset).Find(&WalletTransactions).Error; err != nil{
 		c.HTML(http.StatusInternalServerError,"wallet.html",gin.H{"error":"Could not transaction details, please try again later"})
 		return 
 	}
@@ -94,6 +112,7 @@ func WalletTransactions(c *gin.Context){
 			Itemname: variant_name,
 			Amount: math.Abs(transaction.Amount),
 			Description: transaction.Description,
+			Status: transaction.Status,
 			CreatedAt: transaction.CreatedAt,
 		}
 		
@@ -106,6 +125,9 @@ func WalletTransactions(c *gin.Context){
 		"totalPages":totalPages,
 		"PageRange":pageRange,
 		"limit":limit,
+		"search":search,
+		"from":from,
+		"to":to,
 		})
 
 }
@@ -197,6 +219,7 @@ func WalletRefundApproval (c *gin.Context){
 	}
 
 	transaction.RefundStatus = false
+	transaction.Status = true
 	transaction.Description = transaction.Description+" "+reason
 	transaction.Type = "Credit"
 
@@ -306,6 +329,7 @@ func WalletRefundDecline (c *gin.Context){
 	}
 
 	transaction.RefundStatus = false
+	transaction.Status = false
 	transaction.Description = reason
 	transaction.Type = "Refund declined"
 
