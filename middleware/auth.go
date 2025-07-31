@@ -6,6 +6,7 @@ import (
 	"first-project/models"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -13,7 +14,6 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-var Secret = []byte("your_secret_key")
 
 type Claims struct {
 	Email string
@@ -33,6 +33,8 @@ func CreateToken(role string, email string, id uint)(string, error){
 			Issuer: "Fashion Art",
 		},
 	}
+	key := os.Getenv("JWT_SECRET")
+	Secret := []byte(key)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,claims)
 	return token.SignedString(Secret)
 }
@@ -40,6 +42,8 @@ func CreateToken(role string, email string, id uint)(string, error){
 func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 	return func(c *gin.Context){
 		//authHeader := c.GetHeader("Authorization")
+		key := os.Getenv("JWT_SECRET")
+		Secret := []byte(key)
 		session := sessions.Default(c)
 		username := session.Get("admin-name")
 
@@ -91,6 +95,8 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 func AuthUserMiddlerware(requiredRole string) gin.HandlerFunc{
 	return func(c *gin.Context){
 		//authHeader := c.GetHeader("Authorization")
+		key := os.Getenv("JWT_SECRET")
+		Secret := []byte(key)
 		session := sessions.Default(c)
 		username := session.Get("name")
 
