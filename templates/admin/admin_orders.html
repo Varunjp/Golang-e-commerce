@@ -79,13 +79,6 @@
       </div>
 
       <div class="container py-3">
-        <!-- Search -->
-        <!-- <form method="get" action="/admin/orders" class="d-flex mb-3">
-          <input type="text" name="search" class="form-control me-2" placeholder="Search by Order ID or Username" value="{{ .search }}">
-          <button type="submit" class="btn btn-outline-light me-2">Search</button>
-          <a href="/admin/orders" class="btn btn-secondary">Clear</a>
-        </form> -->
-
         <!-- filter -->
 
         <form method="GET" action="/admin/orders" class="row g-3 mb-4">
@@ -160,15 +153,6 @@
                   {{ end }}
                 </td>
                 <td>
-                  <!-- {{ if and (ne .Status "Delivered") (ne .Status "Cancelled") (ne .Status "Returned")}}
-                  <form action="/admin/orders/cancel/{{.ID}}" method="POST" class="d-inline" onsubmit="return confirm('Cancel this order?')">
-                    <textarea class="form-control form-control-sm mt-1 mb-2" name="reason" rows="2" placeholder="Reason for cancellation" required></textarea>
-                    <button class="btn btn-danger btn-sm">Cancel</button>
-                  </form>
-                  {{ else }}
-                  <span class="text-muted">-</span>
-                  {{ end }} -->
-
                   <a href="/admin/order/{{.ID}}" class="btn btn-primary">View</a>
                 </td>
               </tr>
@@ -183,19 +167,28 @@
             <ul class="pagination justify-content-center">
               {{ if gt .page 1 }}
               <li class="page-item">
-                <a class="page-link" href="?page={{ sub .page 1 }}&search={{ .search }}">Previous</a>
+                <a class="page-link"
+                  href="?page={{ sub .page 1 }}&order_id={{ .Filters.OrderID }}&user_name={{ .Filters.UserName }}&start_date={{ .Filters.StartDate }}&end_date={{ .Filters.EndDate }}&status={{ .Filters.Status }}">
+                  Previous
+                </a>
               </li>
               {{ end }}
 
               {{ range $i := .PageRange }}
-                <li class="page-item {{ if eq $i $.page }}active{{ end }}">
-                  <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
-                </li>
+              <li class="page-item {{ if eq $i $.page }}active{{ end }}">
+                <a class="page-link"
+                  href="?page={{ $i }}&order_id={{ $.Filters.OrderID }}&user_name={{ $.Filters.UserName }}&start_date={{ $.Filters.StartDate }}&end_date={{ $.Filters.EndDate }}&status={{ $.Filters.Status }}">
+                  {{ $i }}
+                </a>
+              </li>
               {{ end }}
 
               {{ if lt .page .totalPages }}
               <li class="page-item">
-                <a class="page-link" href="?page={{ add .page 1 }}&search={{ .search }}">Next</a>
+                <a class="page-link"
+                  href="?page={{ add .page 1 }}&order_id={{ .Filters.OrderID }}&user_name={{ .Filters.UserName }}&start_date={{ .Filters.StartDate }}&end_date={{ .Filters.EndDate }}&status={{ .Filters.Status }}">
+                  Next
+                </a>
               </li>
               {{ end }}
             </ul>

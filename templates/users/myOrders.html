@@ -30,6 +30,26 @@
   <h3 class="mb-4 text-center">My Orders</h3>
   {{ if .error }}<div class="text-danger">{{ .error }}</div>
   {{ end }}
+
+  <!-- Filter Orders -->
+  <form method="GET" action="/user/orders" class="row g-3 mb-4">
+    <div class="col-md-4 offset-md-4">
+      <select name="status" class="form-select" onchange="this.form.submit()">
+        <option value="">All Orders</option>
+        <option value="Delivered" {{if eq .FilterStatus "Delivered"}}selected{{end}}>Delivered</option>
+        <option value="Processing" {{if eq .FilterStatus "Processing"}}selected{{end}}>Processing</option>
+        <option value="Cancelled" {{if eq .FilterStatus "Cancelled"}}selected{{end}}>Cancelled</option>
+        <option value="Returned" {{if eq .FilterStatus "Returned"}}selected{{end}}>Returned</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      {{ if .FilterStatus }}
+      <a href="/user/orders" class="btn btn-outline-secondary w-100">Clear</a>
+      {{ end }}
+    </div>
+  </form>
+
+
   {{if .Orders}}
   <ul class="list-group mb-4">
     {{range .Orders}}
@@ -75,19 +95,19 @@
     <ul class="pagination justify-content-center">
       {{if .HasPrev}}
       <li class="page-item">
-        <a class="page-link" href="/user/orders?page={{.PrevPage}}">Previous</a>
+        <a class="page-link" href="/user/orders?page={{.PrevPage}}{{if .FilterStatus}}&status={{.FilterStatus}}{{end}}">Previous</a>
       </li>
       {{end}}
 
       {{range .Pages}}
       <li class="page-item {{if eq .Number $.CurrentPage}}active{{end}}">
-        <a class="page-link" href="/user/orders?page={{.Number}}">{{.Number}}</a>
+        <a class="page-link" href="/user/orders?page={{.Number}}{{if $.FilterStatus}}&status={{$.FilterStatus}}{{end}}">{{.Number}}</a>
       </li>
       {{end}}
 
       {{if .HasNext}}
       <li class="page-item">
-        <a class="page-link" href="/user/orders?page={{.NextPage}}">Next</a>
+        <a class="page-link" href="/user/orders?page={{.NextPage}}{{if .FilterStatus}}&status={{.FilterStatus}}{{end}}">Next</a>
       </li>
       {{end}}
     </ul>

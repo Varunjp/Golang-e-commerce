@@ -157,21 +157,28 @@
               <ul class="pagination justify-content-center">
                 {{ if gt .page 1 }}
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ sub .page 1 }}&search={{ .search }}">Previous</a>
+                  <a class="page-link"
+                    href="?page={{ sub .page 1 }}&filter={{ .filter | urlquery }}&start={{ .start | urlquery }}&end={{ .end | urlquery }}">
+                    Previous
+                  </a>
                 </li>
                 {{ end }}
-                
 
                 {{ range $i := .PageRange }}
                 <li class="page-item {{ if eq $i $.page }}active{{ end }}">
-                  <a class="page-link" href="?page={{ $i }}&search={{ $.search }}">{{ $i }}</a>
+                  <a class="page-link"
+                    href="?page={{ $i }}&filter={{ $.filter | urlquery }}&start={{ $.start | urlquery }}&end={{ $.end | urlquery }}">
+                    {{ $i }}
+                  </a>
                 </li>
                 {{ end }}
-                
 
                 {{ if lt .page .totalPages }}
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ add .page 1 }}&search={{ .search }}">Next</a>
+                  <a class="page-link"
+                    href="?page={{ add .page 1 }}&filter={{ .filter | urlquery }}&start={{ .start | urlquery }}&end={{ .end | urlquery }}">
+                    Next
+                  </a>
                 </li>
                 {{ end }}
               </ul>

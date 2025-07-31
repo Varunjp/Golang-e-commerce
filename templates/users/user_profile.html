@@ -169,20 +169,20 @@
                   <ul class="pagination justify-content-center">
                     {{if gt .CurrentPage 1}}
                     <li class="page-item">
-                      <a class="page-link" href="/user/orders?page={{sub .CurrentPage 1}}">&laquo; Previous</a>
+                      <a class="page-link" href="/user/profile?page={{sub .CurrentPage 1}}">&laquo; Previous</a>
                     </li>
                     {{end}}
 
                     {{ $root := . }}
                     {{range $i, $_ := until $root.TotalPages}}
                       <li class="page-item {{if eq (add $i 1) $root.CurrentPage}}active{{end}}">
-                        <a class="page-link" href="/user/orders?page={{add $i 1}}">{{add $i 1}}</a>
+                        <a class="page-link" href="/user/profile?page={{add $i 1}}">{{add $i 1}}</a>
                       </li>
                     {{end}}
 
                     {{if lt .CurrentPage .TotalPages}}
                     <li class="page-item">
-                      <a class="page-link" href="/user/orders?page={{add .CurrentPage 1}}">Next &raquo;</a>
+                      <a class="page-link" href="/user/profile?page={{add .CurrentPage 1}}">Next &raquo;</a>
                     </li>
                     {{end}}
                   </ul>

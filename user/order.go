@@ -21,16 +21,22 @@ func ListOrders(c *gin.Context){
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,userId,_ := helper.DecodeJWT(tokenStr)
 
+	qstatus := c.Query("status")
 	page,_ := strconv.Atoi(c.DefaultQuery("page","1"))
 	limit := 10
 	offset := (page - 1) * limit
 
 	var orders []models.Order
 	var total int64 
+	var query *gorm.DB
 
-	db.Db.Model(&models.Order{}).Where("user_id = ?",userId).Count(&total)
+	if qstatus != ""{
+		query = db.Db.Model(&models.Order{}).Where("user_id = ? AND status = ?",userId,qstatus).Count(&total)
+	}else{
+		query = db.Db.Model(&models.Order{}).Where("user_id = ?",userId).Count(&total)
+	}
 
-	if err := db.Db.Where("user_id = ?",userId).Order("id DESC").Offset(offset).Limit(limit).Find(&orders).Error; err != nil{
+	if err := query.Order("id DESC").Offset(offset).Limit(limit).Find(&orders).Error; err != nil{
 
 		if err == gorm.ErrRecordNotFound {
 			c.HTML(http.StatusNotFound,"myOrders.html",gin.H{"user":"done"})
@@ -71,6 +77,7 @@ func ListOrders(c *gin.Context){
 		"HasNext": page < totalPages,
 		"PrevPage": page - 1,
 		"NextPage": page + 1,
+		"FilterStatus":qstatus,
 	})
 
 }
