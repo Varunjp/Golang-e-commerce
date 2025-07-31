@@ -27,6 +27,15 @@
 <!-- Order Listing -->
 <div class="container mt-5">
   <h3 class="mb-4 text-center">Wallet Transactions</h3>
+  <nav aria-label="breadcrumb" class="bg-light py-2">
+      <div class="container">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-dark">Home</a></li>
+          <li class="breadcrumb-item"><a href="/user/profile" class="text-decoration-none text-dark">Profile</a></li>
+          <li class="breadcrumb-item active text-muted" aria-current="page">Wallet-transactions</li>
+        </ol>
+      </div>
+    </nav>
   {{ if .error }}<div class="text-danger">{{ .error }}</div>
   {{ end }}
   {{if .Transactions}}

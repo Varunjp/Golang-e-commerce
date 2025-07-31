@@ -33,6 +33,9 @@ func TemplateFuncs() template.FuncMap {
 		"toFloat":tofloat,
 		"inSlice":inSlice,
 		"until":until,
+		"max":Max,
+		"min":Min,
+		"seqs":Secq,
 	}
 }
 
@@ -108,4 +111,26 @@ func until(n int) []int {
 		result[i] = i
 	}
 	return result
+}
+
+func Max(a, b int) int {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func Min(a, b int) int {
+    if a < b {
+        return a
+    }
+    return b
+}
+
+func Secq(start, end int) []int {
+    s := make([]int, end-start+1)
+    for i := range s {
+        s[i] = start + i
+    }
+    return s
 }

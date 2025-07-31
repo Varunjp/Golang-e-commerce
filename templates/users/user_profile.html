@@ -42,6 +42,16 @@
 </nav>
 
   <div class="container mt-5">
+
+    <nav aria-label="breadcrumb" class="bg-light py-2">
+      <div class="container">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-dark">Home</a></li>
+          <li class="breadcrumb-item"><a href="/user/profile" class="text-decoration-none text-dark">Profile</a></li>
+        </ol>
+      </div>
+    </nav>
+    
     {{if .error}}
     <div class="alert alert-danger">{{.error}}</div>
     {{end}}
@@ -69,14 +79,19 @@
             {{if .user.ReferralCode }}
             <label class="label">Referral Code</label>
             <input type="text" id="refCode" class="form-control mb-2" value="{{.user.ReferralCode}}" readonly>
-            <input type="text" id="refLink" class="form-control mb-2" value="http://localhost:8000/user/register?ref={{.user.ReferralCode}}" readonly>
-            <button onclick="copyToClipboard('refLink')" class="btn btn-primary btn-sm">Copy Link</button>
-            <a href="https://wa.me/?text=Join%20and%20save%20₹50!%20Use%20my%20referral:%20http://localhost:8000/user/register?ref={{.user.ReferralCode}}" class="btn btn-success btn-sm mt-2">Share via WhatsApp</a>
+            <input type="text" id="refLink" class="form-control mb-3" value="http://localhost:8000/user/register?ref={{.user.ReferralCode}}" readonly>
+
+            <div class="d-flex justify-content-end gap-2 flex-wrap">
+              <button onclick="copyToClipboard('refLink')" class="btn btn-primary btn-sm">Copy Link</button>
+              <a href="https://wa.me/?text=Join%20and%20save%20₹50!%20Use%20my%20referral:%20http://localhost:8000/user/register?ref={{.user.ReferralCode}}" class="btn btn-success btn-sm">Share via WhatsApp</a>
+            </div>
+
             {{else if eq .user.ReferralCode ""}}
             <a href="/user/create/referral" class="btn btn-outline-success">Generate referral code</a>
             {{end}}
           </div>
         </div>
+
 
         <div class="card mb-4">
           <div class="card-header">User Information</div>
@@ -167,24 +182,40 @@
                 <!-- Pagination -->
                 <nav class="mt-4">
                   <ul class="pagination justify-content-center">
+
                     {{if gt .CurrentPage 1}}
                     <li class="page-item">
                       <a class="page-link" href="/user/profile?page={{sub .CurrentPage 1}}">&laquo; Previous</a>
                     </li>
                     {{end}}
 
-                    {{ $root := . }}
-                    {{range $i, $_ := until $root.TotalPages}}
-                      <li class="page-item {{if eq (add $i 1) $root.CurrentPage}}active{{end}}">
+                    {{ $totalPages := .TotalPages }}
+                    {{ $currentPage := .CurrentPage }}
+
+                    {{if le $totalPages 10}}
+                      {{range $i, $_ := until $totalPages}}
+                      <li class="page-item {{if eq (add $i 1) $currentPage}}active{{end}}">
                         <a class="page-link" href="/user/profile?page={{add $i 1}}">{{add $i 1}}</a>
                       </li>
+                      {{end}}
+                    {{else}}
+                      {{/* Show 10 pages max, around current page when possible */}}
+                      {{ $start := max (sub $currentPage 4) 1 }}
+                      {{ $end := min (add $start 9) $totalPages }}
+
+                      {{range $i := seqs $start $end}}
+                      <li class="page-item {{if eq $i $currentPage}}active{{end}}">
+                        <a class="page-link" href="/user/profile?page={{$i}}">{{$i}}</a>
+                      </li>
+                      {{end}}
+
+                      {{if lt $end $totalPages}}
+                      <li class="page-item">
+                        <a class="page-link" href="/user/profile?page={{add $end 1}}">Next &raquo;</a>
+                      </li>
+                      {{end}}
                     {{end}}
 
-                    {{if lt .CurrentPage .TotalPages}}
-                    <li class="page-item">
-                      <a class="page-link" href="/user/profile?page={{add .CurrentPage 1}}">Next &raquo;</a>
-                    </li>
-                    {{end}}
                   </ul>
                 </nav>
               {{else}}

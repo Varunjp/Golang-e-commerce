@@ -3,6 +3,15 @@
   <!-- Checkout Container -->
   <div class="container mt-5">
     <h3 class="mb-4 text-center">Checkout</h3>
+    <nav aria-label="breadcrumb" class="bg-light py-2">
+      <div class="container">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-dark">Home</a></li>
+          <li class="breadcrumb-item"><a href="/user/cart" class="text-decoration-none text-dark">Cart</a></li>
+          <li class="breadcrumb-item active text-muted" aria-current="page">Checkout</li>
+        </ol>
+      </div>
+    </nav>
     {{if .error}}
       <div class="alert alert-danger">{{.error}}</div>
     {{end}}
