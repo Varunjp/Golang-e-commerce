@@ -1,92 +1,103 @@
-🛍️ E-Commerce Clothing Platform
+# 🛍️ E-Commerce Clothing Platform
 
-A full-featured e-commerce web application built using Go (Golang) for the backend and HTML templates with Bootstrap for the frontend. This platform is tailored specifically for selling clothing online, offering features like user authentication, product browsing, cart management, order processing, and admin controls.
+A full-featured **e-commerce web application** tailored for selling **clothing**, built using the Go programming language. This project includes a clean admin panel, responsive user frontend, and secure backend services with JWT authentication.
 
-🔧 Tech Stack
+---
 
-🖥️ Backend
+## 🚀 Tech Stack
 
-* Gin – High-performance HTTP web framework in Go
+### 💻 Backend
+- [Gin](https://github.com/gin-gonic/gin) – High-performance HTTP web framework
+- [GORM](https://gorm.io/) – ORM for database interaction
+- [JWT](https://jwt.io/) – Secure, stateless authentication
+- [html/template](https://pkg.go.dev/html/template) – Server-side rendering with Go templates
 
-* GORM – ORM for interacting with the database
+### 🎨 Frontend
+- HTML templates rendered from Go
+- [Bootstrap 5](https://getbootstrap.com/) for UI components and responsiveness
 
-* JWT (JSON Web Tokens) – For stateless and secure user authentication
+---
 
-* Go Templates – Server-side rendering of HTML pages
+## ✨ Key Features
 
-🎨 Frontend
+### 👤 User Panel
+- ✅ Register/Login with secure JWT-based sessions
+- 🔐 OTP email verification and password reset
+- 🛍️ Browse clothing products with filters (category, price, size)
+- ❤️ Wishlist support
+- 🛒 Cart and checkout functionality
+- 📦 Order history and invoices
 
-* HTML Templates – Dynamic rendering from the Go server
+### 🛠️ Admin Panel
+- 📊 Dashboard with sales reports and trending items
+- 👕 Add/Edit/Delete products and variants
+- 🔎 Search orders by ID, user, or date
+- 🚫 Block/unblock users
 
-* Bootstrap 5 – For responsive and modern UI components
+---
 
-✨ Features
+## 📁 Project Structure
 
-👤 User
+```text
+.
+├── DB/                 # Create DB instance
+├── user/               # Route handlers User
+├── admin/              # Route handlers Admin
+├── helper/             # helper functions (JWT,OTP)
+├── models/             # GORM models (User, Product, Order, etc.)
+├── routes/             # API routing and middleware
+├── templates/          # HTML templates rendered by Go
+├── static/             # Static assets (CSS, JS, images)
+├── utils/              # Helper utilities (html_helper,password)
+├── go.mod              # Go module file
+├── go.sum              # Go dependencies checksum
+└── main.go             # Application bootstrap
 
-* Register, login, and manage account
+```
+---
 
-* Secure JWT-based authentication
+## ⚙️ Getting Started
 
-* Browse and search clothing products
+### Prerequisites
 
-* Add/remove items from cart
+- Go 1.20 or higher
+- PostgreSQL (or any SQL DB)
+- Git
 
-* Place orders and view order history
+### Installation
 
-* Forgot password & OTP verification support
+```bash
+# Clone the repo
+git clone [https://github.com/Varunjp/Golang-e-commerce.git]
 
-🛒 Product
+# Set up environment variables
+cp .env.example .env
 
-* Filter by category, price, and size
+# Install dependencies
+go mod tidy
 
-* View product variants (e.g., color/size options)
+# Run the app
+go run main.go
+```
 
-* Wishlist functionality
+## 🔐 Environment Variables
 
-📦 Orders
+Create a `.env` file in the root directory and add the following:
 
-* Checkout with multiple addresses
+```env
+PORT=8080                         # Port to run the server
+dns                               # Database connection with username and password
+ClientID                          # GoogleOauthID
+ClientSecret                      # GoogleOauthSecret
+GoogleRedirectURL                 # Redirect URL from Oauth
+JWT_SECRET=your_jwt_secret        # Secret key for JWT generation
+RAZORPAY_KEY_ID                   # Razorpay payment ID
+RAZORPAY_KEY_SECRET               # Razorpay secret key
+Email=noreply@project.com         # Sender email
+Password=email_password           # Sender email password or app password
 
-* Stock reduction on order placement
+```
 
-* Invoice generation
+## 🙋‍♂️ Author
 
-🛠️ Admin Panel
-
-* Dashboard with monthly sales report
-
-* Add/update/delete products and variants
-
-* Manage users (view/block)
-
-* View orders and search by user/date/order ID
-
-🤝 Contributing
-
-Contributions are welcome! Feel free to open issues or submit PRs for improvements, new features, or bug fixes.
-
-📁 Project Structure
-
-* /main.go         -> Entry point of the application
-
-* /user            -> HTTP handlers for user routes
-
-* /admin           -> HTTP handlers for admin routes
-
-* /models          -> GORM models for DB schema
-
-* /templates       -> HTML templates for rendering pages
-
-* /static          -> Static assets (CSS, JS, images)
-
-* /routes          -> Route definitions and middleware
-
-* /utils           -> Helper functions (e.g., pagination, password)
-
-* /middleware      -> All middleware configs
-
-* /upload          -> Product images
-
-* /helper          -> Helper configs (e.g., JWT,OTP)
-
+Created by Varun Jp
