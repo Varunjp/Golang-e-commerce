@@ -13,17 +13,20 @@ type User struct{
 	Password 				string 						`gorm:"not null"`
 	Phone 					string 		
 	Status 					string 						`gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
-	Addresses 				[]Address 					`gorm:"constraint:OnDelete:CASCADE; foreignKey:UserID"` 
 	ReferralCode			string						`gorm:"unique"`
 	ReferredBy 				string 
+	DeletedAt 				gorm.DeletedAt
 	Created_at 				time.Time
 	Updated_at 				time.Time
-	Orders					[]Order						`gorm:"constraint:ONDELETE:CASCADE; foreignKey:UserID"`
-	ProfileImages			[]ProfileImage				`gorm:"constraint:ONDELETE:CASCADE; foreignKey:UserID"`
-	CartItems				[]CartItem					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
-	WishLists				[]WishList					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
-	Reviews 				[]Review					`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
-	DeletedAt 				gorm.DeletedAt	
+	
+	// Associations
+	Orders					[]Order						`gorm:"constraint:ONDELETE:CASCADE;"`
+	ProfileImages			[]ProfileImage				`gorm:"constraint:ONDELETE:CASCADE;"`
+	CartItems				[]CartItem					`gorm:"constraint:ONDELETE:CASCADE;"`
+	WishLists				[]WishList					`gorm:"constraint:ONDELETE:CASCADE;"`
+	Reviews 				[]Review					`gorm:"constraint:ONDELETE:CASCADE;"`
+	Addresses 				[]Address 					`gorm:"constraint:OnDelete:CASCADE;"` 
+		
 }
 
 type ProfileImage struct{
