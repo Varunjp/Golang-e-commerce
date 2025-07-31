@@ -95,6 +95,8 @@ func GetUrl(router *gin.Engine){
 
 	// User review
 	router.POST("/user/review",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.Review)
+	router.GET("/review/edit/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.ReviewEditPage)
+	router.POST("/review/edit/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),user.ReviewEdit)
 
 	// User wishlist
 	router.GET("/user/add-wishlist/:id",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.AddToWishlist)

@@ -161,7 +161,14 @@
                     {{ end }}
                   </span>
                 </div>
-                <small class="text-muted">{{ .CreatedAt.Format "02 Jan 2006" }}</small>
+                
+                <div class="d-flex justify-content-between">
+                  <small class="text-muted">{{ .CreatedAt.Format "02 Jan 2006" }}</small>
+                  {{ if eq $.CurrentUserID .UserID }}
+                    <a href="/review/edit/{{ .ID }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                  {{ end }}
+                </div>
+
                 <p class="mt-2">{{ .Comment }}</p>
               </div>
             {{ end }}

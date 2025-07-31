@@ -25,11 +25,18 @@ func Product(c *gin.Context){
 	var product models.Product
 	var product_variant models.Product_Variant
 	var images []models.Product_image
+	var isuser uint 
 	type ReviewResponse struct{
+		ID			uint
 		UserName 	string
+		UserID 		uint
 		Rating 		int 
 		CreatedAt 	time.Time
 		Comment 	string
+	}
+
+	if userId > 0 {
+		isuser = uint(userId)
 	}
 
 	type relatedItem struct{
@@ -102,7 +109,9 @@ func Product(c *gin.Context){
 
 	for _,rev := range reviews{
 		respReview =  append(respReview, ReviewResponse{
+			ID: rev.ID,
 			UserName: rev.User.Username,
+			UserID: rev.UserID,
 			Rating: rev.Rating,
 			CreatedAt: rev.CreatedAt,
 			Comment: rev.Comment,
@@ -163,6 +172,7 @@ func Product(c *gin.Context){
 				"TotalReviews":  total,
 				"message":flash,
 				"RelatedProducts":relatedProduct,
+				"CurrentUserID":isuser,
 			})
 			return 
 		}else if errmsg != nil{
@@ -181,6 +191,7 @@ func Product(c *gin.Context){
 				"Wishlist":isWishlist,
 				"error":errmsg,
 				"RelatedProducts":relatedProduct,
+				"CurrentUserID":isuser,
 			})
 			return 
 		}
@@ -196,6 +207,7 @@ func Product(c *gin.Context){
 			"Images": images,
 			"Wishlist":isWishlist,
 			"RelatedProducts":relatedProduct,
+			"CurrentUserID":isuser,
 		})
 	}else{
 
