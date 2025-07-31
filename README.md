@@ -68,15 +68,25 @@ Contributions are welcome! Feel free to open issues or submit PRs for improvemen
 
 📁 Project Structure
 
-/main.go         -> Entry point of the application
-/user            -> HTTP handlers for user routes
-/admin           -> HTTP handlers for admin routes
-/models          -> GORM models for DB schema
-/templates       -> HTML templates for rendering pages
-/static          -> Static assets (CSS, JS, images)
-/routes          -> Route definitions and middleware
-/utils           -> Helper functions (e.g., pagination, password)
-/middleware      -> All middleware configs
-/upload          -> Product images
-/helper          -> Helper configs (e.g., JWT,OTP)
+* /main.go         -> Entry point of the application
+
+* /user            -> HTTP handlers for user routes
+
+* /admin           -> HTTP handlers for admin routes
+
+* /models          -> GORM models for DB schema
+
+* /templates       -> HTML templates for rendering pages
+
+* /static          -> Static assets (CSS, JS, images)
+
+* /routes          -> Route definitions and middleware
+
+* /utils           -> Helper functions (e.g., pagination, password)
+
+* /middleware      -> All middleware configs
+
+* /upload          -> Product images
+
+* /helper          -> Helper configs (e.g., JWT,OTP)
 
