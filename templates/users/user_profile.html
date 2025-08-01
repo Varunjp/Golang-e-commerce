@@ -211,7 +211,7 @@
 
                       {{if lt $end $totalPages}}
                       <li class="page-item">
-                        <a class="page-link" href="/user/profile?page={{add $end 1}}">Next &raquo;</a>
+                        <a class="page-link" href="/user/profile?page={{add .CurrentPage 1}}">Next &raquo;</a>
                       </li>
                       {{end}}
                     {{end}}

@@ -82,7 +82,7 @@ func GetUrl(router *gin.Engine){
 
 	// User wallet
 	router.GET("/user/wallet-transactions",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.WalletTransaction)
-	router.POST("/wallet-payment",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),user.WalletPurchase)
+	router.POST("/wallet-payment",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.WalletPurchase)
 
 	// User payment online
 	router.POST("/create-razorpay-order",middleware.AuthVaildUser(),middleware.NoCacheMiddleware(),middleware.AuthUserMiddlerware("user"),middleware.VerifyProduct(),user.CreateRazorpayOrder)

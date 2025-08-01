@@ -45,11 +45,11 @@
         <form method="GET" action="/admin/wallet-transactions" class="row g-3 mb-4">
           <div class="col-md-3">
             <label for="from" class="form-label">From</label>
-            <input type="date" id="from" name="from" class="form-control" value="{{ .from }}">
+            <input type="date" id="from" name="from" class="form-control" value="{{ .from }}" max="{{ .today }}">
           </div>
           <div class="col-md-3">
             <label for="to" class="form-label">To</label>
-            <input type="date" id="to" name="to" class="form-control" value="{{ .to }}">
+            <input type="date" id="to" name="to" class="form-control" value="{{ .to }}" max="{{ .today }}">
           </div>
           <div class="col-md-4">
             <label for="search" class="form-label">Search by Order ID</label>

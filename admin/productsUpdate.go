@@ -119,11 +119,10 @@ func UpdateProductHandler(c *gin.Context){
 	var Product models.Product
 	var Product_variant models.Product_Variant
 
-	if err := db.Db.First(&Product_variant,productID).Error;err != nil{
+	if err := db.Db.Preload("Product_images").First(&Product_variant,productID).Error;err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"status":"error","message":"Error loading product detail from DB"})
 		return
 	}
-
 
 	if err := db.Db.Where("product_id = ?", Product_variant.ProductID).First(&Product).Error;err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"status":"error","message":"Error loading product detail from DB"})
@@ -250,6 +249,9 @@ func UpdateProductHandler(c *gin.Context){
 			}
 		
 			order, _ := strconv.Atoi(c.PostForm(fmt.Sprintf("order%d", i)))
+			if order < 1 {
+				order = len(Product_variant.Product_images) + 1
+			}
 			isPrimary := c.PostForm(fmt.Sprintf("is_primary%d", i)) == "true"
 		
 			image := models.Product_image{
@@ -266,7 +268,6 @@ func UpdateProductHandler(c *gin.Context){
 			}
 		}
 	
-		
 	}
 
 	c.JSON(http.StatusOK,gin.H{

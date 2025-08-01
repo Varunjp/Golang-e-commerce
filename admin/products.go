@@ -236,6 +236,10 @@ func AddProduct(c *gin.Context){
 		Errors["name"] = "Name should be properly defined"	
 	}
 
+	if ProductTax < 0 {
+		Errors["tax"] = "Tax cannot be less than zero"
+	}
+
 	if strings.TrimSpace(ProductVariantName) == ""{
 		Errors["varian_name"] = "Variant name should be properly defined"
 	}
@@ -607,6 +611,11 @@ func DeleteImage(c *gin.Context){
 	if len(productImages) == 1 {
 		c.Redirect(http.StatusSeeOther,"/admin/products/edit/"+strconv.Itoa(int(Image.ProductVariantID)))
 		return 
+	}
+
+	if err := os.Remove(Image.Image_url); err != nil{
+		c.Redirect(http.StatusSeeOther,"/admin/products/edit/"+strconv.Itoa(int(Image.ProductVariantID)))
+		return
 	}
 
 	if err := db.Db.Delete(&Image).Error; err != nil{

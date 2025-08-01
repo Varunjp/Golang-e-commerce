@@ -288,48 +288,59 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', function () {
+        // 🔍 Image Zoom on Hover
         const zoomContainer = document.getElementById('zoomContainer');
+        if (zoomContainer) {
+          zoomContainer.addEventListener('mousemove', function (e) {
+            const rect = this.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-        zoomContainer.addEventListener('mousemove', function (e) {
-          const rect = this.getBoundingClientRect();
-          const x = ((e.clientX - rect.left) / rect.width) * 100;
-          const y = ((e.clientY - rect.top) / rect.height) * 100;
+            this.style.backgroundSize = '200%';
+            this.style.backgroundPosition = `${x}% ${y}%`;
+          });
 
-          this.style.backgroundSize = '200%'; // Zoom on hover
-          this.style.backgroundPosition = `${x}% ${y}%`;
-        });
+          zoomContainer.addEventListener('mouseleave', function () {
+            this.style.backgroundSize = 'contain';
+            this.style.backgroundPosition = 'center';
+          });
+        }
 
-        zoomContainer.addEventListener('mouseleave', function () {
-          this.style.backgroundSize = 'contain'; // Reset zoom
-          this.style.backgroundPosition = 'center';
-        });
-
-        // Optional: handle thumbnail click
+        // 🖼️ Thumbnail Click to Change Main Image
         const thumbnails = document.querySelectorAll('.thumbnail-image');
         thumbnails.forEach((thumb) => {
           thumb.addEventListener('click', function () {
             const newSrc = this.getAttribute('data-image');
-            zoomContainer.style.backgroundImage = `url('${newSrc}')`;
-            zoomContainer.style.backgroundSize = 'contain'; // Reset on image change
-            zoomContainer.style.backgroundPosition = 'center';
+            if (zoomContainer) {
+              zoomContainer.style.backgroundImage = `url('${newSrc}')`;
+              zoomContainer.style.backgroundSize = 'contain';
+              zoomContainer.style.backgroundPosition = 'center';
+            }
 
             thumbnails.forEach(t => t.classList.remove('active'));
             this.classList.add('active');
           });
         });
+
+        // 🎯 Size Select - Redirect to Selected Variant
+        const sizeSelect = document.getElementById("sizeSelect");
+        if (sizeSelect) {
+          sizeSelect.addEventListener("change", function () {
+            const selectedVariantID = this.value;
+            window.location.href = `/user/product/${selectedVariantID}`;
+          });
+        }
+
+        // ⏳ Auto-dismiss Alert
+        const alert = document.getElementById('alertMessage');
+        if (alert) {
+          setTimeout(() => {
+            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+            bsAlert.close();
+          }, 3000);
+        }
       });
     </script>
 
-    
-    <script>
-      // Fade out alert after 3 seconds
-      setTimeout(() => {
-        const alert = document.getElementById('alertMessage');
-        if (alert) {
-          const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-          bsAlert.close();
-        }
-      }, 3000); // 3 seconds
-    </script>
   </body>
   </html>
