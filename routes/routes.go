@@ -141,7 +141,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/product/create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddProductPage)
 	router.POST("/admin/products/create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddProduct)
 	router.GET("/admin/products/edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.UpdateProductPage)
-	router.POST("/admin/products/edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.UpdateProduct)
+	router.POST("/admin/products/edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.UpdateProductHandler)
 	router.GET("/admin/products/delete/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.DeleteProduct)
 	router.POST("/admin/products/images/delete/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.DeleteImage)
 	router.GET("/admin/product/variant",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddProductVariantPage)
