@@ -170,6 +170,7 @@ func SalesReportPage(c *gin.Context){
 		"end":end.Format("2006-01-02"),
 		"filter":rangeType,
 		"user":name,
+		"today": now.Format("2006-01-02"),
 	})
 
 }

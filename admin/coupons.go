@@ -236,8 +236,13 @@ func AddCoupon(c *gin.Context){
 		return 
 	}
 
-	if err := db.Db.Where("code ILIKE ?",input.Code).First(&Existcoupon).Error; err == nil{
-		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Coupon code already exist"})
+	checkCode := strings.TrimSpace(input.Code)
+	checkCode = strings.ReplaceAll(checkCode," ","")
+
+	if err := db.Db.Where("code ILIKE ?",checkCode).First(&Existcoupon).Error; err == nil{
+		session.Set("flash","Coupon code already exist")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/admin/coupons")
 		return 
 	}
 
@@ -245,11 +250,14 @@ func AddCoupon(c *gin.Context){
 
 	var coupon models.Coupons
 
+	newCode := strings.ToUpper(strings.TrimSpace(input.Code))
+	newCode = strings.ReplaceAll(newCode," ","")
+
 	if categoryID != ""{
 		catId,_ := strconv.Atoi(categoryID)
 
 		coupon = models.Coupons{
-		Code: strings.ToUpper(input.Code),
+		Code: newCode,
 		Description: input.Description,
 		Discount: input.Discount,
 		MinAmount: input.MinAmount,
@@ -262,7 +270,7 @@ func AddCoupon(c *gin.Context){
 	}else{
 
 		coupon = models.Coupons{
-		Code: strings.ToUpper(input.Code),
+		Code: newCode,
 		Description: input.Description,
 		Discount: input.Discount,
 		MinAmount: input.MinAmount,

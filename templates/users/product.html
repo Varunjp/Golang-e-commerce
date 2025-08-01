@@ -29,7 +29,9 @@
                 {{ if gt (len .Images) 0 }}
                 <!-- <img src="/{{ ( index .Images 0).Image_url }}" alt="Product Image" class="img-fluid rounded-3 shadow-sm" />  -->
                 <div class="text-center mb-3">
-                  <img id="mainProductImage" src="/{{ ( index .Images 0).Image_url }}" alt="Product Image" class="product-main-image" />
+                  <div id="zoomContainer" class="zoom-container"
+                      style="background-image: url('/{{ ( index .Images 0).Image_url }}');">
+                  </div>
                 </div>
                 <div class="d-flex flex-wrap justify-content-center gap-2">
                   {{ range .Images }}
@@ -285,39 +287,39 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.min.js" integrity="sha384-RuyvpeZCxMJCqVUGFI0Do1mQrods/hhxYlcVfGPOfQtPJh0JCw12tUAZ/Mv10S7D" crossorigin="anonymous"></script>
 
     <script>
-    // Handle variant size selection change
-        document.addEventListener("DOMContentLoaded", function () {
-          const sizeSelect = document.getElementById("sizeSelect");
-          if (sizeSelect) {
-            sizeSelect.addEventListener("change", function () {
-              const variantId = this.value;
-              window.location.href = "/user/product/" + variantId;
-            });
-          }
+      document.addEventListener('DOMContentLoaded', function () {
+        const zoomContainer = document.getElementById('zoomContainer');
 
-          // Handle thumbnail click
-          const thumbnails = document.querySelectorAll(".thumbnail-image");
-          const mainImage = document.getElementById("mainProductImage");
+        zoomContainer.addEventListener('mousemove', function (e) {
+          const rect = this.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-          if (thumbnails.length && mainImage) {
-            thumbnails.forEach(img => {
-              img.addEventListener("click", function () {
-                // Change the main image
-                mainImage.src = this.dataset.image;
-
-                // Remove active from all thumbnails
-                thumbnails.forEach(t => t.classList.remove("active"));
-
-                // Add active class to current
-                this.classList.add("active");
-              });
-            });
-
-            // Set first thumbnail active by default
-            thumbnails[0].classList.add("active");
-          }
+          this.style.backgroundSize = '200%'; // Zoom on hover
+          this.style.backgroundPosition = `${x}% ${y}%`;
         });
+
+        zoomContainer.addEventListener('mouseleave', function () {
+          this.style.backgroundSize = 'contain'; // Reset zoom
+          this.style.backgroundPosition = 'center';
+        });
+
+        // Optional: handle thumbnail click
+        const thumbnails = document.querySelectorAll('.thumbnail-image');
+        thumbnails.forEach((thumb) => {
+          thumb.addEventListener('click', function () {
+            const newSrc = this.getAttribute('data-image');
+            zoomContainer.style.backgroundImage = `url('${newSrc}')`;
+            zoomContainer.style.backgroundSize = 'contain'; // Reset on image change
+            zoomContainer.style.backgroundPosition = 'center';
+
+            thumbnails.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+          });
+        });
+      });
     </script>
+
     
     <script>
       // Fade out alert after 3 seconds

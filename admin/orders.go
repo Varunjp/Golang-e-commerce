@@ -148,6 +148,7 @@ func AdminOrdersPage(c *gin.Context){
 			"EndDate": enddate,
 			"Status": orderStatus,
 		},
+		"today": time.Now().Format("2006-01-02"),
 	})
 }
 

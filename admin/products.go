@@ -687,17 +687,16 @@ func UpdateProduct(c *gin.Context){
 	}
 
 	var pcount int64
+	var existProduct models.Product
 
-	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ","%"+ProductName+"%").Count(&pcount).Error; err == nil{
+	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ?",ProductName).First(&existProduct).Count(&pcount).Error; err == nil{
 		if pcount > 0 {
 			Errors["name"] = "Product already exist"
 			
 		}
 	}
 
-
 	ProductSize = utils.SizeAdjust(ProductSize)
-
 
 	// image check
 	for i := 0; i < 3; i++{

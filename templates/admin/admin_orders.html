@@ -89,10 +89,10 @@
             <input type="text" class="form-control" name="user_name" placeholder="User Name" value="{{.Filters.UserName}}">
           </div>
           <div class="col-md-3">
-            <input type="date" class="form-control" name="start_date" value="{{.Filters.StartDate}}">
+            <input type="date" class="form-control" name="start_date" value="{{.Filters.StartDate}}" max="{{ .today }}">
           </div>
           <div class="col-md-3">
-            <input type="date" class="form-control" name="end_date" value="{{.Filters.EndDate}}">
+            <input type="date" class="form-control" name="end_date" value="{{.Filters.EndDate}}" max="{{ .today }}">
           </div>
           <div class="col-md-3">
             <select name="status" class="form-select">

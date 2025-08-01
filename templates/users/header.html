@@ -48,15 +48,22 @@
       background-color: #ff6f61;
       color: white;
     }
-    .product-main-image {
-      max-width: 100%;
-      max-height: 400px;
-      object-fit: contain;
+    .zoom-container {
+      width: 100%;
+      max-width: 500px;
+      height: 400px;
+      margin: auto;
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      overflow: hidden;
       background-color: #fff;
-      padding: 10px;
+      background-repeat: no-repeat;
+      background-size: contain; /* Show normal image size initially */
+      background-position: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      transition: background-position 0.1s ease, background-size 0.3s ease;
+      cursor: zoom-in;
     }
+    
     .thumbnail-image {
       width: 75px;
       height: 75px;
@@ -65,15 +72,18 @@
       border: 2px solid transparent;
       padding: 5px;
       background-color: #fff;
-      transition: border-color 0.3s, transform 0.3s;
+      transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
     }
     .thumbnail-image:hover {
       border-color: #999;
       cursor: pointer;
+      transform: scale(1.05);
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
     }
     .thumbnail-image.active {
       border-color: #000;
       transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
       z-index: 1;
     }
   </style>
