@@ -34,14 +34,15 @@ type ProfileImage struct{
 	UserID			uint				`gorm:"index"`
 	ImageUrl		string	
 	CreateAt		time.Time
-	User			User				`gorm:"constraint:ONDELETE:CASCADE"`
 	DeletedAt 		gorm.DeletedAt
+
+	// Associations
+	User			User				`gorm:"constraint:ONDELETE:CASCADE"`
 }
 
 type Address struct {
 	AddressID 		uint 						`gorm:"primarykey;autoIncrement"`
 	UserID 			uint 						`gorm:"not null; index;"`
-	User 			User 						`gorm:"constraint:OnDelete:CASCADE;"`
 	AddressLine1 	string
 	AddressLine2 	string
 	Country 		string 
@@ -49,8 +50,10 @@ type Address struct {
 	State 			string  
 	PostalCode 		string
 	IsDefault		bool
-	Orders			[]Order						`gorm:"constraint:ONDELETE:CASCADE;foreignKey:AddressID"`
 	DeletedAt		gorm.DeletedAt
+	
+	// Associations
+	User 			User 						`gorm:"constraint:ONDELETE:CASCADE;"`
 }
 
 type OrderAddress struct {
@@ -65,14 +68,14 @@ type OrderAddress struct {
 }
 
 type CartItem struct {
-	ID 				uint		`gorm:"primarykey;autoIncrement"`
-	UserID			uint 		`gorm:"index"`
-	ProductID 		uint 		`gorm:"index"`
-	Quantity		int 		`gorm:"not null"`
-	Price 			float64 	`gorm:"not null"`
+	ID 				uint					`gorm:"primarykey;autoIncrement"`
+	UserID			uint 					`gorm:"index"`
+	ProductID 		uint 					`gorm:"index"`
+	Quantity		int 					`gorm:"not null"`
+	Price 			float64 				`gorm:"not null"`
 	AddAt 			time.Time 
-	User			User		`gorm:"constraint:ONDELETE:CASCADE"`
-	Product 		Product_Variant		`gorm:"constraint:ONDELETE:CASCADE"`
+	User			User					`gorm:"constraint:ONDELETE:CASCADE"`
+	Product 		Product_Variant			`gorm:"constraint:ONDELETE:CASCADE"`
 }
 
 type Order struct{
@@ -93,9 +96,11 @@ type Order struct{
 	CreateAt				time.Time
 	BadgeClass 				string
 	Reason 					string 	
+	DeletedAt 				gorm.DeletedAt
+	
+	// Associations
 	OrderItems				[]OrderItem  `gorm:"constraint:ONDELETE:CASCADE;foreignKey:OrderID"`
 	Reviews 				[]Review	`gorm:"constraint:ONDELETE:CASCADE;foreignKey:OrderID"`
-	Address 				Address 	`gorm:"constraint:ONDELETE:CASCADE"`
 }
 
 type OrderItem struct {
@@ -110,8 +115,10 @@ type OrderItem struct {
 	Status 				string
 	PaymentStatus 		string 
 	Reason 				string 
-	Order 				Order	`gorm:"constraint:ONDELETE:CASCADE"`
 	DeletedAt 			gorm.DeletedAt
+
+	// Associations
+	Order 				Order	`gorm:"constraint:ONDELETE:CASCADE"`
 }
 
 type WishList struct {
@@ -181,8 +188,10 @@ type Category struct {
 	CategoryName 		string 			`json:"name"`
 	CreateAt 			time.Time
 	IsBlocked			bool			`gorm:"default:false"`
-	SubCategories  		[]SubCategory 	`gorm:"constraint:OnDelete:CASCADE; foreignKey:CategoryID"` 
 	DeletedAt 			gorm.DeletedAt 	`gorm:"index"`
+	
+	// Associations
+	SubCategories  		[]SubCategory 	`gorm:"constraint:OnDelete:CASCADE; foreignKey:CategoryID"` 
 }
 
 type SubCategory struct{
@@ -192,8 +201,10 @@ type SubCategory struct{
 	IsBlocked			bool				`gorm:"default:false"`
 	Category 			Category 			`gorm:"constraint:OnDelete:CASCADE;"`
 	CategoryDiscount 	uint 				
-	Products			[]Product 			`gorm:"foreignkey:SubCategoryID"`
 	Deleted_at 			gorm.DeletedAt 		`gorm:"index"`
+
+	// Associations
+	Products			[]Product 			`gorm:"foreignkey:SubCategoryID"`
 }
 
 type Product struct {
@@ -201,11 +212,13 @@ type Product struct {
 	ProductName				string				`gorm:"not null" json:"name"`
 	Description				string				`json:"description"`
 	SubCategoryID			uint				`gorm:"not null"`
-	SubCategory				SubCategory			`gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CreatedAt 				time.Time
+	DeletedAt				gorm.DeletedAt 		`gorm:"index"`
+
+	// Associations
+	SubCategory				SubCategory			`gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Product_variants 		[]Product_Variant 	`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductID"`
 	Reviews          		[]Review          	`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductID"`
-	DeletedAt				gorm.DeletedAt 		`gorm:"index"`
 }
 
 
@@ -220,12 +233,14 @@ type Product_Variant struct {
 	DiscountedPrice		float64
 	CreatedAt			time.Time
 	UpdatedAt			time.Time
+	IsActive			bool      			`gorm:"default:true"`
+	DeletedAt			gorm.DeletedAt 		`gorm:"index"`
+
+	// Associations
 	Product 			Product				`gorm:"constraint: OnDelete:CASCADE"`
 	Product_images		[]Product_image		`gorm:"constraint:OnDelete:CASCADE;foreignkey:ProductVariantID"`
 	CartItems			[]CartItem			`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
 	WishLists			[]WishList			`gorm:"constraint:OnDelelte:CASCADE;foreignkey:ProductID"`
-	IsActive			bool      			`gorm:"default:true"`
-	DeletedAt			gorm.DeletedAt 		`gorm:"index"`
 }
 
 type Product_image struct {
@@ -235,21 +250,25 @@ type Product_image struct {
 	Is_primary						bool
 	Order_no						int
 	CreatedAt						time.Time
-	Product_Variant					Product_Variant		`gorm:"constraint: OnDelete:CASCADE"`
 	DeleteAt						gorm.DeletedAt		`gorm:"index"`
+
+	// Associations
+	Product_Variant					Product_Variant		`gorm:"constraint: OnDelete:CASCADE"`
 }
 
 type Review struct {
     ID        				uint      			`gorm:"primarykey;autoIncrement"`
     ProductID 				uint				`gorm:"not null;index"`
-	Product    				Product   			`gorm:"constraint: OnDelete:CASCADE"`
     UserID    				uint				`gorm:"not null;index"`
-    User      				User      			`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
 	OrderID 				uint
-	Order 					Order				`gorm:"constraint:ONDELETE:CASCADE"`
     Rating    				int       
     Comment   				string
     CreatedAt 				time.Time
+
+	// Associations
+	Product    				Product   			`gorm:"constraint: OnDelete:CASCADE"`
+	User      				User      			`gorm:"constraint:ONDELETE:CASCADE; foreignkey:UserID"`
+	Order 					Order				`gorm:"constraint:ONDELETE:CASCADE"`
 }
 
 type Banner struct {

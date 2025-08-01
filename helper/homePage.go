@@ -7,19 +7,19 @@ import (
 	"fmt"
 )
 
-func GetHomePage() ([]responsemodels.HomePage, string, error){
+func GetHomePage() ([]responsemodels.HomePage, string,string, error){
 	
 	var Products []models.Product_Variant
 	var Banner models.Banner
 
-	if err := db.Db.Where("active").Order("created_at DESC").First(&Banner).Error; err != nil{
+	if err := db.Db.Where("active = ?",true).Order("created_at DESC").First(&Banner).Error; err != nil{
 		Banner.ImageUrl = ""
 	}
 
 	subQuery := db.Db.Model(&models.Product_Variant{}).Select("MIN(id) AS id").Where("is_active = ? AND deleted_at IS NULL", true).Group("product_id")
 
 	if err := db.Db.Joins("JOIN (?) AS selected ON selected.id = product_variants.id", subQuery).Order("id DESC").Limit(10).Find(&Products).Error; err != nil{
-		return []responsemodels.HomePage{},Banner.ImageUrl,fmt.Errorf("no products found")
+		return []responsemodels.HomePage{},Banner.ImageUrl,Banner.RedirectURL,fmt.Errorf("no products found")
 	}
 
 	result := make([]responsemodels.HomePage,len(Products))
@@ -50,5 +50,5 @@ func GetHomePage() ([]responsemodels.HomePage, string, error){
 		}
 	}
 
-	return result,Banner.ImageUrl,nil
+	return result,Banner.ImageUrl,Banner.RedirectURL,nil
 }

@@ -131,7 +131,11 @@
                 </td>
                 <td>{{ .CreatedAt.Format "02 Jan 2006" }}</td>
                 <td>
-                  <a href="/admin/banners/edit/{{.ID}}" class="btn btn-sm btn-warning">Edit</a>
+                  {{ if .Active}}
+                    <a href="/admin/banners/edit/{{.ID}}" class="btn btn-sm btn-warning">Deactive</a>
+                  {{ else }}
+                    <a href="/admin/banners/edit/{{.ID}}" class="btn btn-sm btn-warning">Active</a>
+                  {{ end }}
                   <form action="/admin/banners/delete/{{.ID}}" method="POST" class="d-inline" onsubmit="return confirm('Delete this banner?')">
                     <button class="btn btn-sm btn-danger">Delete</button>
                   </form>

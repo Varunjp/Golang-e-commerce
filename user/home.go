@@ -13,13 +13,14 @@ func HomePage(c *gin.Context){
 	session := sessions.Default(c)
 	username,usererr := session.Get("name").(string)
 
-	products, imageUrl, err := helper.GetHomePage()
+	products, imageUrl,redirctUrl, err := helper.GetHomePage()
 
 	if usererr{
 			if err != nil{
 			c.HTML(http.StatusBadRequest,"home.html",gin.H{
 				"user": username,
 				"Image_url": imageUrl,
+				"RedirectURL": redirctUrl,
 				"Products": products,
 				"error" : err.Error(),
 			})
@@ -28,6 +29,7 @@ func HomePage(c *gin.Context){
 			c.HTML(http.StatusOK,"home.html",gin.H{
 				"user": username,
 				"Image_url": imageUrl,
+				"RedirectURL": redirctUrl,
 				"Products": products,
 			})
 	}else{
@@ -36,6 +38,7 @@ func HomePage(c *gin.Context){
 		c.HTML(http.StatusBadRequest,"home.html",gin.H{
 			"Image_url": imageUrl,
 			"Products": products,
+			"RedirectURL": redirctUrl,
 			"error" : err.Error(),
 			})
 		}
@@ -43,6 +46,7 @@ func HomePage(c *gin.Context){
 		c.HTML(http.StatusOK,"home.html",gin.H{
 			"Image_url": imageUrl,
 			"Products": products,
+			"RedirectURL": redirctUrl,
 		})
 	}
 
@@ -51,12 +55,13 @@ func HomePage(c *gin.Context){
 
 func DemoPage(c *gin.Context){
 
-	products, imageUrl, err := helper.GetHomePage()
+	products, imageUrl,redirctUrl, err := helper.GetHomePage()
 
 	if err != nil{
 		c.HTML(http.StatusBadRequest,"home.html",gin.H{
 			"Image_url": imageUrl,
 			"Products": products,
+			"RedirectURL": redirctUrl,
 			"error" : err.Error(),
 		})
 	}
@@ -64,6 +69,7 @@ func DemoPage(c *gin.Context){
 	c.HTML(http.StatusOK,"home.html",gin.H{
 		"Image_url": imageUrl,
 		"Products": products,
+		"RedirectURL": redirctUrl,
 	})
 
 }

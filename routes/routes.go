@@ -164,6 +164,7 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/banners",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.BannerPage)
 	router.POST("/admin/banners/add",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddBanner)
 	router.POST("/admin/banners/delete/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.DeleteBanner)
+	router.GET("/admin/banners/edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.EditBanner)
 
 	// Admin coupons
 	router.GET("/admin/coupons",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.ListCoupons)
