@@ -154,12 +154,13 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			}
 
 			db.Db.Delete(&usedCoupon)
+
 		}else{
 			
 			returnamount := itemTotal
 			newTotal := orignalTotal - itemTotal
-			
-			if adjustedTotal < newTotal {
+
+			if adjustedTotal < newTotal{
 				returnamount = order.TotalAmount - newTotal
 				if returnamount < 0 {
 					returnamount = 0
@@ -201,8 +202,6 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			}
 
 		}
-
-		//db.Db.Delete(&usedCoupon)
 
 	}else{
 

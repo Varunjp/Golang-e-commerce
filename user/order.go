@@ -242,7 +242,9 @@ func OrderItems(c *gin.Context){
 		
 		var Product models.Product_Variant
 		var count int64
-		err := db.Db.Unscoped().Preload("Product_images").Where("id = ?",item.ProductID).Unscoped().First(&Product).Error
+		err := db.Db.Preload("Product_images",func(DB *gorm.DB)*gorm.DB{
+			return DB.Order("order_no,product_image_id ASC")
+		}).Where("id = ?",item.ProductID).Unscoped().First(&Product).Error
 
 		if err := db.Db.Model(&models.Review{}).Where("user_id = ? AND product_id = ? AND order_id = ?",Order.UserID,Product.ProductID,Order.ID).Count(&count).Error; err != nil{
 			log.Println(err)

@@ -4,7 +4,6 @@ import (
 	db "first-project/DB"
 	"first-project/models"
 	"log"
-	"math"
 
 	"gorm.io/gorm"
 )
@@ -49,7 +48,6 @@ func UserOrderCancelItem(itemId string) error {
 	var walletTransaction models.WalletTransaction
 	db.Db.Unscoped().Where("order_id = ? AND user_id = ? AND type = ?", order.ID, order.UserID, "Debit").First(&walletTransaction)
 
-
 	if valueCheck && errVal == nil {
 		if newTotal == 0 {
 			order.SubTotal = 0
@@ -87,7 +85,7 @@ func UserOrderCancelItem(itemId string) error {
 				updateTotal = order.SubTotal + walletTransaction.Amount
 			}else{
 				order.SubTotal = order.SubTotal - retrunAmount
-				updateTotal = order.SubTotal + walletTransaction.Amount
+				updateTotal = order.SubTotal
 			}
 			
 
@@ -96,7 +94,7 @@ func UserOrderCancelItem(itemId string) error {
 				order.DiscountTotal = 0
 			} else {
 				order.TotalAmount = updateTotal
-				order.DiscountTotal = math.Abs(walletTransaction.Amount)
+				order.DiscountTotal = 0.0
 			}
 
 		} else {
