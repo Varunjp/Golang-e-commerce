@@ -252,8 +252,11 @@ func AddProduct(c *gin.Context){
 		Errors["size"] = "Size should be properly defined"
 	}
 
-	ProductSize = utils.SizeAdjust(ProductSize)
-
+	ProductSize, pserr := utils.SizeAdjust(ProductSize)
+	if pserr != nil {
+		Errors["size"] = pserr.Error()
+	}
+	
 	var pcount int64
 
 	if err := db.Db.Model(models.Product{}).Where("product_name ILIKE ","%"+ProductName+"%").Count(&pcount).Error; err == nil{

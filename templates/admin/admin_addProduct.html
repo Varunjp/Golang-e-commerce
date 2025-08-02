@@ -100,7 +100,25 @@
             </div>
             <div class="col-md-2 mb-3">
               <label class="form-label">Size</label>
-              <input type="text" name="size" class="form-control" required>
+              <input type="text" name="size" class="form-control" list="sizeOptions" required>
+                <datalist id="sizeOptions">
+                  <option value="XS">
+                  <option value="S">
+                  <option value="M">
+                  <option value="L">
+                  <option value="XL">
+                  <option value="XXL">
+                  <option value="UK-1">
+                  <option value="UK-2">
+                  <option value="UK-3">
+                  <option value="UK-4">
+                  <option value="UK-5">
+                  <option value="UK-6">
+                  <option value="UK-7">
+                  <option value="UK-8">
+                  <option value="UK-9">
+                  <option value="UK-10">
+                </datalist>
             </div>
             <div class="col-md-2 mb-3">
               <label class="form-label">Stock</label>
@@ -112,7 +130,7 @@
             </div>
             <div class="col-md-2 mb-3">
               <label class="form-label">Discount Price</label>
-              <input type="number" step="0.01" name="discount_price" class="form-control" required>
+              <input type="number" step="0.01" name="discount_price" class="form-control">
             </div>
             <div class="col-md-2 mb-3">
               <label class="form-label">Tax (%)</label>

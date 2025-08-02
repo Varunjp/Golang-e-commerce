@@ -139,7 +139,11 @@ func UpdateProductHandler(c *gin.Context){
 		}
 	}
 
-	ProductSize = utils.SizeAdjust(ProductSize)
+	ProductSize,pserr := utils.SizeAdjust(ProductSize)
+
+	if pserr != nil {
+		Errors["size"] = pserr.Error()
+	}
 
 	// image check
 	for i := 0; i < 3; i++{
@@ -222,6 +226,16 @@ func UpdateProductHandler(c *gin.Context){
 	
 		if base64Str != "" {
 			
+			var ProductImage []models.Product_image
+			if err := db.Db.Where("product_variant_id = ?", productID).Find(&ProductImage).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Failed to load existing images"})
+				return	
+			}
+
+			if len(ProductImage) >= 4 {
+				continue
+			}
+
 			var base64Data string
 			if strings.Contains(base64Str, ",") {
 				// Format: data:image/jpeg;base64,<data>
