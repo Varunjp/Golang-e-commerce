@@ -118,7 +118,7 @@
                 <td>{{.Status}}</td>
                 {{ if eq .Status "Processing"}}
                 <td><a href="/admin/order/item-admin-reject/{{.ID}}" class="btn btn-outline-danger">Cancel</a></td>
-                {{ else if eq .Status "Return requested"}}
+                {{ else if and (ne $.Order.Status "Return requested") (eq .Status "Return requested") }}
                 <td><a href="/admin/order/item/{{.ID}}" class="btn btn-outline-warning">Approve</a>
                   <a href="/admin/order/item-reject/{{.ID}}" class="btn btn-outline-danger">Reject</a>
                 </td>
