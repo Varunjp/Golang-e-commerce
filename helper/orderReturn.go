@@ -54,13 +54,6 @@ func ItemReturnOnline(orderId, itemId, reason string) error{
 		orignalTotal += item.Price * float64(item.Quantity) + tempTax
 	}
 
-	walletAmount := 0.0
-
-
-	if WalletTransaction.ID != 0 {
-		walletAmount = math.Abs(WalletTransaction.Amount)
-	}
-
 	if usedCoupon.ID != 0 {
 
 		var coupon models.Coupons
@@ -74,13 +67,26 @@ func ItemReturnOnline(orderId, itemId, reason string) error{
 
 			newTotal := orignalTotal - itemTotal
 			refundAmount := order.TotalAmount - newTotal
+
+			if refundAmount < 0{
+				refundAmount = 0
+			}
+
+			if refundAmount < 1{
+				desc := newTotal - order.TotalAmount
+				order.DiscountTotal = desc 
+			}else{
+				
+				order.DiscountTotal = 0.0
+				db.Db.Delete(&usedCoupon)
+			}
 			
 			// amount refunded
 			walletTranscation := models.WalletTransaction{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: refundAmount+walletAmount,
+				Amount: refundAmount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: true,
@@ -99,13 +105,26 @@ func ItemReturnOnline(orderId, itemId, reason string) error{
 
 		}else if adjustedTotal < coupon.MinAmount && adjustedTotal < 0{
 
+			var refundAmount float64
+			var newTotal float64
+
+			if CheckLeftItems(order.ID){
+				refundAmount = order.TotalAmount
+			}else{
+				newTotal = orignalTotal - itemTotal
+				refundAmount = order.TotalAmount - newTotal
+			}
+
+			if refundAmount < 0 {
+				refundAmount = 0
+			}
 			
 			// amount refund
 			walletTransaction := models.WalletTransaction{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: order.TotalAmount,
+				Amount: refundAmount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: true,
@@ -115,29 +134,47 @@ func ItemReturnOnline(orderId, itemId, reason string) error{
 				return err 
 			}
 
-			if WalletTransaction.ID != 0 {
-				db.Db.Delete(&WalletTransaction)
+			if refundAmount < 1{
+				desc := newTotal - order.TotalAmount
+				order.DiscountTotal = desc 
+			}else{
+				order.DiscountTotal = 0
 			}
 
 		}else{
+
+			returnamount := itemTotal
+			newTotal := orignalTotal - itemTotal
+
+			if adjustedTotal < newTotal{
+				returnamount = order.TotalAmount - newTotal
+				if returnamount < 0 {
+					returnamount = 0
+				}
+
+				if order.TotalAmount < newTotal {
+					order.DiscountTotal = newTotal - order.TotalAmount
+				}else{
+					order.DiscountTotal = 0.0
+					db.Db.Delete(&usedCoupon)
+				}
+				
+			}
 
 			// amount refund
 			walletTransaction := models.WalletTransaction{
 				UserID: order.UserID,
 				OrderID: order.ID,
 				OrderItemID: orderItem.ID,
-				Amount: itemTotal+walletAmount,
+				Amount: returnamount,
 				Type: "Credit",
 				Description: reason,
 				RefundStatus: true,
 			}
+
 			err := db.Db.Create(&walletTransaction).Error
 			if err != nil{
 				return err 
-			}
-
-			if WalletTransaction.ID != 0 {
-				db.Db.Delete(&WalletTransaction)
 			}
 
 		}
@@ -146,18 +183,22 @@ func ItemReturnOnline(orderId, itemId, reason string) error{
 
 	}else{
 
+		var returnamount float64
+
+		if itemTotal > order.TotalAmount{
+			returnamount = order.TotalAmount
+		}else{
+			returnamount = itemTotal
+		}
+
 		newalletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
 			OrderID: order.ID,
 			OrderItemID: orderItem.ID,
-			Amount: itemTotal+walletAmount,
+			Amount: returnamount,
 			Type: "Credit",
 			Description: reason,
 			RefundStatus: true,
-		}
-
-		if WalletTransaction.ID != 0 {
-			db.Db.Delete(&WalletTransaction)
 		}
 
 		err := db.Db.Create(&newalletTransaction).Error
