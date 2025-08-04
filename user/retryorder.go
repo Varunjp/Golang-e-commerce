@@ -20,8 +20,18 @@ import (
 
 func RetryOrderPage(c *gin.Context) {
 	orderId := c.Query("orderId")
+	var order models.Order
+	if orderId == "" {
+		c.HTML(http.StatusBadRequest, "orderRetry.html", gin.H{"error": "Order ID is required"})
+		return
+	}
 
-	c.HTML(http.StatusOK,"orderRetry.html",gin.H{"OrderId":orderId})
+	if err := db.Db.Preload("OrderItems").Where("order_id = ?", orderId).First(&order).Error; err != nil {
+		c.HTML(http.StatusNotFound, "orderRetry.html", gin.H{"error": "Order not found"})
+		return	
+	}
+
+	c.HTML(http.StatusOK,"orderRetry.html",gin.H{"OrderId":orderId,"user":"done"})
 }
 
 type RetryOrderRequest struct{
