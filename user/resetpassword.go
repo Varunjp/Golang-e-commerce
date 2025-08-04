@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -118,9 +119,21 @@ func ResetPassword(c *gin.Context){
 
 	email := c.PostForm("email")
 	newPassword := c.PostForm("password")
+	session := sessions.Default(c)
+	var user models.User
+	
+	if err := db.Db.Where("email = ?",email).First(&user).Error; err != nil{
+		c.HTML(http.StatusBadRequest,"reset_password.html",gin.H{"error": "User not found", "email": email})
+		return
+	}
 
 	if !helper.IsValidPassword(newPassword){
 		c.HTML(http.StatusBadRequest,"reset_password.html",gin.H{"error": "Password must be at least 8 characters with uppercase, lowercase, number, and special character", "email": email})
+		return
+	}
+
+	if utils.CheckPasswordHash(newPassword, user.Password) {
+		c.HTML(http.StatusBadRequest,"reset_password.html",gin.H{"error": "New password cannot be the same as the old password", "email": email})
 		return
 	}
 
@@ -131,6 +144,8 @@ func ResetPassword(c *gin.Context){
 		return 
 	}
 
+	session.Set("success","Password reset successfully")
+	session.Save()
 	c.Redirect(http.StatusSeeOther,"/user/login")
 
 }

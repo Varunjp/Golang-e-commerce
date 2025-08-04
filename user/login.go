@@ -14,6 +14,13 @@ import (
 
 func LoginPage(c *gin.Context){
 	tokenstr,err := c.Cookie("JWT-User")
+	session := sessions.Default(c)
+
+	message := session.Get("success")
+	if message != nil {
+		session.Delete("success")
+		session.Save()
+	}
 
 	if err == nil{
 		if tokenstr != ""{
@@ -21,7 +28,8 @@ func LoginPage(c *gin.Context){
 			return 
 		}
 	}
-	c.HTML(http.StatusOK,"userLogin.html",nil)
+	c.HTML(http.StatusOK,"userLogin.html",gin.H{
+		"message": message,})
 }
 
 func Login(c * gin.Context){
