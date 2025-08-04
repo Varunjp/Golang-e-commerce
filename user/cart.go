@@ -4,6 +4,8 @@ import (
 	db "first-project/DB"
 	"first-project/helper"
 	"first-project/models"
+	"first-project/models/responsemodels"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -133,8 +135,10 @@ func ListCart(c *gin.Context){
 
 	tokenStr,_ := c.Cookie("JWT-User")
 	_,id,_ := helper.DecodeJWT(tokenStr)
+	totalItems := 0
+	var totalamount float64
 	var cart []models.CartItem
-
+	
 	if err := db.Db.Preload("Product").Preload("Product.Product_images").Where("user_id = ?",id).Find(&cart).Error; err != nil{
 		c.JSON(http.StatusBadRequest,gin.H{
 			"error":"User cart not found",
@@ -142,30 +146,75 @@ func ListCart(c *gin.Context){
 		return 
 	}
 
-	for i, item := range cart{
+	var responseCart []responsemodels.ResponseCartItem
+	today := time.Now().Format("2006-01-02")
+	for _, item := range cart{
+
+		var productOffer models.ProductOffer
+		var categoryOffer models.CategoryOffer
+		var productVariant models.Product_Variant
+		var imageUrl string 
+
+		if err := db.Db.Preload("Product").Where("id = ?",item.ProductID).First(&productVariant).Error; err != nil{
+			log.Println("Could not get product details :",err)
+		}
+
+		if err := db.Db.Where("created_at <= ? AND product_id = ? AND active = true ",today+" 23:00:00",productVariant.ProductID).First(&productOffer).Error; err != nil{
+		log.Println("No offer available ",err)
+		}
+
+		if err := db.Db.Where("created_at <= ? AND category_id = ? AND active = true",today+" 23:00:00",productVariant.Product.SubCategoryID).First(&categoryOffer).Error; err != nil{
+			log.Println("No offer available as category ",err)
+		}
 
 		for _,image := range item.Product.Product_images{
 			if image.Order_no == 1 {
-				cart[i].Product.Product_images = []models.Product_image{image}
+				imageUrl = image.Image_url
 				break
 			}
 		}
 
-	}
+		var offername string
+		var dicountper float64
+		
+		if productOffer.DiscountPercentage > categoryOffer.DiscountPercentage{
+			offername = productOffer.OfferName
+			dicountper = productOffer.DiscountPercentage
+		}else if categoryOffer.DiscountPercentage > productOffer.DiscountPercentage{
+			offername = categoryOffer.OfferName
+			dicountper = categoryOffer.DiscountPercentage
+		}else{
+			offername = ""
+			dicountper = 0
+		}
 
-	
+		temp := responsemodels.ResponseProductVariant{
+			ProductID: productVariant.ID,
+			Variant_name: productVariant.Variant_name,
+			Image_url: imageUrl,
+			Size: productVariant.Size,
+			Price: item.Price,
+			Quantity: item.Quantity,
+			OfferName: offername,
+			Discount: dicountper,
+		}
 
-	totalItems := 0
-	var totalamount float64
+		responseCart = append(responseCart, responsemodels.ResponseCartItem{
+			ID: item.ID,
+			Product: temp,
+		})
 
-	for _, item := range cart{
+		discount := 0.0 
 
+		if dicountper > 0 {
+			discount = ((item.Price * dicountper)/100) * (float64(item.Quantity))
+		}
 		totalItems += item.Quantity
-		totalamount += (item.Price * float64(item.Quantity))
-
+		totalamount += (item.Price * float64(item.Quantity) - discount)
 	}
 
-	c.HTML(http.StatusOK,"cart.html",gin.H{"user":"done","CartItems":cart,"TotalItems":totalItems,"TotalAmount":totalamount})
+
+	c.HTML(http.StatusOK,"cart.html",gin.H{"user":"done","CartItems":responseCart,"TotalItems":totalItems,"TotalAmount":totalamount})
 
 }
 

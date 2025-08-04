@@ -26,6 +26,11 @@ func Product(c *gin.Context){
 	var product_variant models.Product_Variant
 	var images []models.Product_image
 	var isuser uint 
+	
+	var productOffer models.ProductOffer
+	var categoryOffer models.CategoryOffer
+	today := time.Now().Format("2006-01-02")
+
 	type ReviewResponse struct{
 		ID			uint
 		UserName 	string
@@ -56,6 +61,14 @@ func Product(c *gin.Context){
 	if err := db.Db.Preload("Product_variants").Where("deleted_at IS NULL AND product_id = ?",product_variant.ProductID).First(&product).Error; err != nil{
 		c.JSON(http.StatusNotFound,gin.H{"error":"Product not found"})
 		return 
+	}
+
+	if err := db.Db.Where("created_at <= ? AND product_id = ? AND active = true ",today+" 23:00:00",product.ProductID).First(&productOffer).Error; err != nil{
+		log.Println("No offer available ",err)
+	}
+
+	if err := db.Db.Where("created_at <= ? AND category_id = ? AND active = true",today+" 23:00:00",product.SubCategoryID).First(&categoryOffer).Error; err != nil{
+		log.Println("No offer available as category ",err)
 	}
 
 	//related products
@@ -158,43 +171,12 @@ func Product(c *gin.Context){
 		}
 		if flash != nil{
 			session.Delete("flash")
-			session.Save()
-			c.HTML(http.StatusOK,"product.html",gin.H{
-				"user":"done",
-				"pagetitle":product_variant.Variant_name,
-				"Product": product,
-				"variant": product_variant,
-				"AllVariants":availableVariants,
-				"Images": images,
-				"Wishlist":isWishlist,
-				"Reviews": respReview,
-				"AverageRating": averageRating,
-				"TotalReviews":  total,
-				"message":flash,
-				"RelatedProducts":relatedProduct,
-				"CurrentUserID":isuser,
-			})
-			return 
+			session.Save() 
 		}else if errmsg != nil{
 			session.Delete("error")
 			session.Save()
-			c.HTML(http.StatusOK,"product.html",gin.H{
-				"user":"done",
-				"pagetitle":product_variant.Variant_name,
-				"Product": product,
-				"variant": product_variant,
-				"AllVariants":availableVariants,
-				"Images": images,
-				"Reviews": respReview,
-				"AverageRating": averageRating,
-				"TotalReviews":  total,
-				"Wishlist":isWishlist,
-				"error":errmsg,
-				"RelatedProducts":relatedProduct,
-				"CurrentUserID":isuser,
-			})
-			return 
 		}
+
 		c.HTML(http.StatusOK,"product.html",gin.H{
 			"user":"done",
 			"pagetitle":product_variant.Variant_name,
@@ -208,44 +190,22 @@ func Product(c *gin.Context){
 			"Wishlist":isWishlist,
 			"RelatedProducts":relatedProduct,
 			"CurrentUserID":isuser,
+			"message":flash,
+			"error":errmsg,
+			"ProductOffer":productOffer,
+			"CategoryOffer":categoryOffer,
 		})
 	}else{
 
 		if flash != nil{
 			session.Delete("flash")
 			session.Save()
-			c.HTML(http.StatusOK,"product.html",gin.H{
-				"pagetitle":product_variant.Variant_name,
-				"Product": product,
-				"variant": product_variant,
-				"AllVariants":availableVariants,
-				"Images": images,
-				"Reviews": respReview,
-				"AverageRating": averageRating,
-				"TotalReviews":  total,
-				"Wishlist":false,
-				"message":flash,
-				"RelatedProducts":relatedProduct,
-			})
-			return 
 		}else if errmsg != nil{
 			session.Delete("error")
 			session.Save()
-			c.HTML(http.StatusOK,"product.html",gin.H{
-				"pagetitle":product_variant.Variant_name,
-				"Product": product,
-				"variant": product_variant,
-				"AllVariants":availableVariants,
-				"Images": images,
-				"Reviews": respReview,
-				"AverageRating": averageRating,
-				"TotalReviews":  total,
-				"Wishlist":false,
-				"error":errmsg,
-				"RelatedProducts":relatedProduct,
-			})
-			return
+			
 		}
+
 		c.HTML(http.StatusOK,"product.html",gin.H{
 			"pagetitle":product_variant.Variant_name,
 			"Product": product,
@@ -257,6 +217,10 @@ func Product(c *gin.Context){
 			"TotalReviews":  total,
 			"Wishlist":false,
 			"RelatedProducts":relatedProduct,
+			"message":flash,
+			"error":errmsg,
+			"ProductOffer":productOffer,
+			"CategoryOffer":categoryOffer,
 		})
 	}
 

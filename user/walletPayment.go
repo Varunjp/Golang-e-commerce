@@ -42,9 +42,17 @@ func WalletPayment(c *gin.Context,amount float64,couponcode string,addressId str
 	var total float64
 	var totalTax float64
 	var totalAmount float64
+	var specialDiscountsave float64
 	for _,item := range CartItems{
 		var product models.Product_Variant
 		db.Db.Where("id = ?",item.ProductID).First(&product)
+
+		specialDiscountper := helper.CheckSpecialOffer(item.ProductID)
+		specialDiscount := 0.0
+
+		if specialDiscountper > 0 {
+			specialDiscount = (item.Price * specialDiscountper / 100) * float64(item.Quantity)
+		}
 
 		if product.Stock < item.Quantity {
 			erram := helper.CreditWallet(uint(userID),amount,"Stock not available for the product")
@@ -57,7 +65,8 @@ func WalletPayment(c *gin.Context,amount float64,couponcode string,addressId str
 
 		total += item.Price * float64(item.Quantity)
 		totalTax += product.Tax * float64(item.Quantity)
-		totalAmount+= item.Price * float64(item.Quantity)
+		totalAmount+= item.Price * float64(item.Quantity) - specialDiscount
+		specialDiscountsave += specialDiscount
 	}
 
 	totalAmount += totalTax
@@ -91,6 +100,10 @@ func WalletPayment(c *gin.Context,amount float64,couponcode string,addressId str
 	neOrderId := helper.GenerateOrderID()
 	totalAmount = totalAmount - discount
 	addIdint,_ := strconv.Atoi(addressId)
+
+	if specialDiscountsave > 0 {
+		discount += specialDiscountsave
+	}
 
 	order := models.Order{
 		UserID: uint(userID),
@@ -169,6 +182,13 @@ func WalletPayment(c *gin.Context,amount float64,couponcode string,addressId str
 		}
 		db.Db.Where("id = ?",item.ProductID).First(&product)
 
+		specialDiscountper := helper.CheckSpecialOffer(item.ProductID)
+		specialDiscount := 0.0
+
+		if specialDiscountper > 0{
+			specialDiscount = (item.Price * specialDiscountper /100) * float64(item.Quantity)
+		}
+
 		for _, oritems := range orderitems{
 			if item.ProductID == oritems.ProductID{
 				itemCount = item.Quantity + oritems.Quantity
@@ -194,6 +214,7 @@ func WalletPayment(c *gin.Context,amount float64,couponcode string,addressId str
 				Quantity: item.Quantity,
 				Status: "Cancelled ",
 				Price: item.Price,
+				Discount: specialDiscount,
 			}
 
 			if err := db.Db.Create(&orderItem).Error; err != nil{
@@ -212,6 +233,7 @@ func WalletPayment(c *gin.Context,amount float64,couponcode string,addressId str
 				Quantity: item.Quantity,
 				Status: "Processing",
 				Price: item.Price,
+				Discount: specialDiscount,
 			}
 
 			if err := db.Db.Create(&orderItem).Error; err != nil{
@@ -301,13 +323,24 @@ func WalletPurchase(c *gin.Context){
 	}
 
 	var totalTax float64
+	var specialDiscountSave float64
 	for _,item := range CartItems{
 
 		var Product models.Product_Variant
 		db.Db.Where("id = ?",item.ProductID).First(&Product)
+
+		specialDiscountper := helper.CheckSpecialOffer(item.ProductID)
+		specialDiscount := 0.0
+
+		if specialDiscountper > 0{
+			specialDiscount = (item.Price * specialDiscountper /100) * float64(item.Quantity)
+		}
+
 		itemCount := 0
 		totalAmount += item.Price * float64(item.Quantity)
 		totalTax += Product.Tax * float64(item.Quantity)
+
+		specialDiscountSave += specialDiscount
 
 		for _, oritems := range orderitems{
 			if item.ProductID == oritems.ProductID{
@@ -329,7 +362,7 @@ func WalletPurchase(c *gin.Context){
 
 	var discount float64
 	var paidAmount float64
-	paidAmount = totalAmount
+	paidAmount = totalAmount - specialDiscountSave
 	if couponCode != "" {
 		var Coupon models.Coupons
 		db.Db.Where("id = ?",couponCode).First(&Coupon)
@@ -413,6 +446,13 @@ func WalletPurchase(c *gin.Context){
 		}
 		db.Db.Where("id = ?",item.ProductID).First(&product)
 
+		specialDiscountper := helper.CheckSpecialOffer(item.ProductID)
+		specialDiscount := 0.0
+
+		if specialDiscountper > 0{
+			specialDiscount = (item.Price * specialDiscountper /100) * float64(item.Quantity)
+		}
+
 		for _, oritems := range orderitems{
 			if item.ProductID == oritems.ProductID{
 				itemCount = item.Quantity + oritems.Quantity
@@ -438,6 +478,7 @@ func WalletPurchase(c *gin.Context){
 				Quantity: item.Quantity,
 				Status: "Cancelled ",
 				Price: item.Price,
+				Discount: specialDiscount,
 			}
 
 			if err := db.Db.Create(&orderItem).Error; err != nil{
@@ -456,6 +497,7 @@ func WalletPurchase(c *gin.Context){
 				Quantity: item.Quantity,
 				Status: "Processing",
 				Price: item.Price,
+				Discount: specialDiscount,
 			}
 
 			if err := db.Db.Create(&orderItem).Error; err != nil{

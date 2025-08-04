@@ -25,6 +25,7 @@ func CheckOutPage(c *gin.Context) {
 	_,userID,_ := helper.DecodeJWT(tokenStr)
 	var coupons []models.Coupons
 	var usedCoupon []models.UsedCoupon
+	session := sessions.Default(c)
 
 	if err := db.Db.Preload("Product").Where("user_id = ?",userID).Find(&CartItems).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to load data from DB"})
@@ -70,11 +71,14 @@ func CheckOutPage(c *gin.Context) {
 		Price  			float64 
 		TotalSum		float64
 		TotalTax		float64
+		DiscountPercent float64
 		TotalDiscount	float64
 		GrandTotal		float64
 	}
 
 	subCatID := make([]int,0)
+	today := time.Now().Format("2006-01-02")
+	finalDiscount := 0.0
 
 	for _,item := range CartItems{
 
@@ -82,22 +86,55 @@ func CheckOutPage(c *gin.Context) {
 
 		if res {
 			var pv models.Product_Variant
-			db.Db.Where("id = ?",item.ProductID).First(&pv)
-			Response = append(Response, struct{ID uint; Name string; Quantity int; Size string; Price float64; TotalSum float64; TotalTax float64; TotalDiscount float64; GrandTotal float64}{
+			db.Db.Preload("Product").Where("id = ?",item.ProductID).First(&pv)
+
+			var productOffer models.ProductOffer
+			var categoryOffer models.CategoryOffer
+
+			if err := db.Db.Where("created_at <= ? AND product_id = ? AND active = true ",today+" 23:00:00",pv.ProductID).First(&productOffer).Error; err != nil{
+				log.Println("No offer available ",err)
+			}
+
+			if err := db.Db.Where("created_at <= ? AND category_id = ? AND active = true",today+" 23:00:00",pv.Product.SubCategoryID).First(&categoryOffer).Error; err != nil{
+				log.Println("No offer available as category ",err)
+			}
+
+			totalDiscount := 0.0
+			var discountPercent float64 
+
+			if productOffer.DiscountPercentage > categoryOffer.DiscountPercentage{
+				discountPercent = productOffer.DiscountPercentage
+			}else if categoryOffer.DiscountPercentage > productOffer.DiscountPercentage{
+				discountPercent = categoryOffer.DiscountPercentage
+			}else{
+				discountPercent = 0
+			}
+
+			if discountPercent > 0 {
+				totalDiscount = ((item.Price * discountPercent)/100 * float64(item.Quantity))
+			}
+
+			payTotal := item.Price * float64(item.Quantity) - totalDiscount 
+			payTotal = payTotal + (item.Product.Tax * float64(item.Quantity))
+
+			Response = append(Response, struct{ID uint; Name string; Quantity int; Size string; Price float64; TotalSum float64; TotalTax float64; DiscountPercent float64;TotalDiscount float64; GrandTotal float64}{
 				ID: item.ProductID,
 				Name: item.Product.Variant_name,
 				Quantity: item.Quantity,
 				Price: item.Price,
 				Size: item.Product.Size,
-				TotalSum: (item.Price * float64(item.Quantity)),
+				TotalSum: (item.Price * float64(item.Quantity))+(pv.Tax*float64(item.Quantity)),
 				TotalTax: (pv.Tax*float64(item.Quantity)),
-				TotalDiscount: 0.0,
-				GrandTotal: (item.Price * float64(item.Quantity))+(item.Product.Tax*float64(item.Quantity)),
+				TotalDiscount: totalDiscount,
+				DiscountPercent: discountPercent,
+				GrandTotal: payTotal,
 			})
 
 			var tempProduct models.Product_Variant
 			db.Db.Preload("Product").Where("id = ?",item.ProductID).First(&tempProduct)
 			subCatID = append(subCatID, int(tempProduct.Product.SubCategoryID))
+
+			finalDiscount += totalDiscount
 		}
 
 	}
@@ -119,9 +156,11 @@ func CheckOutPage(c *gin.Context) {
 
 
 	var totalamount float64
+	var payablamount float64
 
 	for _, item := range Response{
-		totalamount += item.GrandTotal
+		totalamount += item.TotalSum
+		payablamount += item.GrandTotal
 	}
 
 	var wallet models.Wallet
@@ -141,18 +180,15 @@ func CheckOutPage(c *gin.Context) {
 		}
 	}
 
-	session := sessions.Default(c)
+	
 	flash := session.Get("flash")
 
 	if flash != nil{
 		session.Delete("flash")
 		session.Save()
-
-		c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance,"message":flash})
-		return 
 	}
 
-	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance,"pagetitle":"Checkout"})
+	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance,"pagetitle":"Checkout","message":flash,"discount":finalDiscount,"PayAmount":payablamount})
 
 }
 
@@ -232,8 +268,17 @@ func CheckOutOrder(c *gin.Context){
 
 	for _,item := range CartItems{
 		var product models.Product_Variant
-		total += item.Price * float64(item.Quantity)
 		db.Db.Where("id = ?",item.ProductID).First(&product)
+
+		specialDiscountPercent := helper.CheckSpecialOffer(item.ProductID)
+		specialDiscount := 0.0
+
+		if specialDiscountPercent > 0{
+			specialDiscount = (item.Price * specialDiscountPercent / 100) * float64(item.Quantity)
+		}
+
+		total += item.Price * float64(item.Quantity) - specialDiscount
+		
 		tax += product.Tax * float64(item.Quantity)
 		
 	}
@@ -397,12 +442,20 @@ func CheckOutOrder(c *gin.Context){
 			return 
 		}
 
+		specialDiscountper := helper.CheckSpecialOffer(item.ProductID)
+		specialDiscount := 0.0
+		
+		if specialDiscountper > 0{
+			specialDiscount = (item.Price * specialDiscountper / 100) * float64(item.Quantity)
+		}
+
 		orderItem := models.OrderItem{
 			UserID: uint(userID),
 			OrderID: order.ID,
 			ProductID: item.ProductID,
 			Quantity: item.Quantity,
 			Tax: product.Tax,
+			Discount: specialDiscount,
 			Status: "Processing",
 			Price: item.Price,		
 		}

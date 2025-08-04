@@ -36,6 +36,9 @@ func TemplateFuncs() template.FuncMap {
 		"max":Max,
 		"min":Min,
 		"seqs":Secq,
+		"toInt": func(u uint) int {
+        	return int(u)
+    	},
 	}
 }
 

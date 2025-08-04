@@ -90,14 +90,41 @@ func CreateRazorpayOrder(c *gin.Context){
 		c.JSON(http.StatusNotFound,gin.H{"success":false})
 		return
 	}
-
+	today := time.Now().Format("2006-01-02")
 	
 	for _,item := range CartItems{
 
+		specialDiscount := 0.0
+		specialDiscountPercent := 0.0 
 		var Product models.Product_Variant
-		db.Db.Where("id = ?",item.ProductID).First(&Product)
+		db.Db.Preload("Product").Where("id = ?",item.ProductID).First(&Product)
+
+		var productOffer models.ProductOffer
+		var categoryOffer models.CategoryOffer
+
+		if err := db.Db.Where("created_at <= ? AND product_id = ? AND active = true ",today+" 23:00:00",Product.ProductID).First(&productOffer).Error; err != nil{
+			log.Println("No offer available ",err)
+		}
+
+		if err := db.Db.Where("created_at <= ? AND category_id = ? AND active = true",today+" 23:00:00",Product.Product.SubCategoryID).First(&categoryOffer).Error; err != nil{
+			log.Println("No offer available as category ",err)
+		}
+
+		if productOffer.DiscountPercentage > categoryOffer.DiscountPercentage{
+			specialDiscountPercent = productOffer.DiscountPercentage
+		}else if categoryOffer.DiscountPercentage > productOffer.DiscountPercentage{
+			specialDiscountPercent = categoryOffer.DiscountPercentage
+		}else{
+			specialDiscountPercent = 0.0
+		}
+
+		if specialDiscountPercent > 0 {
+			specialDiscount = (item.Price * specialDiscountPercent /100) * float64(item.Quantity)
+		}
+
+
 		itemCount := 0
-		totalAmount += item.Price * float64(item.Quantity)
+		totalAmount += (item.Price * float64(item.Quantity) - specialDiscount)
 		totalAmount += Product.Tax * float64(item.Quantity)
 
 		for _, oritems := range orderitems{
@@ -244,9 +271,13 @@ func PaymentSuccess(c *gin.Context){
 	var total float64
 	var totalTax float64
 	var totalAmount float64
+	var specialDiscountSave float64
+	today := time.Now().Format("2006-01-02")
 	for _,item := range CartItems{
+		specialDiscount := 0.0
+		specialDiscountPercent := 0.0 
 		var product models.Product_Variant
-		db.Db.Where("id = ?",item.ProductID).First(&product)
+		db.Db.Preload("Product").Where("id = ?",item.ProductID).First(&product)
 
 		if product.Stock < item.Quantity {
 			erram := helper.CreditWallet(uint(userID),payload.Amount,"Stock not available for the product")
@@ -257,9 +288,33 @@ func PaymentSuccess(c *gin.Context){
 			return 
 		}
 
+		var productOffer models.ProductOffer
+		var categoryOffer models.CategoryOffer
+
+		if err := db.Db.Where("created_at <= ? AND product_id = ? AND active = true ",today+" 23:00:00",product.ProductID).First(&productOffer).Error; err != nil{
+			log.Println("No offer available ",err)
+		}
+
+		if err := db.Db.Where("created_at <= ? AND category_id = ? AND active = true",today+" 23:00:00",product.Product.SubCategoryID).First(&categoryOffer).Error; err != nil{
+			log.Println("No offer available as category ",err)
+		}
+
+		if productOffer.DiscountPercentage > categoryOffer.DiscountPercentage{
+			specialDiscountPercent = productOffer.DiscountPercentage
+		}else if categoryOffer.DiscountPercentage > productOffer.DiscountPercentage{
+			specialDiscountPercent = categoryOffer.DiscountPercentage
+		}else{
+			specialDiscountPercent = 0.0
+		}
+
+		if specialDiscountPercent > 0 {
+			specialDiscount = (item.Price * specialDiscountPercent /100) * float64(item.Quantity)
+		}
+
 		total += item.Price * float64(item.Quantity)
 		totalTax += product.Tax * float64(item.Quantity)
-		totalAmount+= item.Price * float64(item.Quantity)
+		totalAmount+= item.Price * float64(item.Quantity) - specialDiscount
+		specialDiscountSave += specialDiscount
 	}
 
 	totalAmount += totalTax
@@ -292,6 +347,10 @@ func PaymentSuccess(c *gin.Context){
 
 	neOrderId := helper.GenerateOrderID()
 	totalAmount = totalAmount - discount
+
+	if specialDiscountSave > 0{
+		discount += specialDiscountSave
+	}
 	
 	order := models.Order{
 		UserID: uint(userID),
@@ -371,7 +430,7 @@ func PaymentSuccess(c *gin.Context){
 
 		itemCount := 0
 		var product models.Product_Variant
-
+		specialDiscountpercent := helper.CheckSpecialOffer(item.ProductID)
 		db.Db.Where("id = ?",item.ProductID).First(&product)
 
 		for _, oritems := range orderitems{
@@ -390,6 +449,12 @@ func PaymentSuccess(c *gin.Context){
 			}
 		}
 
+		totalDiscount := 0.0
+
+		if specialDiscountpercent > 0 {
+			totalDiscount = (item.Price * specialDiscountpercent / 100) * float64(item.Quantity)
+		}
+
 		if product.Stock < item.Quantity{
 			orderItem := models.OrderItem{
 				UserID: uint(userID),
@@ -398,6 +463,8 @@ func PaymentSuccess(c *gin.Context){
 				Quantity: item.Quantity,
 				Status: "Cancelled",
 				Price: item.Price,
+				Discount: totalDiscount,
+				Tax: product.Tax,
 			}
 
 			if err := db.Db.Create(&orderItem).Error; err != nil{
@@ -417,6 +484,7 @@ func PaymentSuccess(c *gin.Context){
 				Tax: product.Tax,
 				Status: "Processing",
 				Price: item.Price,
+				Discount: totalDiscount,
 			}
 
 			if err := db.Db.Create(&orderItem).Error; err != nil{
@@ -442,7 +510,6 @@ func PaymentSuccess(c *gin.Context){
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to clear cart items"})
 		return 
 	}
-
 
 	c.JSON(http.StatusOK,gin.H{"success":true,"redirect": fmt.Sprintf("/order/confirmation/%d",order.ID)})
 }

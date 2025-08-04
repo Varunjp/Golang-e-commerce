@@ -61,6 +61,18 @@
                     <del class="text-muted">₹{{ .variant.DiscountedPrice }}</del>
                     {{ end }}
                   </p>
+                  {{ if or (gt ( toInt .ProductOffer.ID) 0) (gt ( toInt .CategoryOffer.ID) 0) }}
+                    {{ if (gt ( toInt .ProductOffer.ID) 0) }}
+                      <div class="alert alert-info p-2 rounded-2 shadow-sm">
+                        <strong>{{ .ProductOffer.OfferName }}</strong> - Get <strong>{{ .ProductOffer.DiscountPercentage }}%</strong> off!
+                      </div>
+                    {{ end }}
+                    {{ if (gt ( toInt .CategoryOffer.ID) 0) }}
+                      <div class="alert alert-info p-2 rounded-2 shadow-sm">
+                        <strong>{{ .CategoryOffer.OfferName }}</strong> - Enjoy <strong>{{ .CategoryOffer.DiscountPercentage }}%</strong> off on this category!
+                      </div>
+                    {{ end }}
+                  {{ end }}
                 </div>
                 <div class="mb-4">
                   <span class="text-warning">

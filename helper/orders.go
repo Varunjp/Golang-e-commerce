@@ -43,7 +43,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 	}
 
 	ptax := Product.Tax
-	itemTotal := orderItem.Price * float64(orderItem.Quantity) + ptax * float64(orderItem.Quantity)
+	itemTotal := orderItem.Price * float64(orderItem.Quantity) + ptax * float64(orderItem.Quantity) - order.DiscountTotal
 	orignalTotal := 0.0
 
 
@@ -52,7 +52,8 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 		var tempP models.Product_Variant
 		db.Db.Where("id = ?",item.ProductID).First(&tempP)
 		tempTax := tempP.Tax * float64(item.Quantity)
-		orignalTotal += item.Price * float64(item.Quantity) + tempTax
+		itemDiscount := item.Discount
+		orignalTotal += (item.Price * float64(item.Quantity) + tempTax) - itemDiscount
 	}
 
 	if usedCoupon.ID != 0 {

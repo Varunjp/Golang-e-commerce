@@ -46,3 +46,19 @@ type ProductForm struct {
 	IsPrimary      string
 	Errors         map[string]string
 }
+
+type ResponseCartItem struct {
+	ID 			uint 
+	Product 	ResponseProductVariant
+}
+
+type ResponseProductVariant struct{
+	ProductID 			uint 
+	Variant_name 		string
+	Image_url 			string 
+	Size 				string 
+	Price 				float64
+	Quantity 			int
+	OfferName 			string 
+	Discount 			float64
+}

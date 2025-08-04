@@ -87,17 +87,40 @@
             <div class="card-body">
               <ul class="list-group mb-3">
                 {{range .CartItems}}
-                <li class="list-group-item d-flex justify-content-between">
-                  <div>
-                    <h6 class="my-0">{{.Name}}</h6>
-                    <small class="text-muted">Qty: {{.Quantity}}</small>
-                    <small class="text-muted">Size: {{.Size}}</small>
-                    <small class="text-muted">Tax: ₹{{.TotalTax}}</small>
+                <li class="list-group-item">
+                  <div class="row align-items-center">
+                    <div class="col-8">
+                      <h6 class="my-0 fw-semibold">{{.Name}}</h6>
+                      <div class="text-muted small">Qty: {{.Quantity}} | Size: {{.Size}}</div>
+
+                      <!-- Tax -->
+                      <div class="mt-1">
+                        <span class="badge bg-info text-dark">Tax: ₹{{printf "%.2f" .TotalTax}}</span>
+                      </div>
+
+                      <!-- Discount (if any) -->
+                      {{if gtf .TotalDiscount 0.0}}
+                      <div class="mt-1">
+                        <span class="badge bg-success">Discount: ₹{{printf "%.2f" .TotalDiscount}}</span>
+                      </div>
+                      {{end}}
+
+                      {{if gtf .DiscountPercent 0.0}}
+                      <div class="mt-1">
+                        <span class="badge bg-warning text-dark">Discount : {{printf "%.2f" .DiscountPercent}}%</span>
+                      </div>
+                      {{end}}
+                    </div>
+
+                    <!-- Price -->
+                    <div class="col-4 text-end">
+                      <span class="fw-bold text-dark">₹{{printf "%.2f" .Price}}</span>
+                    </div>
                   </div>
-                  <span class="text-muted">₹{{printf "%.2f" .Price}}</span>
                 </li>
                 {{end}}
               </ul>
+
 
               <!-- Coupon Section -->
               <div class="mb-3">
@@ -120,6 +143,12 @@
                 <span>Subtotal:</span>
                 <span>{{ if .TotalAmount}}₹{{printf "%.2f" .TotalAmount}}{{else}}₹ 0.00{{end}}</span>
               </div>
+              {{ if gtf .discount 0.0}}
+                <div class="d-flex justify-content-between">
+                  <span>Special Offer:</span>
+                  <span>₹{{ .discount }}</span>
+                </div>
+              {{ end }}
               <div class="d-flex justify-content-between">
                 <span>Discount:</span>
                 <span id="discountAmount">₹0.00</span>
@@ -127,10 +156,10 @@
               <hr>
               <div class="d-flex justify-content-between">
                 <strong>Total Amount:</strong>
-                <strong id="finalAmount">{{ if .TotalAmount}}₹{{printf "%.2f" .TotalAmount}}{{else}}₹ 0.00{{end}}</strong>
+                <strong id="finalAmount">{{ if .PayAmount}}₹{{printf "%.2f" .PayAmount}}{{else}}₹ 0.00{{end}}</strong>
               </div>
-              <input type="hidden" id="totalAmount" value="{{.TotalAmount}}">
-              <input type="hidden" name="final_amount" id="finalAmountInput" value="{{.TotalAmount}}">
+              <input type="hidden" id="totalAmount" value="{{.PayAmount}}">
+              <input type="hidden" name="final_amount" id="finalAmountInput" value="{{.PayAmount}}">
 
               <hr>
               <button type="submit" class="btn btn-dark w-100 mt-3" id="checkout-btn">Place Order</button>

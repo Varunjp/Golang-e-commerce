@@ -36,7 +36,7 @@ func UserOrderCancelItem(itemId string) error {
 	var product models.Product_Variant
 	db.Db.Where("id = ?", orderItem.ProductID).First(&product)
 
-	retrunAmount := orderItem.Price*float64(orderItem.Quantity) + product.Tax*float64(orderItem.Quantity)
+	retrunAmount := orderItem.Price*float64(orderItem.Quantity) + product.Tax*float64(orderItem.Quantity) - orderItem.Discount
 
 	newTotal := order.SubTotal - retrunAmount
 
