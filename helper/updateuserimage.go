@@ -3,6 +3,7 @@ package helper
 import (
 	db "first-project/DB"
 	"first-project/models"
+	"log"
 	"os"
 
 	"gorm.io/gorm"
@@ -33,7 +34,7 @@ func UpdateUserImage(userID int, imagePath string) error {
 		err := os.Remove(ProfileImage.ImageUrl)
 
 		if err != nil{
-			return err 
+			log.Println("Error removing old image:", err)
 		}
 	}
 
