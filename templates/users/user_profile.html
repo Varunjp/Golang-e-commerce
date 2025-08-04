@@ -55,6 +55,9 @@
     {{if .error}}
     <div class="alert alert-danger">{{.error}}</div>
     {{end}}
+    {{if .message}}
+    <div class="alert alert-success">{{.message}}</div>
+    {{end}}
     <div class="row g-4">
       <!-- Profile Card -->
       <div class="col-md-4">

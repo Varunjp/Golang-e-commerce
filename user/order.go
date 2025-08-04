@@ -22,6 +22,7 @@ func ListOrders(c *gin.Context){
 	_,userId,_ := helper.DecodeJWT(tokenStr)
 
 	qstatus := c.Query("status")
+	order_id := c.Query("order_id")
 	page,_ := strconv.Atoi(c.DefaultQuery("page","1"))
 	limit := 10
 	offset := (page - 1) * limit
@@ -30,8 +31,12 @@ func ListOrders(c *gin.Context){
 	var total int64 
 	var query *gorm.DB
 
-	if qstatus != ""{
+	if qstatus != "" && order_id == ""{
 		query = db.Db.Model(&models.Order{}).Where("user_id = ? AND status = ?",userId,qstatus).Count(&total)
+	}else if order_id != "" && qstatus == ""{
+		query = db.Db.Model(&models.Order{}).Where("user_id = ? AND order_id = ?",userId,order_id).Count(&total)
+	}else if qstatus != "" && order_id != ""{
+		query = db.Db.Model(&models.Order{}).Where("user_id = ? AND order_id = ?",userId,order_id).Count(&total)
 	}else{
 		query = db.Db.Model(&models.Order{}).Where("user_id = ?",userId).Count(&total)
 	}
@@ -78,6 +83,7 @@ func ListOrders(c *gin.Context){
 		"PrevPage": page - 1,
 		"NextPage": page + 1,
 		"FilterStatus":qstatus,
+		"FilterOrderID": order_id,
 	})
 
 }

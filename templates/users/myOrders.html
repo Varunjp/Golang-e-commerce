@@ -42,7 +42,7 @@
 
   <!-- Filter Orders -->
   <form method="GET" action="/user/orders" class="row g-3 mb-4">
-    <div class="col-md-4 offset-md-4">
+    <div class="col-md-3 offset-md-2">
       <select name="status" class="form-select" onchange="this.form.submit()">
         <option value="">All Orders</option>
         <option value="Delivered" {{if eq .FilterStatus "Delivered"}}selected{{end}}>Delivered</option>
@@ -52,12 +52,28 @@
         <option value="Failed" {{if eq .FilterStatus "Failed"}}selected{{end}}>Failed</option>
       </select>
     </div>
+
+    <div class="col-md-3">
+      <input 
+        type="text" 
+        name="order_id" 
+        value="{{.FilterOrderID}}" 
+        class="form-control" 
+        placeholder="Search Order ID"
+      >
+    </div>
+
     <div class="col-md-2">
-      {{ if .FilterStatus }}
+      <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+
+    <div class="col-md-2">
+      {{ if or .FilterStatus .FilterOrderID }}
       <a href="/user/orders" class="btn btn-outline-secondary w-100">Clear</a>
       {{ end }}
     </div>
   </form>
+
 
 
   {{if .Orders}}

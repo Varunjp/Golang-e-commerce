@@ -97,6 +97,12 @@ func UserProfilePage(c *gin.Context) {
 
 	session := sessions.Default(c)
 	flash := session.Get("flash")
+	sussess := session.Get("profilesuccess")
+
+	if sussess != nil{
+		session.Delete("profilesuccess")
+		session.Save()
+	}
 
 	if flash != nil{
 		session.Delete("flash")
@@ -122,6 +128,7 @@ func UserProfilePage(c *gin.Context) {
 		"Orders": orders,
 		"CurrentPage": page,
 		"TotalPages":  totalPages,
+		"message": sussess,
 	})
 
 }
@@ -492,6 +499,13 @@ func ChangePasswordPage(c *gin.Context){
 	session := sessions.Default(c)
 	username,err := session.Get("name").(string)
 
+	passerr := session.Get("password_error")
+
+	if passerr != nil{
+		session.Delete("password_error")	
+		session.Save()
+	}
+
 	if !err {
 		c.HTML(http.StatusInternalServerError,"change_password.html",gin.H{"error":"Error while fetching user name"})
 		return 
@@ -507,9 +521,9 @@ func ChangePasswordPage(c *gin.Context){
 	}
 
 	if user.Password != ""{
-		c.HTML(http.StatusOK,"change_password.html",gin.H{"user":username,"hasPassword":true})
+		c.HTML(http.StatusOK,"change_password.html",gin.H{"user":username,"hasPassword":true,"error":passerr})
 	}else{
-		c.HTML(http.StatusOK,"change_password.html",gin.H{"user":username})
+		c.HTML(http.StatusOK,"change_password.html",gin.H{"user":username,"error":passerr})
 	}	
 
 }
@@ -519,10 +533,19 @@ func ChangePassword(c *gin.Context){
 	currentPassword := c.PostForm("current_password")
 	newPassword := c.PostForm("new_password")
 	confirmPassword := c.PostForm("confirm_password")
+	session := sessions.Default(c)
+	if strings.TrimSpace(currentPassword) == "" || strings.TrimSpace(newPassword) == "" || strings.TrimSpace(confirmPassword) == ""{
+		session.Set("password_error","Please fill all fields")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/change-password")
+		return
+	}
 
 	if newPassword != confirmPassword {
-		c.HTML(http.StatusBadRequest,"change_password.html",gin.H{"error":"New Password mismatch"})
-		return 
+		session.Set("password_error","New Password mismatch")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/change-password")
+		return
 	}
 
 	tokenStr,_ := c.Cookie("JWT-User")
@@ -530,33 +553,50 @@ func ChangePassword(c *gin.Context){
 	var user models.User
 
 	if err := db.Db.First(&user,id).Error; err != nil {
-		c.HTML(http.StatusInternalServerError,"change_password.html",gin.H{"error":"Failed to load user details. Please try again later"})
-		return 
+		session.Set("password_error","Failed to load user details. Please try again later")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/change-password")
+		return
 	}
 
 	if user.Password != ""{
 		
 		if !utils.CheckPasswordHash(currentPassword,user.Password){
-		c.HTML(http.StatusConflict,"change_password.html",gin.H{"error":"Incorrect old password"})
-		return
+			session.Set("password_error","Incorrect old password")
+			session.Save()
+			c.Redirect(http.StatusSeeOther,"/user/change-password")
+			return
 		}
 
+	}
+
+	if !helper.IsValidPassword(newPassword){
+		session.Set("password_error","Password must be at least 8 characters with uppercase, lowercase, number, and special character")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/change-password")
+		return
 	}
 
 	hashedPass, hasherr := utils.HashPassword(newPassword)
 
 	if hasherr != nil {
-		c.HTML(http.StatusConflict,"change_password.html",gin.H{"error":"Failed to generator hash of new password"})
+		session.Set("password_error","Failed to generator hash of new password")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/change-password")
 		return
 	}
 
 	user.Password = hashedPass
 
 	if err := db.Db.Save(&user).Error; err != nil{
-		c.HTML(http.StatusConflict,"change_password.html",gin.H{"error":"Failed to update new password"})
+		session.Set("password_error","Failed to update new password")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/change-password")
 		return
 	}
 
+	session.Set("profilesuccess","Password updated successfully")
+	session.Save()
 	c.Redirect(http.StatusFound,"/user/profile")
 
 }	

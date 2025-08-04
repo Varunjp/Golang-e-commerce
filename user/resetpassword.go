@@ -43,24 +43,6 @@ func ResetPasswordOTPSend(c *gin.Context){
 		}
 	}()
 
-	// otp,err := helper.GenerateAndSaveOtp(email)
-
-	// if err != nil{
-	// 	c.HTML(http.StatusBadRequest,"resetPassword.html",gin.H{
-	// 		"error": "Failed to create OTP",
-	// 	})
-	// 	return 
-	// }
-
-	// err = helper.SendOTPEmail(email,otp)
-
-	// if err != nil{
-	// 	c.HTML(http.StatusBadRequest,"resetPassword.html",gin.H{
-	// 		"error": "Failed to send otp",
-	// 	})
-	// 	return
-	// }
-
 	c.Redirect(http.StatusFound,"/reset-password/verify-otp?email="+email)
 }
 
@@ -121,14 +103,6 @@ func Resetpassword_ResendOTP(c *gin.Context){
 			log.Println(err)
 		}
 	}()
-	// otp, _ := helper.GenerateAndSaveOtp(email)
-
-	// err := helper.SendOTPEmail(email,otp)
-
-	// if err != nil{
-	// 	c.HTML(http.StatusConflict,"resetpassword_verifyOtp.html",gin.H{"error":"Failed to send OTP"})
-	// 	return 
-	// }
 
 	c.HTML(http.StatusOK,"resetpassword_verifyOtp.html",gin.H{"message":"OTP resend to mail","email":email})
 
@@ -144,6 +118,11 @@ func ResetPassword(c *gin.Context){
 
 	email := c.PostForm("email")
 	newPassword := c.PostForm("password")
+
+	if !helper.IsValidPassword(newPassword){
+		c.HTML(http.StatusBadRequest,"reset_password.html",gin.H{"error": "Password must be at least 8 characters with uppercase, lowercase, number, and special character", "email": email})
+		return
+	}
 
 	hashed,_ := utils.HashPassword(newPassword)
 
