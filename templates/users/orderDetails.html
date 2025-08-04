@@ -67,10 +67,11 @@
                           Price: ₹{{printf "%.2f" .Price}}<br>
                           Size: {{ .Size}}<br>
                           Tax: ₹{{printf "%.2f" .Tax}}<br>
-                          {{if gtf .Discount 0.0 }}<br><small class="text-success">Discount: ₹{{printf "%.2f" .Discount}}</small>{{end}}
+                          {{if gtf .Discount 0.0 }}<br><small class="text-success fw-bold d-block">Discount: ₹{{printf "%.2f" .Discount}}</small>
+                          {{end}}
                       </div>
                       <div class="col-3 col-md-3 text-end fw-bold">
-                          ₹{{printf "%.2f" (addFloat (mulFloat .Price .Quantity) (mulFloat .Tax .Quantity))}}
+                          ₹{{printf "%.2f" (subFloat (addFloat (mulFloat .Price .Quantity) (mulFloat .Tax .Quantity)) .Discount)}}
                       </div>
                       <!--testing-->
                       <div class="col-12 col-md-2 text-end">

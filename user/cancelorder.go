@@ -116,9 +116,13 @@ func CancelOrderItem(c *gin.Context){
 	if cancelCount == 0 && order.PaymentMethod == "cod"{
 		order.Status = "Cancelled"
 		order.PaymentStatus = "Not Valid"
+		order.SubTotal = 0.0
+		order.TotalAmount = 0.0
 	}else if cancelCount == 0 && order.PaymentMethod != "cod"{
 		order.Status = "Cancelled"
 		order.PaymentStatus = "Refunded"
+		order.SubTotal = 0.0
+		order.TotalAmount = 0.0
 	}
 
 	orderItem.Status = "Cancelled"

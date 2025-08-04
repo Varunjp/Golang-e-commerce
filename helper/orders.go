@@ -43,15 +43,13 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 	}
 
 	ptax := Product.Tax
-	itemTotal := orderItem.Price * float64(orderItem.Quantity) + ptax * float64(orderItem.Quantity) - order.DiscountTotal
+	itemTotal := orderItem.Price * float64(orderItem.Quantity) + ptax * float64(orderItem.Quantity) - orderItem.Discount
 	orignalTotal := 0.0
 
 
 	// fetching orignal amount
 	for _, item := range order.OrderItems{
-		var tempP models.Product_Variant
-		db.Db.Where("id = ?",item.ProductID).First(&tempP)
-		tempTax := tempP.Tax * float64(item.Quantity)
+		tempTax := item.Tax * float64(item.Quantity)
 		itemDiscount := item.Discount
 		orignalTotal += (item.Price * float64(item.Quantity) + tempTax) - itemDiscount
 	}
@@ -77,10 +75,13 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 				desc := newTotal - order.TotalAmount
 				order.DiscountTotal = desc 
 			}else{
-				
 				order.DiscountTotal = 0.0
 				db.Db.Delete(&usedCoupon)
 			}
+
+			//delet
+			fmt.Println("checking refund amount :",refundAmount)
+
 			// amount refunded
 			walletTranscation := models.WalletTransaction{
 				UserID: order.UserID,
@@ -162,7 +163,9 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			newTotal := orignalTotal - itemTotal
 
 			if adjustedTotal < newTotal{
+				
 				returnamount = order.TotalAmount - newTotal
+				
 				if returnamount < 0 {
 					returnamount = 0
 				}
@@ -179,6 +182,7 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 			if returnamount > order.TotalAmount{
 				returnamount = 0
 			}
+
 
 			// amount refund
 			walletTransaction := models.WalletTransaction{
@@ -246,6 +250,12 @@ func ItemCancelOnline(orderId, itemId, reason string) error{
 	db.Db.Save(&order)
 	db.Db.Save(&orderItem)
 
+	if order.DiscountTotal < 1{
+		if err := OrderDiscountFix(order.ID); err != nil{
+			return err 
+		}
+	}
+	
 	return nil
 }
 

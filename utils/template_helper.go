@@ -39,6 +39,7 @@ func TemplateFuncs() template.FuncMap {
 		"toInt": func(u uint) int {
         	return int(u)
     	},
+		"subFloat":subFloat,
 	}
 }
 
@@ -136,4 +137,8 @@ func Secq(start, end int) []int {
         s[i] = start + i
     }
     return s
+}
+
+func subFloat(a, b float64) float64 {
+	return a - b
 }
