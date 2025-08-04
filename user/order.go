@@ -452,6 +452,10 @@ func DownloadPdf(c *gin.Context){
 			return
 		}
 
+		if item.Status == "Cancelled"{
+			continue // Skip items that are not delivered
+		}
+
 		lineTotal := float64(item.Quantity) * item.Price
 		subtotal += lineTotal
 

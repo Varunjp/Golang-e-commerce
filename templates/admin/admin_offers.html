@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Products - Fashion Art</title>
+  <title>Offers</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
@@ -62,13 +62,13 @@
       <nav class="nav flex-column">
         <a class="nav-link " href="/admin">Dashboard</a>
         <a class="nav-link" href="/admin/users-list">Customers</a>
-        <a class="nav-link active" href="/admin/products">Products</a>
+        <a class="nav-link" href="/admin/products">Products</a>
         <a class="nav-link" href="/admin/categories">Categories</a>
         <a class="nav-link" href="/admin/reports">Sales Report</a>
         <a class="nav-link" href="/admin/orders">Orders</a>
         <a class="nav-link" href="/admin/banners">Banners</a>
         <a class="nav-link" href="/admin/coupons">Coupons</a>
-        <a class="nav-link" href="/admin/offers">Offers</a>
+        <a class="nav-link active" href="/admin/offers">Offers</a>
         <a class="nav-link" href="/admin/wallet-transactions">Wallet</a>
       </nav>
     </div>
@@ -76,10 +76,10 @@
     <!-- Main Content -->
     <div class="col-md-10">
       <div class="topbar">
-        <h4 class="mb-0">Product</h4>
+        <h4 class="mb-0">Offers</h4>
         <div class="d-flex align-items-center gap-3">
-          <a href="/admin/product/create" class="btn btn-primary btn-sm">New Product +</a>
-          <a href="/admin/product/variant" class="btn btn-secondary btn-sm">New Variant +</a>
+          <a href="/admin/offer/product-create" class="btn btn-primary btn-sm">New Product Offer</a>
+          <a href="/admin/offer/category-create" class="btn btn-secondary btn-sm">New Category Offer</a>
           <span class="text-white">Admin: {{ .user}}</span>
           <a href="/admin/logout" class="btn btn-outline-danger ms-3">Logout</a>
           
@@ -88,10 +88,10 @@
 
       <div class="container py-3">
         <!-- Search -->
-        <form method="get" action="/admin/products" class="d-flex mb-3">
-          <input type="text" name="search" class="form-control me-2" placeholder="Search for id, name product" value="{{ .search }}">
+        <form method="get" action="/admin/coupons" class="d-flex mb-3">
+          <input type="text" name="search" class="form-control me-2" placeholder="Search offer name" value="{{ .search }}">
           <button type="submit" class="btn btn-outline-light me-2">Search</button>
-          <a href="/admin/products" class="btn btn-secondary">Clear</a>
+          <a href="/admin/coupons" class="btn btn-secondary">Clear</a>
         </form>
 
         <!-- Table -->
@@ -102,49 +102,61 @@
                 {{if .error}}
                 <div class="alert alert-danger">{{.error}}</div>
                 {{end}}
-          <table class="table table-dark table-hover">
-            <thead>
-              <tr>
-                <th><input type="checkbox" /></th>
-                <th>Product</th>
-                <th>Price</th>
-                <th>Size</th>
-                <th>QTY</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {{ range .products }}
-              <tr>
-                <td><input type="checkbox" /></td>
-                <td>
-                  <a href="/admin/products/edit/{{ .ID }}"><img src="/{{ .ImageURl }}" alt="" width="40" class="me-2"> {{ .Name }}</a>
-                </td>
-                <td>₹{{ .Price }}</td>
-                <td>{{ .Size }}</td>
-                <td>{{ .Quantity }}</td>
-                <td>{{ .CreatedAt.Format "01/02/06 at 3:04 PM" }}</td>
-                <td>
-                  {{ if .InStock }}
-                    <span class="badge badge-available">Available</span>
-                  {{ else }}
-                    <span class="badge badge-out">Out of Stock</span>
-                  {{ end }}
-                </td>
-                <td>
-                  <!-- text-light me-2  -->
-                  <a href="/admin/products/edit/{{ .ID }}" class="btn btn-warning btn-sm">✏️</a>
-                  <a href="/admin/products/delete/{{ .ID }}" class="btn btn-danger btn-sm" data-action="Delete">🗑️</a>
-                  <!-- <form action="/admin/products/delete/{{.ID}}" method="POST" class="d-inline" onsubmit="return confirm('Delete this product?')">
-                    <button class="btn btn-danger btn-sm">🗑️</button>
-                  </form> -->
-                </td>
-              </tr>
-              {{ end }}
-            </tbody>
-          </table>
+             <table class="table table-dark table-hover">
+                <thead>
+                    <tr>
+                    <th>#</th>
+                    <th>Type</th>
+                    <th>Name</th>
+                    <th>Target</th>
+                    <th>Discount (%)</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ if gt (len .Offers) 0 }}
+                      {{ range $index, $offer := .Offers }}
+                      <tr>
+                      <td>{{ add $index 1 }}</td>
+                      <td>{{ $offer.OfferType }}</td>
+                      <td>{{ $offer.OfferName }}</td>
+                      <td>{{ $offer.TargetName }}</td>
+                      <td>{{ printf "%.2f" $offer.DiscountPercentage }}</td>
+                      <td>{{ $offer.CreatedAt.Format "02 Jan 06" }}</td>
+                      <td>{{ $offer.EndAt.Format "02 Jan 06" }}</td>
+                      <td>
+                          {{ if $offer.Active }}
+                          <span class="badge bg-success">Active</span>
+                          {{ else }}
+                          <span class="badge bg-secondary">Inactive</span>
+                          {{ end }}
+                      </td>
+                      <td>
+                          <a href="/admin/offers/edit/{{ $offer.OfferType }}/{{ $offer.ID }}" class="btn btn-warning btn-sm">✏️</a>
+                          <a href="/admin/offers/toggle/{{ $offer.OfferType }}/{{ $offer.ID }}" class="btn btn-primary btn-sm">
+                          {{ if $offer.Active }}Disable{{ else }}Enable{{ end }}
+                          </a>
+                      </td>
+                      </tr>
+                      {{ end }}
+                    {{ else }}
+                    <tr>
+                      <td>----</td>
+                      <td>----</td>
+                      <td>----</td>
+                      <td>----</td>
+                      <td>No offers</td>
+                      <td>----</td>
+                      <td>----</td>
+                      <td>----</td>
+                      <td>----</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+                </table>
         </div>
 
         <!-- Pagination -->

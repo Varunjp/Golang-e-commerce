@@ -185,4 +185,16 @@ func GetUrl(router *gin.Engine){
 	router.GET("/admin/reports",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.SalesReportPage)
 	router.POST("/admin/reports/download",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.DownloadSalesReport)
 	
+	// Admin offers
+	router.GET("/admin/offers",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.OffersPage)
+	router.GET("/admin/offer/product-create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddOfferProductPage)
+	router.POST("/admin/offer/product-create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddProductOffer)
+	router.GET("/admin/offer/category-create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddOfferCategoryPage)
+	router.POST("/admin/offer/category-create",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.AddCategoryOffer)
+	router.GET("/admin/offers/edit/Product/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.EditProductOfferPage)
+	router.POST("/admin/offer/product-edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.EditProductOffer)
+	router.GET("/admin/offers/edit/Category/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.EditCategoryOfferPage)
+	router.POST("/admin/offer/category-edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.EditCategoryOffer)
+	router.GET("/admin/offers/toggle/Product/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.ToggleProductOffer)
+	router.GET("/admin/offers/toggle/Category/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.ToggleCategoryOffer)
 }

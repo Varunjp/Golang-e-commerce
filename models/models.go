@@ -289,3 +289,28 @@ type OTPVerification struct {
 	ExpiresAt			time.Time	`gorm:"not null"`
 	IsUsed				bool		`gorm:"default:false"`		
 }
+
+type ProductOffer struct {
+	ID 					uint		`gorm:"primarykey;autoIncrement"`
+	ProductID			uint		`gorm:"not null;index"`
+	OfferName			string		`gorm:"not null"`
+	DiscountPercentage	float64		`gorm:"not null"`
+	CreatedAt			time.Time
+	EndAt				time.Time
+	Active				bool		`gorm:"default:true"`
+
+	// Associations
+	Product				Product		`gorm:"constraint:OnDelete:CASCADE;"`
+}
+
+type CategoryOffer struct {
+	ID 					uint		`gorm:"primarykey;autoIncrement"`
+	CategoryID			uint		`gorm:"not null;index"`
+	CategorryName 		string		`gorm:"not null"`
+	OfferName			string		`gorm:"not null"`
+	DiscountPercentage	float64		`gorm:"not null"`
+	CreatedAt			time.Time
+	EndAt				time.Time
+	Active				bool		`gorm:"default:true"`
+
+}

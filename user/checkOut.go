@@ -152,7 +152,7 @@ func CheckOutPage(c *gin.Context) {
 		return 
 	}
 
-	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance})
+	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance,"pagetitle":"Checkout"})
 
 }
 
