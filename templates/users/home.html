@@ -46,6 +46,34 @@
       background-color: #ff6f61;
       color: white;
     }
+    .ticker-track {
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    .ticker-content {
+      display: flex;
+      animation: tickerScroll 10s linear infinite;
+    }
+
+    .ticker-item {
+      flex: 0 0 100vw; /* each item takes full screen width */
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+      padding: 4px 0;
+    }
+
+    /* Keyframes for smooth scroll */
+    @keyframes tickerScroll {
+      0% {
+        transform: translateX(0%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
   </style>
 </head>
 <body>
@@ -84,6 +112,22 @@
     
   </div>
 </nav>
+
+{{if gt (len .Announcements) 0}}
+<!-- Announcement Ticker -->
+<div class="bg-light border-top border-bottom py-2 overflow-hidden">
+  <div class="ticker-track">
+    <div class="ticker-content">
+      {{range .Announcements}}
+        <div class="ticker-item">{{.}}</div>
+      {{end}}
+      {{range .Announcements}}
+        <div class="ticker-item">{{.}}</div>
+      {{end}}
+    </div>
+  </div>
+</div>
+{{end}}
 
 <!-- Hero Section -->
 <section class="hero d-flex justify-content-between align-items-center flex-wrap">

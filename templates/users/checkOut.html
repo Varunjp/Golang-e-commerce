@@ -146,7 +146,7 @@
               {{ if gtf .discount 0.0}}
                 <div class="d-flex justify-content-between">
                   <span>Special Offer:</span>
-                  <span>₹{{ .discount }}</span>
+                  <span>₹{{ printf "%.2f" .discount }}</span>
                 </div>
               {{ end }}
               <div class="d-flex justify-content-between">
