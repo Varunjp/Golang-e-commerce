@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/models"
 	"first-project/models/responsemodels"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -58,6 +59,11 @@ func ListUsers(c *gin.Context){
 
 	AdDb.Where("deleted_at IS NULL").Order("id desc").Limit(limit).Offset(offset).Find(&users)
 
+	var usererr error
+	if len(users) < 1 {	
+		usererr = fmt.Errorf("no users found")
+	}
+
 	totalPages := int(math.Ceil(float64(total)/ float64(limit)))
 	
 	c.HTML(http.StatusOK,"user_list.html",gin.H{
@@ -66,6 +72,7 @@ func ListUsers(c *gin.Context){
 		"limit":limit,
 		"totalPages":totalPages,
 		"user":name,
+		"error":usererr,
 	})
 }
 
@@ -111,7 +118,13 @@ func FindUser (c *gin.Context){
 	adDb.Count(&total)
 
 	if total < 1 {
-		c.JSON(http.StatusNotFound,gin.H{"message":"User not found"})
+		c.HTML(http.StatusOK,"user_list.html",gin.H{
+		"Users":users,
+		"page":page,
+		"limit":limit,
+		"totalPages":0,
+		"user":name,
+		"error":"No users found",})
 		return 
 	}
 

@@ -6,7 +6,6 @@ import (
 	"first-project/models"
 
 	"log"
-	"math"
 	"net/http"
 	"strconv"
 
@@ -108,6 +107,10 @@ func AdminSideItemCancel(c *gin.Context){
 		newTotal = 0
 	}
 
+	if retrunAmount > order.TotalAmount {
+		retrunAmount = order.TotalAmount - newTotal
+	}
+
 	valueCheck,usedCouponId,errVal := helper.GetOrderValue(order.ID,order.UserID,newTotal)
 	var walletTransaction models.WalletTransaction
 	db.Db.Where("order_id = ? AND user_id = ? AND type = ?",order.ID,order.UserID,"Debit").First(&walletTransaction)
@@ -125,40 +128,30 @@ func AdminSideItemCancel(c *gin.Context){
 	}else if !valueCheck && errVal == nil{
 
 		if walletTransaction.ID != 0 {
-
-			var updateTotal float64
 			if newTotal == 0{
 				order.SubTotal = 0
-				updateTotal = order.SubTotal + walletTransaction.Amount
-			}else{
-				order.SubTotal = order.SubTotal - retrunAmount
-				updateTotal = order.SubTotal + walletTransaction.Amount
-			}
-			
-			if updateTotal <= 0 {
 				order.TotalAmount = 0
 				order.DiscountTotal = 0
 			}else{
-				order.TotalAmount = updateTotal
-				order.DiscountTotal = math.Abs(walletTransaction.Amount)
+				order.SubTotal = newTotal
+				order.TotalAmount = newTotal
+				order.DiscountTotal = 0
 			}
-
 			
 		}else{
 
 			if newTotal == 0 {
 				order.TotalAmount = 0
 				order.SubTotal = 0
-				order.DiscountTotal = 0.0
 			}else{
-				order.TotalAmount = order.TotalAmount - retrunAmount
-				order.SubTotal = order.TotalAmount
+				order.TotalAmount = newTotal
+				order.SubTotal = newTotal
 			}
 			
-			// order.DiscountTotal = 0.0
+			order.DiscountTotal = 0.0
 		}
 		
-		if usedCouponId != 0 && newTotal == 0{
+		if usedCouponId != 0 {
 			db.Db.Delete(&models.UsedCoupon{},usedCouponId)
 		}
 
@@ -188,12 +181,6 @@ func AdminSideItemCancel(c *gin.Context){
 		}
 		order.Status = "Cancelled"
 		order.Reason = orderItem.Reason
-		if walletTransaction.ID != 0 {
-			err := helper.CreditWallet(order.UserID,math.Abs(walletTransaction.Amount),"Admin forwarded")
-			if err != nil{
-				log.Println(err)
-			}
-		}
 	}
 
 

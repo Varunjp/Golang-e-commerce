@@ -35,6 +35,10 @@
             <div class="container py-4">
                 <h2>Customers</h2>
 
+                {{if .error}}
+                <div class="alert alert-danger">{{.error}}</div>
+                {{end}}
+
                 <!-- Search + Buttons -->
                 <form class="d-flex mb-3" method="get">
                     <input class="form-control me-2" type="search" placeholder="Search by name, email..." name="search" value="{{ .search }}">
