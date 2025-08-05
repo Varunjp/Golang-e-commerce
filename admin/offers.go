@@ -60,8 +60,8 @@ func OffersPage(c *gin.Context) {
 			productCount int64
 			categoryCount int64
 		)	
-		prodoff = prodoff.Where("offer_name LIKE ?", "%"+keyword+"%").Count(&productCount)
-		cateoff = cateoff.Where("offer_name LIKE ?", "%"+keyword+"%").Count(&categoryCount)
+		prodoff = prodoff.Where("offer_name ILIKE ?", "%"+keyword+"%").Count(&productCount)
+		cateoff = cateoff.Where("offer_name ILIKE ?", "%"+keyword+"%").Count(&categoryCount)
 		total = productCount + categoryCount
 	}else{
 		var (

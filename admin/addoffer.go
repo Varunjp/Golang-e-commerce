@@ -33,15 +33,15 @@ func AddProductOffer(c *gin.Context) {
 	if err != nil || discountPercentage < 0 || discountPercentage > 50 {
 		Errors["discount"] = "Invalid discount percentage"
 	}
-
+	today := time.Now()
 	startDateStr := c.PostForm("start_date")
 	startDate, err := time.Parse("2006-01-02", startDateStr)
-	if err != nil {	
-		Errors["start_date"] = "Invalid start date format"
+	if err != nil || startDate.Before(today){	
+		Errors["start_date"] = "Invalid start date format or start date is in past"
 	}
 	endDateStr := c.PostForm("end_date")
 	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil || endDate.Before(startDate) {
+	if err != nil || endDate.Before(startDate) || endDate.Equal(startDate){
 		Errors["end_date"] = "Invalid end date format or end date is before start date"
 	}
 
@@ -107,16 +107,16 @@ func AddCategoryOffer(c *gin.Context){
 	if err != nil || discountPercentage < 0 || discountPercentage > 50 {
 		Errors["discount"] = "Invalid discount percentage"
 	}
-
+	today := time.Now()
 	startDateStr := c.PostForm("start_date")
 	startDate, err := time.Parse("2006-01-02", startDateStr)
-	if err != nil {	
-		Errors["start_date"] = "Invalid start date format"
+	if err != nil || startDate.Before(today){	
+		Errors["start_date"] = "Invalid start date format or start date is in past"
 	}
 	endDateStr := c.PostForm("end_date")
 	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil || endDate.Before(startDate) {
-		Errors["end_date"] = "Invalid end date format or end date is before start date"
+	if err != nil || endDate.Before(startDate) || endDate.Equal(startDate){
+		Errors["end_date"] = "Invalid end date format or end date is before or equal to start date"
 	}
 
 	if err := db.Db.Where("category_id = ? AND active = true", subcategoryID).Find(&existingOffers).Error; err != nil {

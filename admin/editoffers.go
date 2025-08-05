@@ -71,8 +71,8 @@ func EditProductOffer(c *gin.Context) {
 
 	endDateStr := c.PostForm("end_date")
 	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil || endDate.Before(startDate) {
-		Errors["end_date"] = "Invalid end date format or end date is before start date"
+	if err != nil || endDate.Before(startDate) || endDate.Equal(startDate){
+		Errors["end_date"] = "Invalid end date format or end date is before or equal to start date"
 	}
 
 	if err := db.Db.Where("product_id = ? AND id != ? AND active = true", productID, offerIDStr).Find(&existingOffers).Error; err != nil {
@@ -215,8 +215,8 @@ func EditCategoryOffer(c *gin.Context) {
 	}
 	endDateStr := c.PostForm("end_date")
 	endDate, err := time.Parse("2006-01-02", endDateStr)
-	if err != nil || endDate.Before(startDate) {
-		Errors["end_date"] = "Invalid end date format or end date is before start date"
+	if err != nil || endDate.Before(startDate) || endDate.Equal(startDate) {
+		Errors["end_date"] = "Invalid end date format or end date is before or equal to start date"
 	}
 
 	if err := db.Db.Where("category_id = ? AND id != ? AND active = true", subcategoryID,offerId).Find(&existingOffers).Error; err != nil {
