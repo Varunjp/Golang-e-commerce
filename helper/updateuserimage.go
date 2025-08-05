@@ -30,16 +30,22 @@ func UpdateUserImage(userID int, imagePath string) error {
 
 	}
 
-	if ProfileImage.ImageUrl != ""{
+	if ProfileImage.ID > 0 {
+		if ProfileImage.ImageUrl != ""{
 		err := os.Remove(ProfileImage.ImageUrl)
+			if err != nil{
+				log.Println("Error removing old image:", err)
+			}
+		}
 
-		if err != nil{
-			log.Println("Error removing old image:", err)
+		ProfileImage.ImageUrl = imagePath
+
+		saveerr := db.Db.Save(&ProfileImage).Error
+
+		if saveerr != nil{
+			return saveerr
 		}
 	}
-
-	ProfileImage.ImageUrl = imagePath
-
-	return db.Db.Save(&ProfileImage).Error
-
+	
+	return nil 
 }

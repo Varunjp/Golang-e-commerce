@@ -26,7 +26,6 @@ type User struct{
 	WishLists				[]WishList					`gorm:"constraint:ONDELETE:CASCADE;"`
 	Reviews 				[]Review					`gorm:"constraint:ONDELETE:CASCADE;"`
 	Addresses 				[]Address 					`gorm:"constraint:OnDelete:CASCADE;"` 
-		
 }
 
 type ProfileImage struct{
