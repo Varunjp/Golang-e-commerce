@@ -13,11 +13,11 @@ func GetSpecialOffer() []string {
 	var categoryOffer []models.CategoryOffer
 	today := time.Now().Format("2006-01-02")
 	
-	if err := db.Db.Where("created_at <= ? AND active = true ", today+" 23:00:00").Find(&productoffer).Error; err != nil{
+	if err := db.Db.Where("created_at <= ? AND end_at >= ? AND active = true", today+" 23:00:00",today+" 23:00:00").Find(&productoffer).Error; err != nil{
 		log.Println("error in product offers :",err)
 	}
 
-	if err := db.Db.Where("created_at <= ? AND active = true ", today+" 23:00:00").Find(&categoryOffer).Error; err != nil{
+	if err := db.Db.Where("created_at <= ? AND end_at >= ? AND active = true ", today+" 23:00:00",today+" 23:00:00").Find(&categoryOffer).Error; err != nil{
 		log.Println("error in category offers :",err)
 	}
 

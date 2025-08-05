@@ -435,8 +435,9 @@ func DownloadPdf(c *gin.Context){
 	pdf.SetFont("Helvetica", "B", 11)
 	pdf.SetFillColor(240, 240, 240)
 	pdf.CellFormat(80, 10, "Description", "1", 0, "", false, 0, "")
-	pdf.CellFormat(20, 10, "Qty", "1", 0, "", false, 0, "")
-	pdf.CellFormat(30, 10, "Price", "1", 0, "", false, 0, "")
+	pdf.CellFormat(10, 10, "Qty", "1", 0, "", false, 0, "")
+	pdf.CellFormat(20, 10, "Price", "1", 0, "", false, 0, "")
+	pdf.CellFormat(20, 10, "Tax", "1", 0, "", false, 0, "")
 	pdf.CellFormat(30, 10, "Discount", "1", 0, "", false, 0, "")
 	pdf.CellFormat(30, 10, "Total", "1", 1, "", false, 0, "")
 
@@ -456,7 +457,7 @@ func DownloadPdf(c *gin.Context){
 			continue // Skip items that are not delivered
 		}
 
-		lineTotal := float64(item.Quantity) * item.Price
+		lineTotal := float64(item.Quantity) * item.Price - item.Discount + (item.Tax * float64(item.Quantity))
 		subtotal += lineTotal
 
 		desc := product.Variant_name
@@ -469,9 +470,10 @@ func DownloadPdf(c *gin.Context){
 
 		// Continue the rest of the row at same height
 		pdf.CellFormat(80, 16, desc, "1", 0, "", false, 0, "")
-		pdf.CellFormat(20, 16, fmt.Sprintf("%d", item.Quantity), "1", 0, "C", false, 0, "")
-		pdf.CellFormat(30, 16, fmt.Sprintf("Rs. %.2f", item.Price), "1", 0, "C", false, 0, "")
-		pdf.CellFormat(30, 16, "Rs. 0.00", "1", 0, "C", false, 0, "")
+		pdf.CellFormat(10, 16, fmt.Sprintf("%d", item.Quantity), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(20, 16, fmt.Sprintf("Rs. %.2f", item.Price), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(20, 16, fmt.Sprintf("Rs. %.2f", item.Tax), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 16, fmt.Sprintf("Rs. %.2f",item.Discount), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(30, 16, fmt.Sprintf("Rs. %.2f", lineTotal), "1", 1, "C", false, 0, "")
 	}
 
@@ -481,8 +483,8 @@ func DownloadPdf(c *gin.Context){
 	pdf.CellFormat(160, 10, "Subtotal", "1", 0, "L", false, 0, "")
 	pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.SubTotal), "1", 1, "C", false, 0, "")
 
-	pdf.CellFormat(160, 10, "Coupon Discount", "1", 0, "L", false, 0, "")
-	pdf.CellFormat(30, 10, fmt.Sprintf("- Rs. %.2f", order.DiscountTotal), "1", 1, "C", false, 0, "")
+	pdf.CellFormat(160, 10, "Total Discount", "1", 0, "L", false, 0, "")
+	pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.DiscountTotal), "1", 1, "C", false, 0, "")
 
 	finalPayable := order.SubTotal - order.DiscountTotal
 	pdf.SetFont("Helvetica", "B", 11)
