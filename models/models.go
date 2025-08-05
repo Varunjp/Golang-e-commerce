@@ -199,12 +199,12 @@ type SubCategory struct{
 	SubCategoryName 	string 				`gorm:"not null"`
 	CategoryID 			uint  				`gorm:"not null;index"`
 	IsBlocked			bool				`gorm:"default:false"`
-	Category 			Category 			`gorm:"constraint:OnDelete:CASCADE;"`
 	CategoryDiscount 	uint 				
 	Deleted_at 			gorm.DeletedAt 		`gorm:"index"`
 
 	// Associations
 	Products			[]Product 			`gorm:"foreignkey:SubCategoryID"`
+	Category 			Category 			`gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 type Product struct {
