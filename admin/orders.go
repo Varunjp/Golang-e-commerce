@@ -57,8 +57,6 @@ func AdminOrdersPage(c *gin.Context){
 		return db.Unscoped()
 	}).Model(&models.Order{}).Order("create_at DESC")
 	
-	
-
 	if orderId != ""{
 		dbQuery =dbQuery.Where("order_id ILIKE ?",orderId)
 	}

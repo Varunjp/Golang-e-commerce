@@ -176,8 +176,6 @@ func ListCoupons(c *gin.Context){
 
 	}
 
-	//c.HTML(http.StatusOK,"coupons.html",gin.H{"couponsList":coupons})
-
 }
 
 func AddCoupon(c *gin.Context){
@@ -284,7 +282,6 @@ func AddCoupon(c *gin.Context){
 	}
 
 	c.Redirect(http.StatusSeeOther,"/admin/coupons")
-
 }
 
 func ToggleCoupon(c *gin.Context){
@@ -380,19 +377,19 @@ func EditCouponPage(c *gin.Context){
 }
 
 func EditCoupon(c *gin.Context){
-	// var couponExist models.Coupons
+	var couponExist models.Coupons
 	Errors := make(map[string]string)
 	idParam := c.Param("id")
 	id,err := strconv.Atoi(idParam)
 	if err != nil{
-		c.HTML(http.StatusInternalServerError,"coupon.html",gin.H{"error":"Invaild id"})
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error"})
 		return 
 	}
 
 	var coupon models.Coupons
 
 	if err := db.Db.Where("id = ?",id).First(&coupon).Error; err != nil{
-		c.String(http.StatusInternalServerError,"Coupon not found")
+		c.JSON(http.StatusInternalServerError,gin.H{"status":"error","error":"Coupon not found"})
 		return 
 	}
 
@@ -402,9 +399,9 @@ func EditCoupon(c *gin.Context){
 	minAmount,_ := strconv.ParseFloat(c.PostForm("min_amount"),64)
 	maxAmount,_ := strconv.ParseFloat(c.PostForm("max_amount"),64)
 
-	// if err := db.Db.Where("code ILIKE ?",newCode).First(&couponExist).Error; err == nil{
-	// 	Errors["code"] = "Already exist"
-	// }
+	if err := db.Db.Where("code ILIKE ? AND id != ?",newCode,id).First(&couponExist).Error; err == nil{
+		Errors["code"] = "Already exist"
+	}
 
 	if strings.TrimSpace(newCode) == ""{
 		Errors["code"] = "Coupon code doesn't meet requirment" 
@@ -434,14 +431,10 @@ func EditCoupon(c *gin.Context){
 	coupon.Code = strings.ToUpper(newCode)
 	coupon.Description = newDescription
 
-	
-
 	coupon.Discount = discount
 	coupon.MinAmount = minAmount
 	coupon.MaxAmount = maxAmount
 	coupon.Type = c.PostForm("type")
-
-	
 
 	categoryIDstr := c.PostForm("category_id")
 	if categoryIDstr != ""{

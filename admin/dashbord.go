@@ -64,15 +64,9 @@ func GetSalesData(c *gin.Context){
 	case "yearly":
 		for i := 0; i < 5; i++{
 			yearTime := now.AddDate(-i,0,0)
-			// start := time.Date(yearTime.Year(),yearTime.Month(),1,0,0,0,0,time.UTC)
-			// end := start.AddDate(1,0,0)
-
 			year := now.Year() - i
-
-			
 			start := time.Date(year, time.January, 1, 0, 0, 0, 0, now.Location())
 
-			
 			var end time.Time
 			if i == 0 {
 				
@@ -93,5 +87,4 @@ func GetSalesData(c *gin.Context){
 			"label":"Yearly Sales (Last 5 years)",
 		})
 	}
-
 }

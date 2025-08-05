@@ -197,4 +197,5 @@ func GetUrl(router *gin.Engine){
 	router.POST("/admin/offer/category-edit/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.EditCategoryOffer)
 	router.GET("/admin/offers/toggle/Product/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.ToggleProductOffer)
 	router.GET("/admin/offers/toggle/Category/:id",middleware.NoCacheMiddleware(),middleware.AuthMiddlerware("admin"),admin.ToggleCategoryOffer)
+
 }

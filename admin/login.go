@@ -82,7 +82,6 @@ func Login(c *gin.Context){
 	}
 	
 	c.SetCookie("JWT-Admin",token,3600,"/","",false,true)
-	
 	// Prevent caching
 	c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
 

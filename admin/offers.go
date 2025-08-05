@@ -156,7 +156,6 @@ func AddOfferCategoryPage(c *gin.Context) {
 		CategoryName		string 
 	}
 
-
 	if err := db.Db.Find(&subcategories).Error; err != nil {
 		c.HTML(http.StatusInternalServerError, "admin_categoryoffer.html", gin.H{"error": "Could not retrieve subcategories, please try again later"})
 		return

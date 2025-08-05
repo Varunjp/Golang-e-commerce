@@ -55,6 +55,7 @@ func AddBanner(c *gin.Context){
 		c.Redirect(http.StatusSeeOther, "/admin/banners")
 		return
 	}
+
 	// getting file 
 
 	file, err := c.FormFile("image")
@@ -126,7 +127,6 @@ func AddBanner(c *gin.Context){
 	}
 
 	c.Redirect(http.StatusSeeOther,"/admin/banners")
-
 }
 
 func DeleteBanner(c *gin.Context){

@@ -61,7 +61,6 @@ func AdminItemCancel(c *gin.Context) {
 	db.Db.Save(&orderItem)
 	db.Db.Save(&order)
 	// db.Db.Delete(&orderItem)
-
 	c.Redirect(http.StatusSeeOther,"/admin/order/"+orderIdStr)
 }
 
@@ -190,8 +189,6 @@ func AdminSideItemCancel(c *gin.Context){
 	db.Db.Save(&order)
 	db.Db.Save(&orderItem)
 	db.Db.Delete(&orderItem)
-
 	
 	c.Redirect(http.StatusSeeOther,"/admin/order/"+orderIdStr)
-
 }

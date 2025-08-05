@@ -491,7 +491,7 @@ func OrderConfirmation(c *gin.Context){
 	id := c.Param("id")
 	var order models.Order
 	db.Db.Where("id = ?",id).First(&order)
-	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.OrderID,"odId":order.ID,"user":"done"})
+	c.HTML(http.StatusOK,"orderSuccess.html",gin.H{"OrderID":order.OrderID,"odId":order.ID,"user":"done","pagetitle":"Ordersuccess"})
 }
 
 

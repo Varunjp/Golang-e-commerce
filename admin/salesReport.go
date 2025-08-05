@@ -243,7 +243,7 @@ func DownloadSalesReport(c *gin.Context){
 		db.Db.Where("id = ?",order.UserID).First(&user)
 		orderDate := order.CreateAt.Format("02-01-2006")
 
-		pdf.CellFormat(30, 10, fmt.Sprintf("%d", order.ID), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(30, 10, order.OrderID, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(35, 10, orderDate, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(40, 10, user.Username, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", order.TotalAmount), "1", 0, "C", false, 0, "")
@@ -257,14 +257,6 @@ func DownloadSalesReport(c *gin.Context){
 	pdf.CellFormat(105, 10, "Grand Total", "1", 0, "R", false, 0, "")
 	pdf.CellFormat(30, 10, fmt.Sprintf("Rs. %.2f", totalAmount), "1", 0, "C", false, 0, "")
 	pdf.CellFormat(30, 10, "", "1", 1, "C", false, 0, "")
-
-	// var buf bytes.Buffer
-	// err := pdf.Output(&buf)
-
-	// if err != nil{
-		// c.HTML(http.StatusInternalServerError,"sales_report.html",gin.H{"error":"Failed to generate PDF"})
-		// return 
-	// }
 
 	c.Header("Content-Type","application/pdf")
 	c.Header("Content-Disposition","attachment; filename=sales_report.pdf")
