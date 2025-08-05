@@ -130,10 +130,6 @@ func FindUser (c *gin.Context){
 
 	totalPages := int(math.Ceil(float64(total)/ float64(limit)))
 	
-	// Add html
-	// c.JSON(http.StatusOK,gin.H{"users":users,"keyword":keyword})
-
-
 	c.HTML(http.StatusOK,"user_list.html",gin.H{
 		"Users":users,
 		"page":page,

@@ -40,9 +40,6 @@ func ListCoupons(c *gin.Context){
 		}
 	}
 
-
-	// loading categories
-
 	var subcat []models.SubCategory
 	
 	type Response struct {
@@ -76,8 +73,6 @@ func ListCoupons(c *gin.Context){
 		}
 
 	}
-
-
 
 	pageStr := c.DefaultQuery("page","1")
 	limitStr := c.DefaultQuery("limit","10")

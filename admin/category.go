@@ -229,7 +229,6 @@ func EditCategory(c *gin.Context){
 	}
 
 	c.JSON(http.StatusOK,gin.H{"redirect":"/admin/categories"})
-	// c.Redirect(http.StatusFound,"/admin/categories")
 }
 
 func EditSubCategoryPage(c *gin.Context){
@@ -273,8 +272,6 @@ func UpdateSubCategory(c *gin.Context){
 		return
 	}
 
-	
-
 	subCategory.SubCategoryName = newName
 
 	if err := db.Db.Save(&subCategory).Error; err != nil{
@@ -303,8 +300,6 @@ func DeleteCategory(c *gin.Context){
 		err = helper.DeleteAllUnderCategory(categoryID)
 	}
 
-	
-
 	if err != nil {
 		c.HTML(http.StatusInternalServerError,"category_list.html",gin.H{"error":"Failed delete category"})
 		return
@@ -316,8 +311,6 @@ func DeleteCategory(c *gin.Context){
 func DeleteSubCategory(c *gin.Context){
 
 	subCategoryID := c.Param("id")
-
-
 	err := helper.DeleteAllUnderSubCategory(subCategoryID)
 
 	if err != nil{
@@ -328,5 +321,4 @@ func DeleteSubCategory(c *gin.Context){
 	}
 
 	c.Redirect(http.StatusFound,"/admin/categories")
-
 }

@@ -179,6 +179,7 @@ func CreateRazorpayOrder(c *gin.Context){
 		
 	}
 	
+	totalAmount = math.Round(totalAmount*100)/100
 	totalAmount = totalAmount *100
 
 	client := razorpay.NewClient(os.Getenv("RAZORPAY_KEY_ID"), os.Getenv("RAZORPAY_KEY_SECRET"))
