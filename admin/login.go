@@ -68,7 +68,7 @@ func Login(c *gin.Context){
 	}
 
 	if admin.Password != password {
-		c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{"error":"Invalid email or password"})
+		c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{"error":"Invalid password"})
 		return 
 	}
 
@@ -78,7 +78,8 @@ func Login(c *gin.Context){
 
 	token, err := middleware.CreateToken("admin",admin.Email,admin.ID)
 	if err != nil{
-		c.HTML(http.StatusInternalServerError,"admin_login.html",gin.H{"error": "Error Generating JWT"})
+		c.HTML(http.StatusInternalServerError,"admin_login.html",gin.H{"error": "Error Generating token, please try again later"})
+		return 
 	}
 	
 	c.SetCookie("JWT-Admin",token,3600,"/","",false,true)
