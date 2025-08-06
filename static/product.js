@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('productForm');
   if (!form) {
@@ -7,7 +8,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let croppers = {};
 
-  // helper: process a single cropper
+  // Helper: Convert file directly to base64 (no cropper)
+  function convertFileToBase64(file, index) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById(`cropped_image${index}`).value = e.target.result;
+
+        // Preview non-image files as text/pdf icon etc. or clear preview
+        const preview = document.getElementById(`preview${index}`);
+        preview.src = ""; // No preview for non-image
+        resolve();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Helper: Crop and convert image using Cropper
   function cropAndSave(index) {
     return new Promise(resolve => {
       const cropper = croppers[index];
@@ -19,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
       canvas.toBlob(blob => {
         const reader = new FileReader();
         reader.onloadend = () => {
-          console.log(`Base64 data for image ${index}:`, reader.result.slice(0, 100));
           document.getElementById(`cropped_image${index}`).value = reader.result;
           resolve();
         };
@@ -28,46 +44,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // helper: process all croppers
-  async function processCroppers() {
-    await Promise.all([0, 1, 2].map(i => cropAndSave(i)));
-  }
-
-  // setup cropper for each image input
+  // Set up file input handler
   document.querySelectorAll('.crop-image').forEach(input => {
     input.addEventListener('change', function () {
       const index = this.dataset.index;
       const file = this.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = document.getElementById(`preview${index}`);
-        img.src = e.target.result;
+      const preview = document.getElementById(`preview${index}`);
 
-        if (croppers[index]) croppers[index].destroy();
+      // Check if file is an image
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          preview.src = e.target.result;
 
-        croppers[index] = new Cropper(img, {
-          aspectRatio: 1,
-          viewMode: 1,
-          autoCropArea: 1,
-          responsive: true,
-        });
-      };
-      reader.readAsDataURL(file);
+          // Destroy previous cropper if any
+          if (croppers[index]) {
+            croppers[index].destroy();
+          }
+
+          // Initialize cropper
+          croppers[index] = new Cropper(preview, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+            responsive: true,
+          });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // If not an image, destroy cropper and convert directly
+        if (croppers[index]) {
+          croppers[index].destroy();
+          delete croppers[index];
+        }
+
+        convertFileToBase64(file, index);
+      }
     });
   });
 
-  // handle form submission
+  // Helper: process all image croppers (only those that exist)
+  async function processCroppers() {
+    await Promise.all([0, 1, 2].map(i => {
+      if (croppers[i]) {
+        return cropAndSave(i);
+      }
+      return Promise.resolve(); // no cropper, already set
+    }));
+  }
+
+  // Handle form submission
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
- 
 
-    // clear previous errors
+    // Clear previous errors
     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
     document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
 
-    // process croppers before submission
+    // Ensure cropped image base64 is ready
     await processCroppers();
 
     const formData = new FormData(form);

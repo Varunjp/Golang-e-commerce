@@ -396,6 +396,8 @@ func UploadProfileImage(c *gin.Context){
 		return
 	}
 
+	session.Set("profilesuccess","Image updated")
+	session.Save()
 	c.Redirect(http.StatusSeeOther,"/user/profile")
 
 }

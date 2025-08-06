@@ -147,7 +147,12 @@ func UpdateProductHandler(c *gin.Context){
 
 	// image check
 	for i := 0; i < 3; i++{
+		
 		base64Str := c.PostForm(fmt.Sprintf("cropped_image%d", i))
+
+		//delete
+		fmt.Println("Checking image")
+		fmt.Println(base64Str)
 
 		if base64Str != "" {
 			
@@ -164,12 +169,12 @@ func UpdateProductHandler(c *gin.Context){
 			decoded, err := base64.StdEncoding.DecodeString(base64Data)
 			if err != nil {
 				Errors[fmt.Sprintf("cropped_image%d", i)] = "Image is invalid"
-				continue
+				break
 			}
 
 			if !isValidImage(decoded) {
 				Errors[fmt.Sprintf("cropped_image%d", i)] = "Image is invalid"
-				continue
+				break
 			}
 			
 		}

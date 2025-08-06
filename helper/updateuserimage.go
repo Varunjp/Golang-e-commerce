@@ -24,6 +24,7 @@ func UpdateUserImage(userID int, imagePath string) error {
 			if err := db.Db.Create(&newImage).Error; err != nil{
 				return err 
 			}
+
 		}else{
 			return err 
 		}
@@ -32,7 +33,7 @@ func UpdateUserImage(userID int, imagePath string) error {
 
 	if ProfileImage.ID > 0 {
 		if ProfileImage.ImageUrl != ""{
-		err := os.Remove(ProfileImage.ImageUrl)
+			err := os.Remove(ProfileImage.ImageUrl)
 			if err != nil{
 				log.Println("Error removing old image:", err)
 			}
