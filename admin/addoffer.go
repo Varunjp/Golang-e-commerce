@@ -33,10 +33,10 @@ func AddProductOffer(c *gin.Context) {
 	if err != nil || discountPercentage < 0 || discountPercentage > 50 {
 		Errors["discount"] = "Invalid discount percentage"
 	}
-	today := time.Now()
+
 	startDateStr := c.PostForm("start_date")
 	startDate, err := time.Parse("2006-01-02", startDateStr)
-	if err != nil || startDate.Before(today){	
+	if err != nil {	
 		Errors["start_date"] = "Invalid start date format or start date is in past"
 	}
 	endDateStr := c.PostForm("end_date")
@@ -107,10 +107,9 @@ func AddCategoryOffer(c *gin.Context){
 	if err != nil || discountPercentage < 0 || discountPercentage > 50 {
 		Errors["discount"] = "Invalid discount percentage"
 	}
-	today := time.Now()
 	startDateStr := c.PostForm("start_date")
 	startDate, err := time.Parse("2006-01-02", startDateStr)
-	if err != nil || startDate.Before(today){	
+	if err != nil {	
 		Errors["start_date"] = "Invalid start date format or start date is in past"
 	}
 	endDateStr := c.PostForm("end_date")
