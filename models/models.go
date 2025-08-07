@@ -12,7 +12,7 @@ type User struct{
 	Email 					string 						`gorm:"not null; unique; index"`
 	Password 				string 						`gorm:"not null"`
 	Phone 					string 		
-	Status 					string 						`gorm:"check(status IN('Active', 'Inactive', 'Blocked'))"`
+	Status 					string 						
 	ReferralCode			string						`gorm:"unique"`
 	ReferredBy 				string 
 	DeletedAt 				gorm.DeletedAt

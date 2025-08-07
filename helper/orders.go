@@ -454,7 +454,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 						Amount: math.Abs(WalletTransaction.Amount),
 						OrderItemID: orderItem.ID,
 						Type: "Credit",
-						Description: fmt.Sprintf("Refund for order : %d",order.ID),
+						Description: "Refund for order : "+order.OrderID,
 						RefundStatus: false,
 						Status: true,
 					}
@@ -481,7 +481,7 @@ func ItemCancelCod(orderId, itemId, reason string) error{
 					Amount: math.Abs(WalletTransaction.Amount),
 					OrderItemID: orderItem.ID,
 					Type: "Credit",
-					Description: fmt.Sprintf("Refund for order : %d",order.ID),
+					Description: "Refund for order :"+order.OrderID,
 					RefundStatus: false,
 					Status: true,
 				}
