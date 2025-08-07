@@ -73,8 +73,8 @@ func OffersPage(c *gin.Context) {
 		total = productCount + categoryCount
 	}
 
-	prodoff = prodoff.Offset(offset).Limit(limit).Find(&productOffers)
-	cateoff = cateoff.Offset(offset).Limit(limit).Find(&categoryOffers)
+	prodoff = prodoff.Order("id DESC").Offset(offset).Limit(limit).Find(&productOffers)
+	cateoff = cateoff.Order("id DESC").Offset(offset).Limit(limit).Find(&categoryOffers)
 
 	if prodoff.Error != nil || cateoff.Error != nil {
 		c.HTML(http.StatusInternalServerError, "admin_offers.html", gin.H{"error": "Could not retrieve offers, please try again later"})

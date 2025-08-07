@@ -182,13 +182,18 @@ func CheckOutPage(c *gin.Context) {
 
 	
 	flash := session.Get("flash")
-
+	erromsg := session.Get("checkouterror")
 	if flash != nil{
 		session.Delete("flash")
 		session.Save()
 	}
 
-	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance,"pagetitle":"Checkout","message":flash,"discount":finalDiscount,"PayAmount":payablamount})
+	if erromsg != nil{
+		session.Delete("checkouterror")
+		session.Save()
+	}
+
+	c.HTML(http.StatusOK,"checkOut.html",gin.H{"user":"done","CartItems":Response,"Addresses":Addresses,"TotalAmount":totalamount,"Coupons":coupons,"Balance":wallet.Balance,"pagetitle":"Checkout","message":flash,"discount":finalDiscount,"PayAmount":payablamount,"error":erromsg})
 
 }
 
@@ -200,13 +205,16 @@ func CheckOutOrder(c *gin.Context){
 	paymentOption := c.PostForm("payment_method")
 	couponCode := c.PostForm("coupon_code")
 	isWallet := c.PostForm("use_wallet")
+	session := sessions.Default(c)
 
 	var addressID uint 
 	var orderitems []models.OrderItem
 	var usedcouponcheck models.UsedCoupon
 	
 	if addressOption == ""{
-		c.HTML(http.StatusBadRequest,"checkOut.html",gin.H{"error":"Need to provide a address details"})
+		session.Set("checkouterror","Need to provide a address details")
+		session.Save()
+		c.Redirect(http.StatusSeeOther,"/user/checkout")
 		return 
 	}
 
@@ -284,7 +292,6 @@ func CheckOutOrder(c *gin.Context){
 	}
 
 	total +=tax
-	session := sessions.Default(c)
 	if total > 1000 {
 		
 		session.Set("flash","Order above 1000 cannot be ordered as cod, please choose online payment.")
@@ -385,7 +392,7 @@ func CheckOutOrder(c *gin.Context){
 	db.Db.Create(&OrderAddress)
 
 	if isWallet == "on" {
-		if err := helper.DebitWallet(uint(userID),walletUsed,order.ID,"Purchase order :"+strconv.Itoa(int(order.ID))); err != nil{
+		if err := helper.DebitWallet(uint(userID),walletUsed,order.ID,"Purchase order : "+order.OrderID); err != nil{
 			c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to update wallet"})
 			return 
 		}

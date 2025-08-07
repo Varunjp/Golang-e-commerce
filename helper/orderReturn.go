@@ -379,6 +379,10 @@ func ItemReturnCod(orderId, itemId, reason string) error{
 			}else{
 				returnamount = itemTotal
 			}
+			
+			if WalletTransaction.ID != 0{
+				returnamount += math.Abs(WalletTransaction.Amount)
+			}
 
 			walletTransaction := models.WalletTransaction{
 				UserID: order.UserID,

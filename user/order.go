@@ -136,7 +136,7 @@ func ReturnOrder(c *gin.Context){
 		walletAmount = math.Abs(WalletTransaction.Amount)
 	}
 
-	if order.PaymentMethod != "cod" || order.Status == "Delivered" {
+	if order.PaymentMethod == "cod"{
 
 		desc := fmt.Sprintf("Refund request for order : %s",order.OrderID)
 		
@@ -151,18 +151,21 @@ func ReturnOrder(c *gin.Context){
 
 		db.Db.Create(&walletTransaction)
 		
-	}else if order.PaymentMethod == "cod" && WalletTransaction.ID != 0{
+	}else if order.PaymentMethod != "cod"{
+
+		desc := fmt.Sprintf("Refund request for order : %s",order.OrderID)
 		
-		newTransaction := models.WalletTransaction{
-			UserID: WalletTransaction.UserID,
-			OrderID: WalletTransaction.OrderID,
-			Amount: walletAmount,
+		walletTransaction := models.WalletTransaction{
+			UserID: order.UserID,
+			OrderID: order.ID,
+			Amount: order.TotalAmount,
 			Type: "Credit",
-			Description: "Refund request for order :"+strconv.Itoa(int(WalletTransaction.OrderID)),
+			Description: desc,
 			RefundStatus: true,
 		}
 
-		db.Db.Create(&newTransaction)
+		db.Db.Create(&walletTransaction)
+
 	}
 	
 	

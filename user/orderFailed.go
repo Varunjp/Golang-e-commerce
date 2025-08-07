@@ -6,6 +6,7 @@ import (
 	"first-project/models"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -21,6 +22,7 @@ func OrderFailed(c *gin.Context){
 	
 	var Payload struct {
 		AddressID		string 		`json:"address_id"`
+		IsWallet 		bool		`json:"is_wallet"`
 	}
 
 
@@ -34,6 +36,43 @@ func OrderFailed(c *gin.Context){
 		return 
 	}
 
+	var WalletTransaction models.WalletTransaction
+	today := time.Now().Format("2006-01-02")
+	
+	if Payload.IsWallet{
+		if err := db.Db.Where("user_id = ? AND order_id = ? AND created_at >= ?",userID,userID,today+" 00:00:00").Order("id DESC").First(&WalletTransaction).Error; err != nil{
+			log.Println("error while getting wallet transaction :",err)
+		}
+	}
+
+	if WalletTransaction.ID > 0 && Payload.IsWallet{
+		var totalTransactions []models.WalletTransaction
+		db.Db.Where("user_id = ? AND order_id = ? AND created_at >= ?",userID,userID,today+" 00:00:00").Find(&totalTransactions)
+
+		walletAmount := math.Abs(WalletTransaction.Amount)
+		newalletTransaction := models.WalletTransaction{
+			UserID: uint(userID),
+			OrderID: uint(userID),
+			Amount: walletAmount,
+			Type: "Credit",
+			Description: "Order failed and amount redirected",
+			RefundStatus: false,
+			Status: true,
+		}
+
+		db.Db.Create(&newalletTransaction)
+
+		for _,transaction := range totalTransactions{
+			db.Db.Delete(&transaction)
+		}
+
+		transferErr := helper.CreditCancelWallet(uint(userID),walletAmount,"Order failed and amount redirected")
+
+		if transferErr != nil{
+			log.Println("Error while transferring amount :",transferErr)
+		}
+	}
+	
 
 	if err := db.Db.Where("address_id = ?",Payload.AddressID).First(&address).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":err})
@@ -122,5 +161,6 @@ func OrderFailedPage(c *gin.Context){
 	c.HTML(http.StatusOK,"orderFailed.html",gin.H{
 		"OrderID":order.OrderID,
 		"user":"done",
+		"pagetitle":"Order Failed",
 	})
 }

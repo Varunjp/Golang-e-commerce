@@ -185,15 +185,16 @@ func CancelOrder(c *gin.Context){
 		walletTransaction := models.WalletTransaction{
 			UserID: order.UserID,
 			OrderID: order.ID,
-			Amount: order.TotalAmount+walletAmount,
+			Amount: order.TotalAmount,
 			Type: "Credit",
 			Description: "Refund",
 			RefundStatus: false,
+			Status: true,
 		}
 
 		db.Db.Create(&walletTransaction)
 
-		transferErr := helper.CreditCancelWallet(order.UserID,order.TotalAmount+walletAmount,reason)
+		transferErr := helper.CreditCancelWallet(order.UserID,order.TotalAmount,reason)
 
 		if transferErr != nil{
 			c.Redirect(http.StatusSeeOther,"/user/order/"+OrderIDStr)
@@ -230,7 +231,7 @@ func CancelOrder(c *gin.Context){
 			OrderID: WalletTransaction.OrderID,
 			Amount: walletAmount,
 			Type: "Credit",
-			Description: "Refund request for order :"+strconv.Itoa(int(WalletTransaction.OrderID)),
+			Description: "Refund request for order :"+order.OrderID,
 			RefundStatus: false,
 		}
 
