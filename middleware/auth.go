@@ -50,7 +50,7 @@ func AuthMiddlerware(requiredRole string) gin.HandlerFunc{
 		token, err := c.Cookie("JWT-Admin")
 
 		if username == nil || err != nil{
-			c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{"error":"Login required"})
+			c.HTML(http.StatusUnauthorized,"admin_login.html",nil)
 			c.Abort()
 			return 
 		}

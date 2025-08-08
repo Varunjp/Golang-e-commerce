@@ -40,14 +40,12 @@ func UserProfilePage(c *gin.Context) {
 		return 
 	}
 
-
 	if err := db.Db.Preload("Addresses").Preload("ProfileImages",func(db *gorm.DB)*gorm.DB{
 		return db.Order("id DESC")
 	}).Where("id = ?",id).First(&User).Error; err != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"User not found"})
 		return 
 	}
-	
 	
 	var image models.ProfileImage
 	var imageUrl string 

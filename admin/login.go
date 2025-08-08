@@ -18,7 +18,7 @@ func LoginPage(c *gin.Context){
 	var AdminUser models.Admin
 
 	if err := db.Db.Where("id = ?",userId).First(&AdminUser).Error; err != nil{
-		c.HTML(http.StatusInternalServerError,"coupons.html",gin.H{"error":"Please login again"})
+		c.HTML(http.StatusInternalServerError,"admin_login.html",gin.H{"error":"Please login again"})
 		return 
 	}
 

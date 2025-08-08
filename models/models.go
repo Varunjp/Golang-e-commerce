@@ -20,9 +20,7 @@ type User struct{
 	Updated_at 				time.Time
 	
 	// Associations
-	Orders					[]Order						`gorm:"constraint:ONDELETE:CASCADE;"`
 	ProfileImages			[]ProfileImage				`gorm:"constraint:ONDELETE:CASCADE;"`
-	CartItems				[]CartItem					`gorm:"constraint:ONDELETE:CASCADE;"`
 	WishLists				[]WishList					`gorm:"constraint:ONDELETE:CASCADE;"`
 	Reviews 				[]Review					`gorm:"constraint:ONDELETE:CASCADE;"`
 	Addresses 				[]Address 					`gorm:"constraint:OnDelete:CASCADE;"` 
