@@ -8,6 +8,7 @@ import (
 	"first-project/helper"
 	"first-project/models"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -217,6 +218,28 @@ func CreateRazorpayOrder(c *gin.Context){
 
 
 func PaymentSuccess(c *gin.Context){
+
+	signatureHeader := c.GetHeader("X-Razorpay-Signature")
+
+	if signatureHeader != "" {
+		// ✅ Webhook case
+		body, _ := ioutil.ReadAll(c.Request.Body)
+		webhookSecret := os.Getenv("RAZORPAY_WEBHOOK_SECRET")
+
+		h := hmac.New(sha256.New, []byte(webhookSecret))
+		h.Write(body)
+		expectedSignature := hex.EncodeToString(h.Sum(nil))
+
+		if expectedSignature != signatureHeader {
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "Invalid webhook signature"})
+			return
+		}
+
+		log.Println("Webhook verified successfully ✅")
+		// Process webhook JSON here
+		c.JSON(http.StatusOK, gin.H{"success": true, "source": "webhook"})
+		return
+	}
 
 	var payload struct {
 		RazorpayPaymentID 		string		`json:"razorpay_payment_id"`
