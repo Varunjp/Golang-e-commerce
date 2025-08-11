@@ -529,7 +529,6 @@ func AdminOrderCancel(orderId uint)error{
 		}
 	}
 
-
 	if order.PaymentMethod != "cod" {
 		totalAmount := order.TotalAmount
 		if walletTransaction.ID != 0{
