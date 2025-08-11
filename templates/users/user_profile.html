@@ -82,11 +82,11 @@
             {{if .user.ReferralCode }}
             <label class="label">Referral Code</label>
             <input type="text" id="refCode" class="form-control mb-2" value="{{.user.ReferralCode}}" readonly>
-            <input type="text" id="refLink" class="form-control mb-3" value="https://fasionart.online/user/register?ref={{.user.ReferralCode}}" readonly>
+            <input type="text" id="refLink" class="form-control mb-3" value="https://fashionart.online/user/register?ref={{.user.ReferralCode}}" readonly>
 
             <div class="d-flex justify-content-end gap-2 flex-wrap">
               <button onclick="copyToClipboard('refLink')" class="btn btn-primary btn-sm">Copy Link</button>
-              <a href="https://wa.me/?text=Join%20and%20save%20₹50!%20Use%20my%20referral:%20https://fasionart.online/user/register?ref={{.user.ReferralCode}}" class="btn btn-success btn-sm">Share via WhatsApp</a>
+              <a href="https://wa.me/?text=Join%20and%20save%20₹50!%20Use%20my%20referral:%20https://fashionart.online/user/register?ref={{.user.ReferralCode}}" class="btn btn-success btn-sm">Share via WhatsApp</a>
             </div>
 
             {{else if eq .user.ReferralCode ""}}
