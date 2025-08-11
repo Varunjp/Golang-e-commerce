@@ -4,6 +4,7 @@ import (
 	db "first-project/DB"
 	"first-project/routes"
 	"first-project/utils"
+	"io"
 	"log"
 	"os"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
@@ -29,7 +31,23 @@ func main() {
     port = "8080"
   }
 
-  router := gin.Default()
+  if _,err := os.Stat("logs"); os.IsNotExist(err){
+    os.Mkdir("logs",0755)
+  }
+
+  logFile := &lumberjack.Logger{
+    Filename: "logs/gin.log",
+    MaxSize: 10,
+    MaxBackups: 5,
+    MaxAge: 30,
+    Compress: true,
+  }
+
+  multiWriter := io.MultiWriter(logFile, os.Stdout)
+	gin.DefaultWriter = multiWriter // Gin's own logs
+	log.SetOutput(multiWriter)  
+
+  router := gin.New()
 
   router.Use(gin.Logger(), gin.Recovery())
 
