@@ -74,6 +74,12 @@ jobs:
         with:
           name: app-static
 
+      # Debug
+      - name: Debug — List workspace files
+        run: |
+          echo "---- WORKSPACE FILE STRUCTURE ----"
+          ls -R .
+
       # Copy binary to EC2
       - name: Upload Binary to EC2
         uses: appleboy/scp-action@v0.1.7
