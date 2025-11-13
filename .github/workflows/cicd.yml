@@ -17,6 +17,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Debug — Show repo tree
+        run: |
+          echo "---- REPO TREE ----"
+          ls -R .
+
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
