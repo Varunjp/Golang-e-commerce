@@ -29,58 +29,65 @@ jobs:
         run: |
           GOOS=linux GOARCH=amd64 go build -o myapp .
 
-      - name: Upload Artifact (Binary)
+      - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
           name: myapp-binary
           path: myapp
 
-      - name: Upload Artifact (Templates)
+      # Upload template folders
+      - name: Upload Template Files
         uses: actions/upload-artifact@v4
         with:
           name: app-templates
-          path: templates/
+          path: |
+            admin/
+            users/
 
-      - name: Upload Artifact (Static Files)
+      # Upload static files
+      - name: Upload Static Files
         uses: actions/upload-artifact@v4
         with:
           name: app-static
-          path: static/
+          path: |
+            images/
+            icons/
+            *.css
+            *.js
 
   # ---------------------------------------------------
   # 🟩 JOB 2: Continuous Deployment (Deploy to EC2)
   # ---------------------------------------------------
   cd:
     name: Deploy to EC2
-    needs: ci # Only deploy if CI succeeded
+    needs: ci
     runs-on: ubuntu-latest
 
     steps:
-      # Download binary
       - name: Download Binary
         uses: actions/download-artifact@v4
         with:
           name: myapp-binary
 
-      # Download templates
       - name: Download Templates
         uses: actions/download-artifact@v4
         with:
           name: app-templates
 
-      # Download static files
       - name: Download Static Files
         uses: actions/download-artifact@v4
         with:
           name: app-static
 
-      # Debug
+      # --------------------------
+      # 🔍 Debug (optional but recommended first time)
+      # --------------------------
       - name: Debug — List workspace files
         run: |
           echo "---- WORKSPACE FILE STRUCTURE ----"
           ls -R .
-
-      # Copy binary to EC2
+      # --------------------------
+      # Upload binary
       - name: Upload Binary to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -90,27 +97,33 @@ jobs:
           source: "myapp"
           target: "/home/${{ secrets.EC2_USER }}/myapp/"
 
-      # Copy template files
-      - name: Upload Templates to EC2
+      # Upload templates (admin + users)
+      - name: Upload Template Files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "app-templates/templates/*"
+          source: |
+            admin/*
+            users/*
           target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
 
-      # Copy static files
+      # Upload static files (images, icons, css, js)
       - name: Upload Static Files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "app-static/static/*"
+          source: |
+            images/*
+            icons/*
+            *.css
+            *.js
           target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
 
-      # Restart service
+      # Restart the service
       - name: Restart systemd service
         uses: appleboy/ssh-action@v0.1.7
         with:
