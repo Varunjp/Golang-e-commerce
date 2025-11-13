@@ -6,15 +6,15 @@ on:
       - main
 
 jobs:
-  # -------------------------
-  # 📌 Job 1: Continuous Integration (CI)
-  # -------------------------
+  # ---------------------------------------------------
+  # 🟦 JOB 1: Continuous Integration (Build + Test)
+  # ---------------------------------------------------
   ci:
     name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Setup Go
@@ -22,34 +22,60 @@ jobs:
         with:
           go-version: "1.21"
 
-      # - name: Run Tests
-      #   run: go test ./...
+      - name: Run Tests
+        run: go test ./...
 
       - name: Build Go Binary
         run: |
           GOOS=linux GOARCH=amd64 go build -o myapp .
 
-      - name: Upload Artifact
+      - name: Upload Artifact (Binary)
         uses: actions/upload-artifact@v4
         with:
           name: myapp-binary
           path: myapp
 
-  # -------------------------
-  # 📌 Job 2: Continuous Deployment (CD)
-  # -------------------------
+      - name: Upload Artifact (Templates)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-templates
+          path: templates/
+
+      - name: Upload Artifact (Static Files)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-static
+          path: static/
+
+  # ---------------------------------------------------
+  # 🟩 JOB 2: Continuous Deployment (Deploy to EC2)
+  # ---------------------------------------------------
   cd:
     name: Deploy to EC2
-    needs: ci # ← only runs when CI succeeds
+    needs: ci # Only deploy if CI succeeded
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Artifact
+      # Download binary
+      - name: Download Binary
         uses: actions/download-artifact@v4
         with:
           name: myapp-binary
 
-      - name: Copy binary to EC2
+      # Download templates
+      - name: Download Templates
+        uses: actions/download-artifact@v4
+        with:
+          name: app-templates
+
+      # Download static files
+      - name: Download Static Files
+        uses: actions/download-artifact@v4
+        with:
+          name: app-static
+
+      # Copy binary to EC2
+      - name: Upload Binary to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -58,6 +84,27 @@ jobs:
           source: "myapp"
           target: "/home/${{ secrets.EC2_USER }}/myapp/"
 
+      # Copy template files
+      - name: Upload Templates to EC2
+        uses: appleboy/scp-action@v0.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "./templates/*"
+          target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
+
+      # Copy static files
+      - name: Upload Static Files to EC2
+        uses: appleboy/scp-action@v0.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "./static/*"
+          target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
+
+      # Restart service
       - name: Restart systemd service
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -66,5 +113,6 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             sudo chmod +x /home/${{ secrets.EC2_USER }}/myapp/myapp
+            sudo systemctl daemon-reload
             sudo systemctl restart myapp
             sudo systemctl status myapp --no-pager
