@@ -7,7 +7,7 @@ on:
 
 jobs:
   # ---------------------------------------------------
-  # 🟦 JOB 1: Continuous Integration (Build + Test)
+  # JOB 1: CI
   # ---------------------------------------------------
   ci:
     name: Build & Test
@@ -17,10 +17,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Debug repo tree (optional)
-      - name: Debug — Show repo tree
+      - name: Debug — Show CI repo structure
         run: |
-          echo "---- REPO TREE ----"
+          echo "---- CI REPO TREE ----"
           ls -R .
 
       - name: Setup Go
@@ -36,28 +35,28 @@ jobs:
           GOOS=linux GOARCH=amd64 go build -o myapp .
 
       # Upload binary
-      - name: Upload Binary
+      - name: Upload Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: myapp-binary
           path: myapp
 
       # Upload templates folder
-      - name: Upload Templates
+      - name: Upload Templates Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-templates
           path: templates/
 
       # Upload static folder
-      - name: Upload Static Files
+      - name: Upload Static Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-static
           path: static/
 
   # ---------------------------------------------------
-  # 🟩 JOB 2: Continuous Deployment (Deploy to EC2)
+  # JOB 2: CD
   # ---------------------------------------------------
   cd:
     name: Deploy to EC2
@@ -75,18 +74,17 @@ jobs:
         with:
           name: app-templates
 
-      - name: Download Static Files
+      - name: Download Static
         uses: actions/download-artifact@v4
         with:
           name: app-static
 
-      # Debug workspace after downloading artifacts
-      - name: Debug — Show workspace files
+      - name: Debug — Show CD workspace
         run: |
-          echo "---- WORKSPACE FILE STRUCTURE ----"
+          echo "---- CD WORKSPACE STRUCTURE ----"
           ls -R .
 
-      # Upload binary to EC2
+      # Upload application binary
       - name: Upload Binary to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -96,8 +94,8 @@ jobs:
           source: "myapp"
           target: "/home/${{ secrets.EC2_USER }}/myapp/"
 
-      # Upload templates (admin + users)
-      - name: Upload Template Files to EC2
+      # Upload templates folder
+      - name: Upload Templates to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -106,8 +104,8 @@ jobs:
           source: "templates/*"
           target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
 
-      # Upload static files (images, icons, css, js)
-      - name: Upload Static Files to EC2
+      # Upload static folder
+      - name: Upload Static to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -116,8 +114,8 @@ jobs:
           source: "static/*"
           target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
 
-      # Restart systemd service
-      - name: Restart systemd service
+      # Restart service
+      - name: Restart service
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
