@@ -44,7 +44,6 @@ func setupMockDB(t *testing.T) (sqlmock.Sqlmock, *gorm.DB) {
 
 func TestLogin_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-
 	// 1️⃣ Setup DB mock
 	mock, gdb := setupMockDB(t)
 	dbpkg.Db = gdb
