@@ -62,6 +62,8 @@ jobs:
     name: Deploy to EC2
     needs: ci
     runs-on: ubuntu-latest
+    environment:
+      name: production
 
     steps:
       - name: Download Binary
