@@ -101,8 +101,12 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "admin/*,users/*"
+          source: |
+            admin/*
+            users/*
           target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
+          strip_components: 0
+          overwrite: true
 
       # Upload static folder
       - name: Upload Static Files to EC2
@@ -111,8 +115,14 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "icons/*,images/*,*.css,*.js"
+          source: |
+            icons/*
+            images/*
+            *.css
+            *.js
           target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
+          strip_components: 0
+          overwrite: true
 
       # Restart service
       - name: Restart service
