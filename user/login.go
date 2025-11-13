@@ -86,5 +86,4 @@ func Login(c * gin.Context){
 	c.Header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
 
 	c.Redirect(http.StatusFound,"/")
-
 }

@@ -1,0 +1,69 @@
+name: CI/CD Pipeline for Go App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # -------------------------
+  # 📌 Job 1: Continuous Integration (CI)
+  # -------------------------
+  ci:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+
+      - name: Run Tests
+        run: go test ./...
+
+      - name: Build Go Binary
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o myapp .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myapp-binary
+          path: myapp
+
+  # -------------------------
+  # 📌 Job 2: Continuous Deployment (CD)
+  # -------------------------
+  cd:
+    name: Deploy to EC2
+    needs: ci # ← only runs when CI succeeds
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: myapp-binary
+
+      - name: Copy binary to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "myapp"
+          target: "/home/${{ secrets.EC2_USER }}/myapp/"
+
+      - name: Restart systemd service
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            sudo systemctl restart myapp
+            sudo systemctl status myapp --no-pager
