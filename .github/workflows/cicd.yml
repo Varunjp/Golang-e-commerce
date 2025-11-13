@@ -101,9 +101,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: |
-            admin/*
-            users/*
+          source: "admin/*,users/*"
           target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
 
       # Upload static folder
@@ -113,11 +111,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: |
-            icons/*
-            images/*
-            *.css
-            *.js
+          source: "icons/*,images/*,*.css,*.js"
           target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
 
       # Restart service
