@@ -10,133 +10,116 @@ jobs:
   # 🟦 JOB 1: Continuous Integration (Build + Test)
   # ---------------------------------------------------
   ci:
-    name: Build & Test
-    runs-on: ubuntu-latest
+  name: Build & Test
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Debug — Show repo tree
-        run: |
-          echo "---- REPO TREE ----"
-          ls -R .
+    # (optional) debug
+    - name: Debug — Show repo tree
+      run: ls -R .
 
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.21"
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: "1.21"
 
-      # - name: Run Tests
-      #   run: go test ./...
+    # - name: Run Tests
+    #   run: go test ./...
 
-      - name: Build Go Binary
-        run: |
-          GOOS=linux GOARCH=amd64 go build -o myapp .
+    - name: Build Go Binary
+      run: |
+        GOOS=linux GOARCH=amd64 go build -o myapp .
 
-      - name: Upload Binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: myapp-binary
-          path: myapp
+    # Upload binary
+    - name: Upload Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: myapp-binary
+        path: myapp
 
-      # Upload template folders
-      - name: Upload Template Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-templates
-          path: |
-            admin/
-            users/
+    # Upload templates folder
+    - name: Upload Templates
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-templates
+        path: templates/ # <-- This is the correct full folder
 
-      # Upload static files
-      - name: Upload Static Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-static
-          path: |
-            images/
-            icons/
-            *.css
-            *.js
+    # Upload static folder
+    - name: Upload Static Files
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-static
+        path: static/ # <-- This is the correct full folder
 
   # ---------------------------------------------------
   # 🟩 JOB 2: Continuous Deployment (Deploy to EC2)
   # ---------------------------------------------------
   cd:
-    name: Deploy to EC2
-    needs: ci
-    runs-on: ubuntu-latest
+  name: Deploy to EC2
+  needs: ci
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Download Binary
-        uses: actions/download-artifact@v4
-        with:
-          name: myapp-binary
+  steps:
+    - name: Download Binary
+      uses: actions/download-artifact@v4
+      with:
+        name: myapp-binary
 
-      - name: Download Templates
-        uses: actions/download-artifact@v4
-        with:
-          name: app-templates
+    - name: Download Templates
+      uses: actions/download-artifact@v4
+      with:
+        name: app-templates
 
-      - name: Download Static Files
-        uses: actions/download-artifact@v4
-        with:
-          name: app-static
+    - name: Download Static Files
+      uses: actions/download-artifact@v4
+      with:
+        name: app-static
 
-      # --------------------------
-      # 🔍 Debug (optional but recommended first time)
-      # --------------------------
-      - name: Debug — List workspace files
-        run: |
-          echo "---- WORKSPACE FILE STRUCTURE ----"
-          ls -R .
-      # --------------------------
-      # Upload binary
-      - name: Upload Binary to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          source: "myapp"
-          target: "/home/${{ secrets.EC2_USER }}/myapp/"
+    - name: Debug — Show workspace files
+      run: ls -R .
 
-      # Upload templates (admin + users)
-      - name: Upload Template Files to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          source: |
-            admin/*
-            users/*
-          target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
+    # Upload binary
+    - name: Upload Binary to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_KEY }}
+        source: "myapp"
+        target: "/home/${{ secrets.EC2_USER }}/myapp/"
 
-      # Upload static files (images, icons, css, js)
-      - name: Upload Static Files to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          source: |
-            images/*
-            icons/*
-            *.css
-            *.js
-          target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
+    # Upload templates
+    - name: Upload Template Files to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_KEY }}
+        source: "templates/*"   # <-- CORRECT
+        target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
 
-      # Restart the service
-      - name: Restart systemd service
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            sudo chmod +x /home/${{ secrets.EC2_USER }}/myapp/myapp
-            sudo systemctl daemon-reload
-            sudo systemctl restart myapp
-            sudo systemctl status myapp --no-pager
+    # Upload static files
+    - name: Upload Static Files to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_KEY }}
+        source: "static/*"      # <-- CORRECT
+        target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
+
+    - name: Restart systemd service
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_KEY }}
+        script: |
+          sudo chmod +x /home/${{ secrets.EC2_USER }}/myapp/myapp
+          sudo systemctl daemon-reload
+          sudo systemctl restart myapp
+          sudo systemctl status myapp --no-pager
+
