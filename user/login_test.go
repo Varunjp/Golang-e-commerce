@@ -1,10 +1,12 @@
 package user
 
 import (
+	db "first-project/DB"
+	"first-project/middleware"
+	"first-project/utils"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -14,79 +16,91 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	dbpkg "first-project/DB"
-	"first-project/middleware"
-	"first-project/utils"
 )
-
-var (
-    checkPassword = utils.CheckPasswordHash
-    createToken   = middleware.CreateToken
-)
-
-// Setup mock GORM + sqlmock
-func setupMockDB(t *testing.T) (sqlmock.Sqlmock, *gorm.DB) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock: %v", err)
-	}
-	dialector := postgres.New(postgres.Config{
-		Conn:                 sqlDB,
-		PreferSimpleProtocol: true,
-	})
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	if err != nil {
-		t.Fatalf("failed to open gorm db: %v", err)
-	}
-	return mock, gdb
-}
 
 func TestLogin_Success(t *testing.T) {
+
+	// -------------------------------
+	// 1️⃣ Mock DB
+	// -------------------------------
+	sqlDB, mock, _ := sqlmock.New()
+	db.Db, _ = gorm.Open(postgres.New(postgres.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
+
+	rows := sqlmock.NewRows([]string{
+		"id", "username", "email", "password", "status",
+	}).AddRow(1, "varun", "test@example.com", "hashedpwd", "Active")
+
+	mock.ExpectQuery(`SELECT (.+) FROM "users"`).
+    WithArgs("test@example.com", sqlmock.AnyArg()).
+    WillReturnRows(rows)
+
+
+	// -------------------------------
+	// 2️⃣ Mock password check
+	// -------------------------------
+	utils.ChecKPasswordHash = func(p, h string) bool {
+		return true
+	}
+
+	// -------------------------------
+	// 3️⃣ Mock JWT token
+	// -------------------------------
+	middleware.CReateToken = func(role, email string, id uint) (string, error) {
+		return "test.jwt.token", nil
+	}
+
+	// -------------------------------
+	// 4️⃣ Setup Gin router
+	// -------------------------------
 	gin.SetMode(gin.TestMode)
-	// 1️⃣ Setup DB mock
-	mock, gdb := setupMockDB(t)
-	dbpkg.Db = gdb
+	r := gin.New()
 
-	rows := sqlmock.NewRows([]string{"id", "email", "password", "username", "status"}).
-		AddRow(1, "test@example.com", "hashedpass", "TestUser", "Active")
+	tmpl := template.Must(template.New("userLogin.html").Parse(`
+		<html>{{ .error }}</html>
+	`))
+	r.SetHTMLTemplate(tmpl)
 
-	mock.ExpectQuery(`SELECT \* FROM "users" WHERE.*email.*deleted_at.*ORDER BY "users"."id" LIMIT`).
-		WithArgs("test@example.com", sqlmock.AnyArg()).
-		WillReturnRows(rows)
-
-	// 2️⃣ Mock functions
-	checkPassword = func(password, hash string) bool {
-		return true // pretend password always matches
-	}
-	createToken = func(role, email string, id uint) (string, error) {
-		return "mocktoken123", nil
-	}
-
-	// 3️⃣ Setup Gin + template
-	router := gin.New()
-	router.SetHTMLTemplate(template.Must(template.New("userLogin.html").Parse(`OK`)))
 
 	store := cookie.NewStore([]byte("secret"))
-	router.Use(sessions.Sessions("mysession", store))
-	router.POST("/login", Login)
+	r.Use(sessions.Sessions("mysession", store))
 
-	// 4️⃣ Make a fake form request
-	form := url.Values{}
-	form.Add("email", "test@example.com")
-	form.Add("password", "password123")
-	req := httptest.NewRequest("POST", "/login", strings.NewReader(form.Encode()))
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	r.POST("/login", Login)
+
+	// -------------------------------
+	// 5️⃣ Create HTTP Request
+	// -------------------------------
+	body := strings.NewReader("email=test@example.com&password=12345")
+	req, _ := http.NewRequest("POST", "/login", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	router.ServeHTTP(w, req)
 
-	// 5️⃣ Assert
+	// -------------------------------
+	// 6️⃣ Perform request
+	// -------------------------------
+	r.ServeHTTP(w, req)
+
+	t.Log("Response Body:", w.Body.String())
+
+	// -------------------------------
+	// 7️⃣ Assertions
+	// -------------------------------
 	if w.Code != http.StatusFound {
-		t.Fatalf("expected redirect, got %d. Body: %s", w.Code, w.Body.String())
+		t.Errorf("Expected status %d, got %d", http.StatusFound, w.Code)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("DB expectations not met: %v", err)
+	// Check if cookie was set
+	cookies := w.Result().Cookies()
+	found := false
+	for _, c := range cookies {
+		if c.Name == "JWT-User" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected JWT-User cookie to be set")
 	}
 }

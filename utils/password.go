@@ -2,6 +2,7 @@ package utils
 
 import "golang.org/x/crypto/bcrypt"
 
+var ChecKPasswordHash = CheckPasswordHash
 
 func HashPassword(password string) (string,error){
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password),bcrypt.DefaultCost)

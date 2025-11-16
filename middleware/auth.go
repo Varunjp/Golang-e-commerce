@@ -22,6 +22,8 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
+var CReateToken = CreateToken
+
 func CreateToken(role string, email string, id uint)(string, error){
 	claims := Claims{
 		Email: email,

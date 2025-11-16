@@ -64,7 +64,7 @@ func Login(c * gin.Context){
 		return 
 	}
 
-	if !utils.CheckPasswordHash(input.Password,user.Password){
+	if !utils.ChecKPasswordHash(input.Password,user.Password){
 		c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error":"Invalid email or password"})
 		return
 	}
@@ -73,7 +73,7 @@ func Login(c * gin.Context){
 	session.Set("name",user.Username)
 	session.Save()
 
-	token, err := middleware.CreateToken("user",user.Email,user.ID)
+	token, err := middleware.CReateToken("user",user.Email,user.ID)
 	
 	if err != nil{
 		c.HTML(http.StatusUnauthorized,"userLogin.html",gin.H{"error": err.Error()})
