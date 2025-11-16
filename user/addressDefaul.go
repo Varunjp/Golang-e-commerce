@@ -14,7 +14,7 @@ import (
 func MakeAddressDefault(c *gin.Context) {
 
 	tokenstr,_ := c.Cookie("JWT-User")
-	_,userid,_ := helper.DecodeJWT(tokenstr)
+	_,userid,_ := helper.DecodEJWT(tokenstr)
 	addressIdstr := c.PostForm("address_id")
 	session := sessions.Default(c)
 	var addresses []models.Address 
