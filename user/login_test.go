@@ -20,9 +20,6 @@ import (
 
 func TestLogin_Success(t *testing.T) {
 
-	// -------------------------------
-	// 1️⃣ Mock DB
-	// -------------------------------
 	sqlDB, mock, _ := sqlmock.New()
 	db.Db, _ = gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,
@@ -37,23 +34,14 @@ func TestLogin_Success(t *testing.T) {
     WillReturnRows(rows)
 
 
-	// -------------------------------
-	// 2️⃣ Mock password check
-	// -------------------------------
 	utils.ChecKPasswordHash = func(p, h string) bool {
 		return true
 	}
 
-	// -------------------------------
-	// 3️⃣ Mock JWT token
-	// -------------------------------
 	middleware.CReateToken = func(role, email string, id uint) (string, error) {
 		return "test.jwt.token", nil
 	}
 
-	// -------------------------------
-	// 4️⃣ Setup Gin router
-	// -------------------------------
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 
@@ -68,25 +56,16 @@ func TestLogin_Success(t *testing.T) {
 
 	r.POST("/login", Login)
 
-	// -------------------------------
-	// 5️⃣ Create HTTP Request
-	// -------------------------------
 	body := strings.NewReader("email=test@example.com&password=12345")
 	req, _ := http.NewRequest("POST", "/login", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
 
-	// -------------------------------
-	// 6️⃣ Perform request
-	// -------------------------------
 	r.ServeHTTP(w, req)
 
 	t.Log("Response Body:", w.Body.String())
 
-	// -------------------------------
-	// 7️⃣ Assertions
-	// -------------------------------
 	if w.Code != http.StatusFound {
 		t.Errorf("Expected status %d, got %d", http.StatusFound, w.Code)
 	}
