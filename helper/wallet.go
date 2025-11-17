@@ -46,6 +46,8 @@ func CreditWallet(userId uint, amount float64, reason string) error {
 	return nil 
 }
 
+var DebiTWallet = DebitWallet
+
 func DebitWallet(userId uint, amount float64, orderID uint,reason string) error {
 
 	if err := db.Db.Model(&models.Wallet{}).Where("user_id = ?",userId).Update("balance",gorm.Expr("balance - ?",amount)).Error; err != nil{

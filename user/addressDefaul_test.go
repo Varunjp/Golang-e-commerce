@@ -17,13 +17,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func init() {
+func TestMakeAddressDefault(t *testing.T) {
+
 	helper.DecodEJWT = func(token string) (string, float64, error) {
 		return "varun", 10.0, nil
 	}
-}
 
-func TestMakeAddressDefault(t *testing.T) {
 	sqlDB, mock, _ := sqlmock.New()
 	db.Db, _ = gorm.Open(postgres.New(postgres.Config{
 		Conn: sqlDB,

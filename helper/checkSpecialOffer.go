@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var CheckSPecialOffer = CheckSpecialOffer
+
 func CheckSpecialOffer(id uint) float64 {
 
 	var productOffer models.ProductOffer

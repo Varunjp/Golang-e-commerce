@@ -18,6 +18,8 @@ func getOrderID() string {
 	return fmt.Sprintf("ORD%02d%03d%04d",year,dayOfYear,random)
 }
 
+var GEnerateOrderID = GenerateOrderID
+
 func GenerateOrderID() string {
 	for {
 		orderid := getOrderID()

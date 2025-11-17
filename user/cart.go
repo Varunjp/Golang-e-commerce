@@ -24,18 +24,23 @@ func AddToCart(c *gin.Context){
 	var wishlist models.WishList
 	
 	tokenStr,_ := c.Cookie("JWT-User")
-	_,id,_ := helper.DecodeJWT(tokenStr)
+	_,id,_ := helper.DecodEJWT(tokenStr)
 	quantity,_ := strconv.Atoi(c.PostForm("quantity"))
 	productID,_ := strconv.Atoi(c.PostForm("product_id"))
 	productIDStr:= c.PostForm("product_id")
 	session := sessions.Default(c)
 
-	if err := db.Db.Preload("Product").First(&product,productID).Error; err != nil{
-		session.Set("error","Could not fetch details from db")
-		session.Save()
-		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
-		return 
-	}
+	if err := db.Db.
+        Preload("Product").
+        Preload("Product.SubCategory").
+        Preload("Product.SubCategory.Category").
+        First(&product, productID).Error; err != nil {
+
+        session.Set("error", "Could not fetch details from db")
+        session.Save()
+        c.Redirect(http.StatusFound, "/user/product/"+productIDStr)
+        return
+    }
 
 
 	if product.Product.SubCategory.IsBlocked || product.Product.SubCategory.Category.IsBlocked || product.Stock < 1 {
