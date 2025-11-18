@@ -534,7 +534,7 @@ func AdminOrderCancel(orderId uint)error{
 		if walletTransaction.ID != 0{
 			totalAmount += math.Abs(walletTransaction.Amount)
 		}
-		err := CreditWallet(order.UserID,order.TotalAmount,"Order cancelled")
+		err := CreditWallet(order.UserID,totalAmount,"Order cancelled")
 		if err != nil{
 			return err 
 		}
