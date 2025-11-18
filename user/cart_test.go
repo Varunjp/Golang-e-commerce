@@ -162,7 +162,7 @@ func TestProductNotFound(t *testing.T) {
 	helper.DecodEJWT = func(token string) (string, float64, error) {
 		return "varun", 1.0, nil
 	}
-
+	// tests
 	router.POST("/add", AddToCart)
 	w := runRequest(router, "product_id=10&quantity=1")
 

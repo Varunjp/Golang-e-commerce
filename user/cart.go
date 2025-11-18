@@ -42,7 +42,6 @@ func AddToCart(c *gin.Context){
         return
     }
 
-
 	if product.Product.SubCategory.IsBlocked || product.Product.SubCategory.Category.IsBlocked || product.Stock < 1 {
 		session.Set("error","Product or category not meets requirement")
 		session.Save()
@@ -63,7 +62,6 @@ func AddToCart(c *gin.Context){
 		c.Redirect(http.StatusFound,"/user/product/"+productIDStr)
 		return 
 	}
-
 
 	if err := db.Db.Where("user_id = ? AND product_id = ?",id,productID).First(&cart).Error; err == nil{
 		
