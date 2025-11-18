@@ -394,41 +394,6 @@ func TestNewCartCreation(t *testing.T) {
 		t.Fatalf("unmet exps: %v", err)
 	}
 }
-
-// // 9 Wishlist exists -> delete after create
-// func TestWishlistDeleteAfterInsert(t *testing.T) {
-// 	mock, closeDB := setupMockDB(t)
-// 	defer closeDB()
-
-// 	mockPreloadChain(mock, 10)
-// 	// cart not found
-// 	mock.ExpectQuery(`SELECT .* FROM "cart_items"`).
-// 		WithArgs(sqlmock.AnyArg(), 10, sqlmock.AnyArg()).
-// 		WillReturnError(gorm.ErrRecordNotFound)
-
-// 	// insert cart
-// 	mockCartInsert(mock)
-
-// 	// wishlist exists -> select and delete
-// 	mockWishlistSelect(mock, sqlmock.AnyArg(), 10, true)
-// 	mockWishlistDelete(mock, 7)
-
-// 	router := setupRouterAndJWT()
-// 	helper.DecodEJWT = func(token string) (string, float64, error) {
-// 		return "varun", 1.0, nil
-// 	}
-
-// 	router.POST("/add", AddToCart)
-// 	w := runRequest(router, "product_id=10&quantity=2")
-// 	if w.Code != http.StatusFound {
-// 		t.Fatalf("expected redirect; got %d", w.Code)
-// 	}
-// 	if err := mock.ExpectationsWereMet(); err != nil {
-// 		t.Fatalf("unmet exps: %v", err)
-// 	}
-// }
-
-// // 10 Update fails
 func TestUpdateFails(t *testing.T) {
 	mock, closeDB := setupMockDB(t)
 	defer closeDB()

@@ -3,14 +3,11 @@ package helper
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/golang-jwt/jwt"
 )
 
-var key = os.Getenv("JWT_SECRET")
-
-var jwtSecret = []byte(key)
+var jwtSecret = []byte("your_secret_key")
 
 var DecodEJWT = DecodeJWT
 
@@ -31,8 +28,6 @@ func DecodeJWT(tokenstr string) (string, float64,error) {
 	if !ok{
 		return "",0,fmt.Errorf("error while getting claim")
 	}
-
 	
 	return claims["Email"].(string),claims["ID"].(float64),nil
-
 }
