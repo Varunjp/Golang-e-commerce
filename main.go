@@ -17,60 +17,55 @@ import (
 
 func main() {
 
+	_ = godotenv.Load()
 
-  err := godotenv.Load()
-  if err != nil{
-    log.Fatal("Error while loading env file")
-  }
+	db.DbInit()
+	port := os.Getenv("PORT")
 
-  db.DbInit()
-  port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
+	if _, err := os.Stat("logs"); os.IsNotExist(err) {
+		os.Mkdir("logs", 0755)
+	}
 
-  if port == ""{
-    port = "8080"
-  }
+	logFile := &lumberjack.Logger{
+		Filename:   "logs/gin.log",
+		MaxSize:    10,
+		MaxBackups: 5,
+		MaxAge:     30,
+		Compress:   true,
+	}
 
-  if _,err := os.Stat("logs"); os.IsNotExist(err){
-    os.Mkdir("logs",0755)
-  }
-
-  logFile := &lumberjack.Logger{
-    Filename: "logs/gin.log",
-    MaxSize: 10,
-    MaxBackups: 5,
-    MaxAge: 30,
-    Compress: true,
-  }
-
-  multiWriter := io.MultiWriter(logFile, os.Stdout)
+	multiWriter := io.MultiWriter(logFile, os.Stdout)
 	gin.DefaultWriter = multiWriter // Gin's own logs
-	log.SetOutput(multiWriter)  
+	log.SetOutput(multiWriter)
 
-  router := gin.New()
+	router := gin.New()
 
-  router.Use(gin.Logger(), gin.Recovery())
+	router.Use(gin.Logger(), gin.Recovery())
 
-  // size constrain
-  router.MaxMultipartMemory = 8 << 20
+	// size constrain
+	router.MaxMultipartMemory = 8 << 20
 
-  // creating session
-  store := cookie.NewStore([]byte("secret-key"))
-  router.Use(sessions.Sessions("Mysession",store))
+	// creating session
+	store := cookie.NewStore([]byte("secret-key"))
+	router.Use(sessions.Sessions("Mysession", store))
 
-  // Connect helper function
-  router.SetFuncMap(utils.TemplateFuncs())
-  
-  // Load static files
+	// Connect helper function
+	router.SetFuncMap(utils.TemplateFuncs())
+
+	// Load static files
 	router.Static("/static", "./static")
-  router.Static("/upload", "./upload")
-  router.Static("/uploads", "./uploads")
+	router.Static("/upload", "./upload")
+	router.Static("/uploads", "./uploads")
 
 	// Load html
 	router.LoadHTMLGlob("templates/**/*")
 
-  routes.GetUrl(router)
-  
-  router.Run(":"+port)
-  
+	routes.GetUrl(router)
+
+	router.Run(":" + port)
+
 }
