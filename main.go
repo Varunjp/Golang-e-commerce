@@ -4,7 +4,6 @@ import (
 	db "first-project/DB"
 	"first-project/routes"
 	"first-project/utils"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -21,9 +20,6 @@ func main() {
 	_ = godotenv.Load()
 
 	db.DbInit()
-
-	// delete
-	fmt.Println("db added")
 
 	port := os.Getenv("PORT")
 
