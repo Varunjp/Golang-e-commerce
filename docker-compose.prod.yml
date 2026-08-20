@@ -5,7 +5,7 @@ services:
   # ==================================================
 
   myapp:
-    image: ghcr.io/varunjp/Golang-e-commerce:latest
+    image: ghcr.io/varunjp/golang-e-commerce:latest
 
     container_name: myapp
 
