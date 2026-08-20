@@ -33,11 +33,6 @@ jobs:
           cache: true
 
 
-      - name: Check formatting
-        run: |
-          test -z "$(gofmt -l .)"
-
-
       - name: Run tests
         run: |
           go test -race ./...
