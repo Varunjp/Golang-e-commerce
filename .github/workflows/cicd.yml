@@ -82,7 +82,7 @@ jobs:
         uses: docker/metadata-action@v5
 
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME | lower }}
 
           tags: |
             type=raw,value=latest
@@ -141,7 +141,7 @@ jobs:
 
             echo "Pulling latest image..."
 
-            docker pull ghcr.io/${{ github.repository }}:latest
+            docker pull ghcr.io/${{ github.repository | lower }}:latest
 
 
             echo "Starting application..."
