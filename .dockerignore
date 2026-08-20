@@ -1,0 +1,16 @@
+.git
+.github
+.gitignore
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+
+.env
+.env.*
+*.log
+
+tmp
+coverage
+bin
+
+README.md

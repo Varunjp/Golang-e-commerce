@@ -1,0 +1,65 @@
+services:
+  db:
+    image: postgres:15
+    container_name: fashionart-db
+    networks:
+      - fashionart-network
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: fashionart-app
+    networks:
+      - fashionart-network
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+      Email: ${Email}
+      Password: ${Password}
+      PORT: ${PORT}
+      ClientID: ${ClientID}
+      ClientSecret: ${ClientSecret}
+      GoogleRedirectURL: ${GoogleRedirectURL}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+    volumes:
+      - ./upload:/app/upload
+    restart: unless-stopped
+
+
+volumes:
+  postgres-data:
+
+networks:
+  fashionart-network:
+    driver: bridge

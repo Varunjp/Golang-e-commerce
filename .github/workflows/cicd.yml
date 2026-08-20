@@ -5,6 +5,14 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read 
+  packages: write 
+
+env:
+  REGISTRY: ghcr.io 
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   # ---------------------------------------------------
   # JOB 1: CI
@@ -15,116 +23,166 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Debug — Show CI repo structure
-        run: |
-          echo "---- CI REPO TREE ----"
-          ls -R .
+        uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
+
         with:
-          go-version: "1.21"
+          go-version: "1.23"
+          cache: true
 
-      - name: Run Tests
-        run: go test ./...
 
-      - name: Build Go Binary
+      - name: Check formatting
         run: |
-          GOOS=linux GOARCH=amd64 go build -o myapp .
+          test -z "$(gofmt -l .)"
 
-      # Upload binary
-      - name: Upload Binary Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: myapp-binary
-          path: myapp
 
-      # Upload templates folder
-      - name: Upload Templates Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-templates
-          path: templates/
+      - name: Run tests
+        run: |
+          go test -race ./...
 
-      # Upload static folder
-      - name: Upload Static Artifact
-        uses: actions/upload-artifact@v4
+
+      - name: Build
+        run: |
+          CGO_ENABLED=0 \
+          GOOS=linux \
+          GOARCH=amd64 \
+          go build -o myapp .
+
+  # ==================================================
+  # DOCKER BUILD
+  # ==================================================
+
+  docker:
+
+    name: Build & Push Docker Image
+
+    needs:
+      - ci
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+
         with:
-          name: app-static
-          path: static/
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+
+        with:
+          context: .
+          push: true
+
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+
+          labels: |
+            ${{ steps.meta.outputs.labels }}
 
   # ---------------------------------------------------
   # JOB 2: CD
   # ---------------------------------------------------
   cd:
     name: Deploy to EC2
-    needs: ci
+    
+    needs: 
+      - docker 
+    
     runs-on: ubuntu-latest
+    
     environment:
       name: production
 
     steps:
-      - name: Download Binary
-        uses: actions/download-artifact@v4
-        with:
-          name: myapp-binary
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.2.2
 
-      - name: Download Templates
-        uses: actions/download-artifact@v4
         with:
-          name: app-templates
 
-      - name: Download Static
-        uses: actions/download-artifact@v4
-        with:
-          name: app-static
-
-      - name: Debug — Show CD workspace
-        run: |
-          echo "---- CD WORKSPACE STRUCTURE ----"
-          ls -R .
-
-      # Upload application binary
-      - name: Upload Binary to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          source: "myapp"
-          target: "/home/${{ secrets.EC2_USER }}/myapp/"
 
-      # Upload templates folder
-      - name: Upload Template Files to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          source: "admin/*,users/*"
-          target: "/home/${{ secrets.EC2_USER }}/myapp/templates/"
 
-      # Upload static folder
-      - name: Upload Static Files to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "icons/*,images/*,*.css,*.js"
-          target: "/home/${{ secrets.EC2_USER }}/myapp/static/"
 
-      # Restart service
-      - name: Restart service
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
           script: |
-            sudo chmod +x /home/${{ secrets.EC2_USER }}/myapp/myapp
-            sudo systemctl daemon-reload
-            sudo systemctl restart myapp
-            sudo systemctl status myapp --no-pager
+
+            set -e
+
+            echo "=================================="
+            echo "Starting deployment"
+            echo "=================================="
+
+            cd /home/${{ secrets.EC2_USER }}/myapp
+
+
+            echo "Pulling latest image..."
+
+            docker pull ghcr.io/${{ github.repository }}:latest
+
+
+            echo "Starting application..."
+
+            docker compose \
+              -f docker-compose.prod.yml \
+              up -d \
+              --remove-orphans
+
+
+            echo "Waiting for application..."
+
+            sleep 10
+
+
+            echo "Container status..."
+
+            docker compose \
+              -f docker-compose.prod.yml \
+              ps
+
+
+            echo "Application logs..."
+
+            docker compose \
+              -f docker-compose.prod.yml \
+              logs \
+              --tail=50 \
+              myapp
+
+
+            echo "Cleaning unused Docker images..."
+
+            docker image prune -f
+
+
+            echo "=================================="
+            echo "Deployment completed"
+            echo "=================================="
