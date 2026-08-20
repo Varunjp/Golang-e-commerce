@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -16,10 +17,20 @@ var Db *gorm.DB
 func DbInit() {
 	_ = godotenv.Load(".env")
 
+	//delete
+	fmt.Println("----------")
+	fmt.Println(os.Getenv("dns"))
+	fmt.Println("----------")
+
 	Db, err := gorm.Open(postgres.Open(os.Getenv("dns")), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Error loading database", err)
 	}
+
+	//delete
+	fmt.Println("----------")
+	fmt.Println("Db is :", Db == nil)
+	fmt.Println("----------")
 
 	autoerr := Db.AutoMigrate(
 		&models.User{},
