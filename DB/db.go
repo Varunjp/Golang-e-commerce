@@ -14,11 +14,14 @@ import (
 var Db *gorm.DB
 
 func DbInit() {
-	_ = godotenv.Load(".env")
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Println(err)
+	}
 
 	dsn := os.Getenv("dns")
 
-	Db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	Db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error opening database: %v", err)
 	}
