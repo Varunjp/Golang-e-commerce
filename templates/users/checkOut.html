@@ -140,7 +140,7 @@
               </div>
 
               <div class="d-flex justify-content-between">
-                <span>Subtotal:</span>
+                <span>TotalAmount + Tax:</span>
                 <span>{{ if .TotalAmount}}₹{{printf "%.2f" .TotalAmount}}{{else}}₹ 0.00{{end}}</span>
               </div>
               {{ if gtf .discount 0.0}}
