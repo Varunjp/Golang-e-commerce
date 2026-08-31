@@ -75,12 +75,27 @@
               </div>
             </div>
             <div class="text-end">
-              <form method="POST" action="/cart/update-quantity" class="d-flex align-items-center">
-                <input type="hidden" name="item_id" value="{{ .Product.ProductID }}">
-                <button type="submit" name="action" value="dec" class="btn btn-outline-secondary btn-sm">−</button>
-                <span class="mx-2">{{ .Product.Quantity}}</span>
-                <button type="submit" name="action" value="inc" class="btn btn-outline-secondary btn-sm">+</button>
-              </form>
+              <div class="d-flex align-items-center quantity-control">
+                <input type="hidden" class="item-id" value="{{ .Product.ProductID }}">
+
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm quantity-btn"
+                    data-action="dec">
+                    −
+                </button>
+
+                <span class="mx-2 quantity">
+                    {{ .Product.Quantity }}
+                </span>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm quantity-btn"
+                    data-action="inc">
+                    +
+                </button>
+            </div>
             </div>
           </li>
           {{end}}
@@ -94,10 +109,10 @@
             <h5 class="card-title">Summary</h5>
             <hr>
             <p class="d-flex justify-content-between">
-              <span>Total Items:</span> <strong>{{.TotalItems}}</strong>
+              <span>Total Items:</span> <strong id="total-items">{{.TotalItems}}</strong>
             </p>
             <p class="d-flex justify-content-between">
-              <span>Total Amount:</span> <strong>₹{{printf "%.2f" .TotalAmount}}</strong>
+              <span>Total Amount:</span> <strong id="total-amount">₹{{printf "%.2f" .TotalAmount}}</strong>
             </p>
             <hr>
             <a href="/user/checkout" class="btn btn-dark w-100">Proceed to Checkout</a>
@@ -111,5 +126,65 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.querySelectorAll(".quantity-btn").forEach(button => {
+
+        button.addEventListener("click", async function () {
+
+            const control = this.closest(".quantity-control");
+
+            const itemID = control.querySelector(".item-id").value;
+            const quantityElement = control.querySelector(".quantity");
+
+            const action = this.dataset.action;
+
+            // Prevent multiple requests
+            this.disabled = true;
+
+            try {
+
+                const formData = new URLSearchParams();
+
+                formData.append("item_id", itemID);
+                formData.append("action", action);
+
+                const response = await fetch("/cart/update-quantity", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Update quantity only
+                quantityElement.textContent = data.quantity;
+
+                document.getElementById("total-items").textContent =
+                  data.total_items;
+
+                document.getElementById("total-amount").textContent =
+                  "₹" + Number(data.total_amount).toFixed(2);
+
+            } catch (error) {
+
+                console.error("Error updating cart:", error);
+                alert("Something went wrong. Please try again.");
+
+            } finally {
+
+                this.disabled = false;
+            }
+        });
+
+    });
+  </script>
 </body>
 </html>
