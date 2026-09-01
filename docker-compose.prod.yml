@@ -17,6 +17,9 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
 
+    volumes:
+      - uploads_data:/app/uploads
+
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,6 +94,9 @@ volumes:
 
   postgres_data:
     name: myapp_postgres_data
+  
+  uploads_data:
+    name: myapp_uploads_data
 
 
 # ====================================================
